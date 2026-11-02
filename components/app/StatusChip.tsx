@@ -11,6 +11,8 @@ const statuses = {
   watch: ["yellow", "status.watch"],
   high: ["rose", "status.high"],
   insufficient: ["neutral", "status.insufficient"],
+  approved: ["cyan", "refund.approved"],
+  draft: ["neutral", "refund.draft"],
 } satisfies Record<string, [ChipColor, TranslationKey]>;
 
 export function StatusChip({ status, language = "en" }: { status: keyof typeof statuses; language?: Language }) {

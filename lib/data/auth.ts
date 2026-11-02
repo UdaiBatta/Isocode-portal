@@ -1,13 +1,14 @@
 import { readProto } from "@/lib/fixtures/state";
 import { students } from "@/lib/fixtures/catalog";
 import { getLanguage } from "@/lib/i18n/server";
+import { today } from "@/lib/clock";
 
 export function safeParentNext(value: unknown) {
   return typeof value === "string" && /^\/receipts\/[a-zA-Z0-9-]+$/.test(value) ? value : "/dues";
 }
 
 export async function getParentPageContext(next?: unknown) {
-  return { ...await getAuthState(), language: await getLanguage(), next: safeParentNext(next), demo: process.env.NEXT_PUBLIC_PROTO === "1" };
+  return { ...await getAuthState(), language: await getLanguage(), today: await today(), next: safeParentNext(next), demo: process.env.NEXT_PUBLIC_PROTO === "1" };
 }
 
 export async function getAuthState() {
