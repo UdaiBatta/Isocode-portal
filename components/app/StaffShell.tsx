@@ -7,6 +7,7 @@ import { WorkspaceSidebar } from "@/components/application/dashboard/dashboard-s
 import { Drawer, DrawerHeader, DrawerBody } from "@/components/base/drawer/drawer";
 import { Button } from "@/components/base/buttons/button";
 import { LogoutButton } from "./LogoutButton";
+import { Toaster } from "@/components/base/toast/toast";
 
 export function StaffShell({ children, counsellor = false }: { children: ReactNode; counsellor?: boolean }) {
   const path = usePathname();
@@ -20,6 +21,6 @@ export function StaffShell({ children, counsellor = false }: { children: ReactNo
     <div className="hidden w-60 shrink-0 md:block"><div className="sticky top-6 h-[calc(100dvh-48px)]">{nav}</div></div>
     <div className="mb-6 md:hidden"><Button variant="secondary" onClick={() => setOpen(true)}>Menu</Button></div>
     <Drawer isOpen={open} onOpenChange={setOpen} placement="start" aria-label="Workspace navigation"><DrawerHeader title="Workspace" /><DrawerBody>{nav}</DrawerBody></Drawer>
-    <main className="mx-auto flex w-full min-w-0 max-w-[1200px] flex-col gap-8 py-3">{children}</main>
+    <main className="mx-auto flex w-full min-w-0 max-w-[1200px] flex-col gap-8 py-3">{children}</main><Toaster />
   </div>;
 }

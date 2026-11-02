@@ -1,5 +1,7 @@
 # Progress
 
+- 2026-11-03 — T0.8 complete: S2 fee plan, summary, instalments, payment receipts and reminder timeline; counter-payment modal validates exact paise and date, creates a receipt and reports excess; pay-link copy and refund navigation work. Corrected fixture allocation dates so new payments preserve earlier paid dates. 30 unit tests, type/lint checks, production build and both counter-payment browser paths pass. Screens captured and desktop/phone inspected. Prototype money still lives in the bounded cookie; next T0.9 refund screen.
+
 - 2026-11-03 — T0.7 complete: staff sign-in now lands on the role home; S1 has four totals, centre/batch grouping, centre scope, student search, expandable batch rows, phone cards/navigation and scoped CSV downloads. 29 unit tests, type checking, production build and both dashboard browser tests (including axe) pass; eight non-failing BoardUI/TanStack lint warnings remain. Screens captured and desktop/phone layouts inspected. Dashboard's historical percentage is still a labelled fixture; exports are prototype browser downloads. Next: T0.8 student ledger.
 
 - 2026-11-03 — Step 0: saved the supplied Plan version 3 and exact one-build prompt, updated the execution rules. T0.1–T0.6 remain complete. Next unfinished task: T0.7 staff dashboard and sign-in. Continue through Gate 7 under docs/PROMPTS.md stop rules; do not deploy.

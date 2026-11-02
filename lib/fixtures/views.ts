@@ -33,12 +33,14 @@ export function ledgerFor(state: ProtoState, code: string, today: string): Ledge
     id: `${code}-${index + 1}`, seq: index + 1, dueDate, amount: net / dates.length, paid: source.paid[index], balance: 0,
     status: "paid", partPaid: false, daysOverdue: 0, dueInDays: 0, payUrl: null,
   }));
+  const paidOn: Record<string, string> = {};
   for (const payment of state.payments?.filter((item) => item.studentCode === code) ?? []) {
     let left = payment.amount;
     for (const instalment of instalments) {
       if (payment.instalmentId && instalment.id < payment.instalmentId) continue;
       const amount = Math.min(left, instalment.amount - instalment.paid);
       instalment.paid += amount;
+      if (amount > 0) paidOn[instalment.id] = payment.on;
       left -= amount;
     }
   }
@@ -67,7 +69,7 @@ export function ledgerFor(state: ProtoState, code: string, today: string): Ledge
         ...(code === "STU-0733" && instalment.seq === 2 ? [{ step: 30, on: "2026-08-09", language: source.language }] : []),
         ...sent.filter((item) => item.instalmentId === instalment.id).map((item) => ({ step: item.step, on: item.on, language: state.languages?.[source.phone] ?? source.language })),
       ];
-      const stopped = !instalment.balance ? `Paid ${state.payments?.filter((item) => item.studentCode === code).at(-1)?.on ?? instalment.dueDate}` : withdrawn ? "Withdrawn" : held.some((item) => item.suggested?.instalmentId === instalment.id) ? "Payment being checked" : null;
+      const stopped = !instalment.balance ? `Paid ${paidOn[instalment.id] ?? instalment.dueDate}` : withdrawn ? "Withdrawn" : held.some((item) => item.suggested?.instalmentId === instalment.id) ? "Payment being checked" : null;
       const step = reminderSteps.find((value) => value > Math.max(-Infinity, ...history.map((item) => item.step)) && shifted(instalment.dueDate, value) >= today);
       return { instalmentId: instalment.id, sent: history, next: stopped || step === undefined ? null : { step, on: shifted(instalment.dueDate, step) }, stopped };
     }),

@@ -59,6 +59,7 @@ describe("prototype fixtures and state changes", () => {
     expect(result).toMatchObject({ ok: true, result: "paid", receiptId: "demo-receipt-1" });
     expect((await getDues()).mode).toBe("clear");
     expect((await getLedger("STU-0587")).instalments[2].balance).toBe(0);
+    expect((await getLedger("STU-0587")).timeline[0].stopped).toBe("Paid 2026-04-10");
     const after = await getDashboard({ group: "batch" });
     expect(before.totals.outstanding - after.totals.outstanding).toBe(1500000);
     expect(before.rows.find((row) => row.id === "MLV-2")!.outstanding - after.rows.find((row) => row.id === "MLV-2")!.outstanding).toBe(1500000);
