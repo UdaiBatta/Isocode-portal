@@ -13,6 +13,7 @@ import { Select, SelectItem } from "@/components/base/select/select";
 import { Tab, TabList, TabPanel, Tabs } from "@/components/base/tabs/tabs";
 import { EmptyState } from "./EmptyState";
 import { ExportButtons } from "./ExportButtons";
+import { StaffFrame, StaffPageHeader } from "./StaffPage";
 import { dateLabel, inr } from "@/lib/format";
 import { methodLabel } from "@/lib/i18n/checkout";
 import type { StudentFilters, StudentRowVM, StudentsVM } from "@/lib/types";
@@ -52,10 +53,8 @@ export function StudentRoster({ view, directory, filters }: { view: StudentsVM; 
   ];
   const batches = directory.batches.filter((batch) => !filters.centre || batch.centreId === filters.centre);
   return <>
-    <header className="flex flex-wrap items-end justify-between gap-4">
-      <div><h1 className="text-title-1-medium">Students</h1><p className="mt-2 text-body-regular text-text-secondary">{view.counts.all} students · {dateLabel(view.today, "en", view.today)}</p></div>
-      <ExportButtons filters={{ centre: filters.centre, batch: filters.batch }} />
-    </header>
+    <StaffPageHeader title="Students" description={`${view.counts.all} students, most overdue first · ${dateLabel(view.today, "en", view.today)}`}><ExportButtons filters={{ centre: filters.centre, batch: filters.batch }} /></StaffPageHeader>
+    <StaffFrame>
     <section className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-4 md:p-5">
       <div className="flex flex-wrap items-end gap-4">
         <div className="w-full min-w-0 md:w-72"><SearchField label="Search student" placeholder="Name or student code" value={query} onChange={setQuery} onSubmit={(value) => navigate({ q: value.trim() || undefined })} onClear={() => navigate({ q: undefined })} /></div>
@@ -78,5 +77,6 @@ export function StudentRoster({ view, directory, filters }: { view: StudentsVM; 
       </Tabs>
       {view.pages > 1 ? <Pagination page={view.page} totalPages={view.pages} onChange={(page) => navigate({ page })} aria-label="Student pages" /> : null}
     </section>
+    </StaffFrame>
   </>;
 }

@@ -549,7 +549,8 @@ Money values are paise in view models. Control tables are the source for `e2e/co
 
 **Routes:** `/login`, `/consent`. Default language Hindi until a `lang` cookie exists.
 
-**Layout, step 1:** language control top right, title, Mobile number input (`inputmode="tel"`), Send code button, quiet "Staff sign-in" link.
+**Layout, both sign-in pages:** `AuthLayout`: company mark and name at the top, the form centred, a footer with the refund policy link. From the `lg` width, a brand panel fills the right side: a dot grid, a sample-data preview and one line on what the product does. The panel is server-rendered, so it adds no script, and it holds no invented customers, quotes or statistics.
+**Layout, step 1:** language control top right, title, one line on what the portal does, Mobile number input (`inputmode="tel"`), Send code button, quiet "Staff sign-in" link.
 **Layout, step 2:** "Enter the 6-digit code", sent-to line, Input OTP (auto-submits on the last digit), Continue, New code, Change number, the no-code help text. In demo mode, a small line reads "Demo code: 123456" with the real generated code.
 **Consent:** shown when any linked student has no live consent. One screen listing the four purposes, Checkbox, Agree and continue, Not now.
 
@@ -657,7 +658,7 @@ export interface DuesVM {
 
 **Route:** `/staff/dashboard?group=centre|batch&centre=<id>&batch=<id>`
 
-**Layout:** four Stat Cards, then a Data Table, then export actions. A centre row expands into batch rows. A batch opens a list of its students with dues, and each student opens S2.
+**Layout:** a header with title, one line of purpose, export actions and Open students. Then one framed area on a soft accent wash holding four Stat Cards, the Needs attention links and the Data Table. S1b uses the same header and frame. A centre row expands into batch rows. A batch opens the roster filtered to that batch, and each student opens S2.
 
 | Tile | Meaning |
 |---|---|
@@ -870,7 +871,7 @@ Opening the Drawer calls `ensureCallBrief`. Template text shows at once, and is 
 
 ### Supporting pages
 
-- **`/staff/login`:** email and password in Auth Card. A wrong password gets the same message as an unknown email.
+- **`/staff/login`:** email and password in `AuthLayout`, with a show-password button, a Caps Lock hint and a loading state. A wrong password gets the same message as an unknown email, in an alert above the form.
 - **`/demo`** (only when `DEMO_MODE=true`): a hero per B3a saying what the product does, one Start button, role cards, then the reviewer's path in 6 steps with links, demo phone numbers and staff emails. Passwords stay in `deployment.md`. This is the only page where decorative motion is allowed. It must also work at 360 px.
 - **`/proto`** (only when `NEXT_PUBLIC_PROTO=1`): links to every screen and each state.
 
