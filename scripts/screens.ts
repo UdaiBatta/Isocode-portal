@@ -31,6 +31,8 @@ async function main() {
           await context.addCookies([{ name: "lang", value: language, url: origin }]);
           const page = await context.newPage();
           for (const route of selected) {
+            await context.clearCookies({ name: "proto" });
+            if (route === "/consent") await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "parent", phone: "+919000000587", otp: { attempts: 0, sends: 1, verified: true } })), url: origin }]);
             for (const state of ["normal", "loading", "empty", "error"]) {
               const url = new URL(route, origin);
               if (state !== "normal") url.searchParams.set("state", state);

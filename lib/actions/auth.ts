@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { mutateProto, fail, codeSchema } from "@/lib/fixtures/state";
 import { students } from "@/lib/fixtures/catalog";
+import { nowMs } from "@/lib/clock";
 
 const phoneSchema = z.string().max(30).transform((input) => {
   let digits = input.replace(/[\s+-]/g, "");
@@ -15,11 +16,15 @@ const phoneSchema = z.string().max(30).transform((input) => {
 export async function requestOtp(input: unknown) {
   return mutateProto(null, (state) => {
     const { phone } = z.object({ phone: phoneSchema }).parse(input);
-    const sends = state.phone === phone ? state.otp?.sends ?? 0 : 0;
-    if (sends >= 3) fail("too_many", "Reset the prototype before requesting more codes.");
-    if (state.phone !== phone) { delete state.consent; delete state.declined; delete state.role; }
+    const now = nowMs();
+    const previous = state.phone === phone ? state.otp : undefined;
+    const inWindow = previous?.firstSentAt !== undefined && now - previous.firstSentAt < 600000;
+    const sends = inWindow ? previous.sends : 0;
+    if (previous?.lastSentAt !== undefined && now - previous.lastSentAt < 30000) fail("cooldown", "Wait before requesting another code.");
+    if (sends >= 3) fail("too_many", "Wait ten minutes before requesting another code.");
+    if (state.phone !== phone) { state.consent = state.consentedPhones?.includes(phone) ?? false; delete state.declined; delete state.role; }
     state.phone = phone;
-    state.otp = { attempts: 0, sends: sends + 1, verified: false };
+    state.otp = { attempts: 0, sends: sends + 1, verified: false, firstSentAt: inWindow ? previous.firstSentAt : now, lastSentAt: now, expiresAt: now + 300000 };
     return { phone, demoCode: "123456" };
   });
 }
@@ -28,6 +33,7 @@ export async function verifyOtp(input: unknown) {
   const result = await mutateProto(null, (state) => {
     const value = z.object({ phone: phoneSchema, code: z.string().regex(/^\d{6}$/) }).parse(input);
     if (state.phone !== value.phone || !state.otp || state.otp.verified) fail("expired", "Request a new prototype code.");
+    if (state.otp.expiresAt !== undefined && nowMs() >= state.otp.expiresAt) fail("expired", "Request a new prototype code.");
     if (state.otp.attempts >= 5) fail("too_many", "Too many attempts. Request a new prototype code.");
     if (value.code !== "123456") { state.otp.attempts++; return { verified: false, next: "/login" }; }
     state.otp.verified = true;
@@ -44,8 +50,17 @@ export async function grantConsent(input: unknown) {
     const linked = students.filter((student) => student.phone === state.phone);
     if (!state.otp?.verified || linked.length === 0 || value.studentIds.length !== linked.length || linked.some((student) => !value.studentIds.includes(student.code))) fail("forbidden", "Consent must cover this prototype family.");
     state.consent = true;
+    if (state.phone && !state.consentedPhones?.includes(state.phone)) (state.consentedPhones ??= []).push(state.phone);
     state.declined = false;
     return { next: "/dues" };
+  });
+}
+
+export async function declineConsent() {
+  return mutateProto("parent", (state) => {
+    state.consent = false;
+    state.declined = true;
+    return {};
   });
 }
 

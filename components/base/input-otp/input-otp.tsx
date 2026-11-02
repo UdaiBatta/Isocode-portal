@@ -41,6 +41,7 @@ export interface InputOtpProps {
   onChange?: (value: string) => void;
   /** Fires once the last box is filled. */
   onComplete?: (value: string) => void;
+  getDigitLabel?: (position: number, length: number) => string;
   isDisabled?: boolean;
   isInvalid?: boolean;
   /** Renders a gap between groups, e.g. `3` gives 000 000. */
@@ -58,6 +59,7 @@ export function InputOtp({
   defaultValue = "",
   onChange,
   onComplete,
+  getDigitLabel,
   isDisabled = false,
   isInvalid = false,
   groupEvery,
@@ -160,7 +162,7 @@ export function InputOtp({
               // Long enough to accept a full autofilled code in one box.
               maxLength={length}
               disabled={isDisabled}
-              aria-label={`Digit ${index + 1} of ${length}`}
+              aria-label={getDigitLabel?.(index + 1, length) ?? `Digit ${index + 1} of ${length}`}
               aria-invalid={isInvalid || undefined}
               value={filled}
               onChange={(event) => writeFrom(index, event.target.value)}

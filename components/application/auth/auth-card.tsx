@@ -56,6 +56,8 @@ export type AuthLayout = "stacked" | "inline" | "grid";
 export type AuthMode = "signin" | "signup" | "verify";
 
 export interface AuthCardProps {
+  /** Custom form composed from BoardUI fields, without the default email form or footer. */
+  children?: ReactNode;
   /**
    * `signin` (default), `signup`, or `verify` for the one-time-code step.
    * `verify` swaps the email fields for OTP boxes and drops the providers:
@@ -153,6 +155,7 @@ export function AuthCard({
   switchHref = "#",
   headingLevel = 1,
   className,
+  children,
 }: AuthCardProps) {
   const localize = useTemplateCopy();
   const TitleHeading = `h${headingLevel}` as const;
@@ -222,7 +225,7 @@ export function AuthCard({
         <TitleHeading className="text-title-2-medium text-text-primary">
           {title ?? copy.title}
         </TitleHeading>
-        <p className="text-body-regular text-text-secondary">
+        {description === null ? null : <p className="text-body-regular text-text-secondary">
           {description ??
             (verify && email ? (
               <>
@@ -233,9 +236,10 @@ export function AuthCard({
             ) : (
               copy.description
             ))}
-        </p>
+        </p>}
       </div>
 
+      {children !== undefined ? <div className="mt-8">{children}</div> : <>
       <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
         {verify ? (
           <div className="flex flex-col gap-1.5">
@@ -350,6 +354,7 @@ export function AuthCard({
           {copy.switchLead} <LinkButton href={switchHref}>{copy.switchAction}</LinkButton>
         </p>
       )}
+      </>}
     </>
   );
 

@@ -13,6 +13,7 @@ const stateSchema = z.object({
   phone: z.string().regex(/^\+91[6-9]\d{9}$/).optional(),
   centreId: z.enum(["MLV", "VSH", "MSR", "RJP"]).optional(),
   consent: z.boolean().optional(),
+  consentedPhones: z.array(z.string()).max(12).optional(),
   declined: z.boolean().optional(),
   date: dateSchema.optional(),
   languages: z.record(z.string(), z.enum(["hi", "en"])).optional(),
@@ -22,7 +23,7 @@ const stateSchema = z.object({
   refunds: z.record(z.string(), refundSchema).optional(),
   outcomes: z.record(z.string(), z.object({ outcome: z.enum(["called", "false_flag"]), note: noteSchema })).optional(),
   sent: z.array(z.object({ instalmentId: z.string().max(50), step: z.number().int(), on: dateSchema, amount: moneySchema, language: z.enum(["hi", "en"]) })).max(8).optional(),
-  otp: z.object({ attempts: z.number().int().min(0).max(5), sends: z.number().int().min(1).max(3), verified: z.boolean() }).optional(),
+  otp: z.object({ attempts: z.number().int().min(0).max(5), sends: z.number().int().min(1).max(3), verified: z.boolean(), firstSentAt: z.number().optional(), lastSentAt: z.number().optional(), expiresAt: z.number().optional() }).optional(),
 });
 
 export type ProtoState = z.infer<typeof stateSchema>;

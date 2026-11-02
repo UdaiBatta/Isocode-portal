@@ -2,6 +2,8 @@
 
 Paste these into Codex in order. `PLAN.md` is the full spec, and each prompt tells Codex which parts of it to read, so it doesn't spend usage reading all 130 KB every time.
 
+**The stack is a Next.js frontend with a Django and PostgreSQL backend.** Prompts 1 to 5 build the screens, and Prompts 6 to 10 build Django behind them.
+
 **Vercel is not part of development.** Prompts 1 to 12 run and test everything on your computer. Prompt 13 is for later, after you do the Vercel part.
 
 ## How to use this file
@@ -17,7 +19,7 @@ Paste these into Codex in order. `PLAN.md` is the full spec, and each prompt tel
 | 3 | Staff screens | | Medium |
 | 4 | Motion, automated checks, self-review | Optional: 21st.dev and MotionSites | Medium |
 | 5 | Changes from your prototype test | **Gate 0 test and sign-off** | Medium |
-| 6 | Database, seed data, sign-in, consent | **Database connection string** | High |
+| 6 | Django, database, seed data, sign-in, consent | **Install PostgreSQL, add its connection string** | High |
 | 7 | Payments and receipts | | High |
 | 8 | Reminders and demo controls | | High |
 | 9 | Refunds, dashboard, exports | | High |
@@ -31,7 +33,7 @@ Paste these into Codex in order. `PLAN.md` is the full spec, and each prompt tel
 Check that you have Node 22 and Git, then:
 
 1. Create an empty **public** GitHub repo named `coaching-fees` and clone it.
-2. Inside it, create a `docs` folder and copy `PLAN.md` to `docs/PLAN.md`.
+2. Inside it, create a `docs` folder. Copy `PLAN.md` to `docs/PLAN.md`, and this file to `docs/PROMPTS.md`.
 3. Install BoardUI from the repo root, using these two commands:
 
 ```bash
@@ -236,34 +238,55 @@ Push to GitHub. Report in under 10 lines. Then stop. Do not start Phase 1.
 
 ## Stage 2: The real system
 
-### Prompt 6: Database, sign-in and consent
+These prompts build the Django backend. The Stage 1 screens stay as they are, and only their data changes from fake to real.
 
-**You first:** create a Neon project with a development branch, or run Postgres locally. Put the connection string in `.env.local` as `DATABASE_URL`. For Neon, use the pooled string.
+### Prompt 6: Django, database, sign-in and consent
+
+**You first:**
+
+1. Install [PostgreSQL 17](https://www.postgresql.org/download/windows/), and remember the password you set for the `postgres` user. Python 3.14 is already on your computer.
+2. Create the database:
+
+```powershell
+& "C:\Program Files\PostgreSQL\17\bin\createdb.exe" -U postgres coaching_fees
+```
+
+3. Add this line to `.env.local`, with your password:
+
+```text
+DATABASE_URL=postgres://postgres:<your password>@localhost:5432/coaching_fees
+```
+
+4. Make sure network access is on (setup step 4), because Django's tests connect to this database.
 
 ```text
 Read AGENTS.md and docs/progress.md.
 
 GOAL
-Phase 1: T1.1 to T1.5. Build the database, seed data, real sign-in and consent. Fixtures still power every other screen.
+Phase 1: T1.1 to T1.5. Build the Django backend in backend/, the database, seed data, real sign-in and consent. Fixtures still power every other screen.
 
 READ
-From docs/PLAN.md, by heading only: B7, B8.1, B8.2, B8.3, B8.4, B8.6, B9, B10, B11, B12, P1 in B5, then T1.1 to T1.5.
+From docs/PLAN.md, by heading only: B1, B7, the B8 introduction, B8.1, B8.2, B8.3, B8.4, B8.6, B9, B10, B11, B12, B13, P1 in B5, then T1.1 to T1.5. These sections now specify Django in full, so follow them over older notes in AGENTS.md and docs/decisions.md.
 
 RULES
 - DATABASE_URL is already in .env.local. Generate the other local values as B12 says, and write them only to .env.local. Never print or commit them.
-- Tests use PGlite, never the dev database.
+- Tests run with Django's test runner on local Postgres, never on Neon.
 - Never change an expected value in B8 to make a test pass. Fix the code. If a value looks wrong, stop and ask me.
+- In Python, never use round() for money or scores. Follow the rules in the B8 introduction.
 - Money is integer paise. Balances are calculated, never stored.
-- Call a guard at the top of each page and action. Do not rely on middleware.
+- The browser talks only to Next.js. Only Django decides access, and every Django view uses @api.
 - Pages and components should not change when data becomes real. Change lib/data and lib/actions.
 - Run the full 2,600-student seed once, in T1.3. Use --small after that.
 
 DONE WHEN
 - Every acceptance check in T1.1 to T1.5 passes.
+- npm run check now includes the Python checks, and passes.
 - On a local production build, each role signs in and lands on its home page: /dues, /staff/dashboard, /counsellor/tasks.
 - A new guardian cannot reach /dues until consent is saved.
+- A request to Django without X-Internal-Key is refused, and test_access.py fails on any view without @api.
+- AGENTS.md follows the A4 text, and no longer says anything overrides the plan.
 - You have reviewed the auth diff for missing role checks.
-- npm run test:e2e passes.
+- npm run test:e2e passes with both apps running.
 
 FINISH
 Push to GitHub. Report in under 10 lines: what is done, what is open, and anything you need from me. Then stop.
@@ -278,22 +301,22 @@ GOAL
 Phase 2: T2.1 to T2.6. A parent signs in, pays on the mock gateway and gets a GST receipt, all on real data.
 
 READ
-From docs/PLAN.md, by heading only: B8.3, B8.4, B8.8, B9, B11, then P2, P3 and S2 in B5, then the Phase 2 tasks.
+From docs/PLAN.md, by heading only: the B8 introduction, B8.3, B8.4, B8.8, B9, B11, then P2, P3 and S2 in B5, then the Phase 2 tasks.
 
 RULES
-- Use APP_URL=http://localhost:3000 for the mock gateway's webhook call.
-- Every money path runs in a database transaction, with no floats.
-- The webhook checks its HMAC and is idempotent. A replayed event changes nothing.
+- The mock gateway acts as an outside gateway: the Next.js action signs a real payload and POSTs it to Django at BACKEND_URL.
+- Every money path runs in transaction.atomic with select_for_update, and uses no floats.
+- The webhook checks its HMAC against the raw request body, and is idempotent. A replayed event changes nothing.
 - A wrong amount marks nothing paid. It creates a queue item.
 - Never change an expected value in B8 to make a test pass.
-- The dues page itself should not change, only its data function.
+- Django returns each B5 view model exactly. The dues page itself should not change, only its data function.
 
 DONE WHEN
 - Every acceptance check in T2.1 to T2.6 passes, including each row of B8.8.
 - Ishita's parent sees ₹15,000, "Was due 10 Oct" and "23 days overdue".
 - A ₹15,000 receipt shows taxable ₹12,711.86, CGST ₹1,144.07, SGST ₹1,144.07 and total ₹15,000.
 - You have reviewed all money code for floats and missing transactions.
-- npm run test:e2e passes on a local production build.
+- npm run test:e2e passes on a local production build with Django running.
 
 FINISH
 Push to GitHub. Report in under 10 lines: what is done, what is open, and anything you need from me. Then stop.
@@ -308,16 +331,17 @@ GOAL
 Phase 3: T3.1 to T3.4. Reminders run by date and stop as soon as a parent pays. Staff can see all of it, and a reviewer can replay it.
 
 READ
-From docs/PLAN.md, by heading only: B8.7, B9, the demo parts of B10, S4 in B5, then the Phase 3 tasks.
+From docs/PLAN.md, by heading only: the B8 introduction, B8.7, B9, the demo parts of B10, S4 in B5, then the Phase 3 tasks.
 
 RULES
-- Write vercel.json as T3.2 says, but do not deploy. Test the cron routes locally by sending the Authorization header yourself.
+- Write backend/vercel.json as B9 says, but do not deploy. Test the cron routes on Django locally by sending the Authorization header yourself.
 - Reminders are worked out at send time, never queued. An outage sends one message, not a backlog.
-- Demo actions refuse unless DEMO_MODE=true.
+- reminder_log stores facts. Next.js renders the message text from lib/i18n, so do not copy the wording into Python.
+- Demo views refuse unless DEMO_MODE=true.
 - Never change an expected value in B8 to make a test pass.
 
 DONE WHEN
-- Every row of the B8.7 table passes, and tests/reminders.test.ts passes.
+- Every row of the B8.7 table passes, and test_reminders.py passes.
 - Calling a cron route without the secret gets 401.
 - The stop-on-payment proof in T3.4 passes as an e2e test.
 - Concurrent resolution of a queue item returns an error rather than paying twice.
@@ -336,7 +360,7 @@ GOAL
 Phase 4: T4.1 to T4.4. Build the refund calculator, the dues dashboard and the CSV exports on real data.
 
 READ
-From docs/PLAN.md, by heading only: B8.5, B8.6, B9, the refund policy in B6, then S1 and S3 in B5, then the Phase 4 tasks.
+From docs/PLAN.md, by heading only: the B8 introduction, B8.5, B8.6, B9, the refund policy in B6, then S1 and S3 in B5, then the Phase 4 tasks.
 
 RULES
 - The refund amount is never editable. e2e/controls.spec.ts must assert this.
@@ -346,7 +370,7 @@ RULES
 - Never change an expected value in B8 to make a test pass.
 
 DONE WHEN
-- All 11 rows of the B8.5 table pass.
+- All 11 rows of the B8.5 table pass, and test_refund.py passes.
 - Aarav with a withdrawal date of 2 Nov shows ₹18,986.31.
 - Paying ₹15,000 lowers the dashboard by exactly ₹15,000.
 - The dashboard responds in under 2 s with 2,600 students.
@@ -369,21 +393,22 @@ GOAL
 Phase 5: T5.1 to T5.6. Build the transparent risk score, the counsellor call brief and the counsellor screen on real data. Then delete the fixtures.
 
 READ
-From docs/PLAN.md, by heading only: B8.9, B9, B11, S5 in B5, the risk rows of B13, then the Phase 5 tasks.
+From docs/PLAN.md, by heading only: the B8 introduction, B8.9, B9, B11, S5 in B5, the risk rows of B13, then the Phase 5 tasks.
 
 RULES
 - The score decides. Claude only writes the call brief, using numbers only. Its request must contain no name, phone number or student code.
+- Use the call_model code in B8.9 as written.
 - Any model failure or refusal falls back to the template.
 - Tests use a fake call. Make one real call by hand in T5.3, and only if a key is set.
-- lib/domain/risk.ts and lib/services/risk.ts must never import messaging, reminder, payment or ledger write code.
+- domain/risk.py and services/risk.py must never import messaging, reminder, payment or ledger write code.
 - Parents and the accounts role never see risk data.
-- Never change an expected value in B8 to make a test pass.
+- Keep the float expressions in B8.9 in the order written. Never change an expected value to make a test pass.
 
 DONE WHEN
-- Every row of both B8.9 tables passes, and tests/risk-isolation.test.ts and tests/risk-brief.test.ts pass.
+- Every row of both B8.9 tables passes, and test_risk_isolation.py and test_risk_brief.py pass.
 - Riya has a High task, Arjun is Watch with no task, Neha is under "Not enough data", and Ishita has no flag.
 - A false flag needs a note, closes the task, changes the accuracy figure, and is not re-created by the next run.
-- lib/fixtures/ and the proto cookie code are gone, and a search finds no references.
+- lib/fixtures/, lib/clock.ts and the proto cookie code are gone, and a search finds no references.
 - Evaluation results are in docs/TDD.md, marked as synthetic.
 - npm run test:e2e passes.
 
@@ -405,6 +430,7 @@ READ
 Only the Phase 6 table, then whichever sections each task names.
 
 RULES
+- Rules, storage and access checks go in Django. Screens go in Next.js.
 - If a task can't be finished, remove it from the interface, including its link or button, so nothing is left dead.
 - Stop adding as soon as usage runs low.
 
@@ -418,8 +444,12 @@ Push to GitHub. Report in under 10 lines. Then stop.
 
 ### Prompt 12: Final tests and documents
 
+Fill in your reason for choosing Django. The interviewers may ask, so it should be your own.
+
 ```text
 Read AGENTS.md and docs/progress.md.
+
+WHY DJANGO: <your reason, in one or two sentences>
 
 GOAL
 Phase 7: T7.1 to T7.4. Stop adding features and fix only what is broken. Finish the tests, clean up and write the documents. Vercel comes later, so use the placeholder <LIVE_URL> wherever the live link goes.
@@ -429,16 +459,17 @@ From docs/PLAN.md, by heading only: B13, D1, D2, D3, D4, D5, then the Phase 7 ta
 
 RULES
 - Do not deploy.
+- Use my reason for Django in the TDD's architecture section. Do not invent another.
 - Label every assumption in the TDD, using the D3 register plus anything added to docs/decisions.md.
 - dist/ holds demo passwords and is never committed.
 - Do not build the ZIP yet.
 - Do not invent test results. Mark anything you could not run.
 
 DONE WHEN
-- Everything in B13 passes on a production build with the seeded dev database, including e2e/golden.spec.ts.
+- Everything in B13 passes on a production build with Django and the seeded dev database, including e2e/golden.spec.ts.
 - /proto returns 404, and the preview helper and NEXT_PUBLIC_PROTO are gone.
 - The secret search finds nothing, .env.local was never committed, and nothing from docs/inbox/ was committed.
-- Every action starts with a role check.
+- test_access.py still walks every URL pattern and passes.
 - The "Run locally" steps in D2 work on a fresh clone.
 - docs/TDD.md, dist/TDD.pdf and dist/deployment.md exist.
 
@@ -450,7 +481,7 @@ Push to GitHub. Tell me to read the TDD and correct anything I cannot defend. Th
 
 ## Stage 3: Later, after your Vercel part
 
-**You first:** follow T8.1 in `PLAN.md`. It covers importing the repo, setting environment variables, seeding the production database and testing the live link.
+**You first:** follow T8.1 in `PLAN.md`. Vercel runs Django too, so you set up two Vercel projects from the one repo, plus a Neon database. T8.1 covers each step, including seeding the production database and testing the live link.
 
 The brief only asks for a live link "if you deployed it", so you can still hand in without one. Use `none` in the prompt below.
 
@@ -459,7 +490,7 @@ The brief only asks for a live link "if you deployed it", so you can still hand 
 ```text
 Read AGENTS.md and docs/progress.md.
 
-LIVE URL: <the Vercel URL, or "none">
+LIVE URL: <the Next.js project's Vercel URL, or "none">
 DEMO PASSWORD: <the production demo password>
 
 GOAL
