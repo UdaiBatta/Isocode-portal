@@ -52,7 +52,7 @@ export function Breadcrumb({
         {items.map((item, index) => (
           <Fragment key={item.key ?? index}>
             {index > 0 && (
-              <ChevronRightSmall className="size-3 shrink-0 text-text-tertiary" aria-hidden />
+              <ChevronRightSmall className="size-3 shrink-0 text-text-secondary" aria-hidden />
             )}
             {item}
           </Fragment>
@@ -103,7 +103,7 @@ export function BreadcrumbItem({
   }
 
   const interactiveClass = cx(
-    "-mx-1 flex items-center gap-1.5 rounded-md px-1 py-0.5 text-caption-1-medium whitespace-nowrap text-text-tertiary",
+    "-mx-1 flex items-center gap-1.5 rounded-md px-1 py-0.5 text-caption-1-medium whitespace-nowrap text-text-secondary",
     "transition-colors duration-150 ease outline-none",
     "hover:bg-background-primary-hover hover:text-text-secondary",
     "focus-visible:ring-2 focus-visible:ring-border-focus-ring",

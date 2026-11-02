@@ -17,6 +17,7 @@ async function main() {
   const only = process.argv.find((argument) => argument.startsWith("--only="))?.slice(7);
   const examples: Record<string, { name: string; path: string }> = {
     "/staff/students/[code]": { name: "ledger", path: "/staff/students/STU-0587" },
+    "/staff/students/[code]/refund": { name: "refund", path: "/staff/students/STU-0587/refund" },
     "/pay/[token]": { name: "pay", path: "/pay/STU-0587-3" },
     "/mock-gateway/[token]": { name: "mock-gateway", path: "/mock-gateway/STU-0587-3" },
     "/pay/[token]/result": { name: "payment-result", path: "/pay/STU-0587-3/result?e=demo-event-1" },
