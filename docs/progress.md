@@ -1,5 +1,7 @@
 # Progress
 
+- 2026-11-03 — T0.11 complete: S5 accuracy, open/closed calls, Watch and Not enough data, reason/brief Drawer, parent tel link and noted outcomes. False flag needs a note, closes the task and updates accuracy; no fee amounts or actions are rendered. Both phone/desktop outcome paths pass; 30 unit tests, type/lint checks and production build pass. Screens inspected. Summaries and scores remain clearly synthetic fixtures until Phase 5. Next: T0.12 index and reviewer demo.
+
 - 2026-11-03 — T0.10 complete: S4 reminder tabs/filters and exact-message Drawer, unmatched queue with student/instalment choice and required rejection notes, demo date/run/reset controls. UI test proves paid Ishita is stopped and Kavya's queue item matches with a receipt; both widths and axe pass. 30 unit tests, type/lint checks and production build pass; responsive screenshots inspected. Reminder sending remains cookie simulation. Next: T0.11 counsellor tasks.
 
 - 2026-11-03 — T0.9 complete: S3 shows Ishita's exact ₹3,986.31 worked calculation and GST split, draft/approval/mock-paid confirmations, read-only approved state, queue blocking and deadline/no-plan states. No editable amount. Snapshot-only dates remain explicitly limited until Django. 30 unit tests, type/lint checks, production build and both refund browser paths including axe pass; desktop/phone screenshots inspected. Next: T0.10 automation.

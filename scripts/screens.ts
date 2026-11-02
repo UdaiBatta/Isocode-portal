@@ -39,6 +39,7 @@ async function main() {
           const page = await context.newPage();
           for (const route of selected) {
             await context.clearCookies({ name: "proto" });
+            if (route.path.startsWith("/counsellor/")) await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "counsellor" })), url: origin }]);
             if (route.path.startsWith("/staff/") && route.path !== "/staff/login") await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "accounts" })), url: origin }]);
             if (["/consent", "/receipts"].includes(route.path) || route.name === "receipt" || route.name === "payment-result") {
               const state = {

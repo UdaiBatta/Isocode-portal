@@ -156,7 +156,7 @@ export type DashboardNavKey = string;
 /** Product navigation without the example workspace menus. */
 export function WorkspaceSidebar({ items, selected, footer }: { items: DashboardNavItem[]; selected: string; footer: ReactNode }) {
   return <aside className="flex h-full w-full flex-col gap-10 rounded-3xl bg-background-secondary-default p-5">
-    <div><p className="text-headline-medium">Company A</p><p className="text-body-regular text-text-secondary">Jaipur · Fee accounts</p></div>
+    <div><p className="text-headline-medium">Company A</p><p className="text-body-regular text-text-secondary">Jaipur · Coaching</p></div>
     <nav aria-label="Workspace" className="flex flex-col gap-2">{items.map(({ key, ...item }) => <NavItem key={key} {...item} isSelected={selected === key} />)}</nav>
     <div className="mt-auto">{footer}</div>
   </aside>;
