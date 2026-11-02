@@ -2,7 +2,7 @@
 
 Spec: docs/PLAN.md. Progress: docs/progress.md. Decisions: docs/decisions.md.
 
-Current execution sequence: docs/PROMPTS.md. Prompts 1–12 run locally; do not deploy or wait for Vercel. Complete only the current prompt, push its commits and stop. Gate 0 still precedes backend implementation.
+Current job: docs/PROMPTS.md. In a new session or after a context summary, re-read it and docs/progress.md, then continue from the next unfinished task. Do not stop between tasks or phases.
 
 ## Active stack decision
 
@@ -10,7 +10,7 @@ The human selected React + BoardUI with a Django + PostgreSQL backend. Next.js i
 
 ## Rules that always apply
 
-- Build Phase 0 first. No database, API or real sign-in implementation until Gate 0 is signed off.
+- Build Phase 0 first. No database, API or real sign-in implementation until the Gate 0 checks that Codex runs have passed.
 - Money is integer paise. Display through lib/format.ts. Balances are calculated from allocations, never stored.
 - Dates are YYYY-MM-DD strings. Today comes from one clock module. Domain rules are pure, without database, clock or network access.
 - Risk code cannot import messaging, payment, reminder or ledger write code. Parents and accounts never receive risk data; counsellors never receive fee amounts.

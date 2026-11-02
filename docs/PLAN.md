@@ -4,9 +4,13 @@
 **Who builds it:** OpenAI Codex, working from this file alone, with a person (the "human") for the steps Codex cannot do.
 **UI components:** BoardUI first, https://www.boardui.com/components/button-group. Then React Bits (https://reactbits.dev), 21st.dev (https://21st.dev) and MotionSites (https://motionsites.ai), only in the places set out in B3a.
 **Usage:** Codex usage, free tiers and paid calls are limited. A5 sets the rules, and they apply to every task.
+**Stack:** a Next.js frontend with BoardUI, and a Django and PostgreSQL backend (B1).
+**Prompt:** `docs/PROMPTS.md` holds the one prompt that runs the whole build.
+Plan version: 3 (Django, one-prompt run).
+**Deployment comes last:** Phases 0 to 7 run and are checked on the human's own computer. Vercel is Phase 8, when the human chooses.
 **Hand-in:** one ZIP holding a Technical Design Document (TDD) and `deployment.md`.
 
-> **The first step is a prototype.** No database, API or sign-in work starts until a clickable prototype of all 8 screens has passed Gate 0 and the human has signed it off.
+> **The first step is a prototype.** No database, API or sign-in work starts until a clickable prototype of all 8 screens has passed Codex's Gate 0 checks and is tagged `v0-prototype`. The human's own test can happen at any time after that, and its results are applied when the human gives them.
 
 The client brief is copied in full in Appendix A. If this spec and the brief disagree, the brief wins: record the conflict in `docs/decisions.md`.
 
@@ -14,7 +18,7 @@ The client brief is copied in full in Appendix A. If this spec and the brief dis
 
 - **Part A. Start here:** human setup, Codex prompts, working rules, usage rules
 - **Part B. What to build:** stack, design system, screens, copy, data model, rules, endpoints, seed data, security
-- **Part C. Build tasks:** Phase 0 (prototype) to Phase 7, with acceptance checks
+- **Part C. Build tasks:** Phase 0 (prototype) to Phase 8 (deployment), with acceptance checks
 - **Part D. Hand-in:** TDD, `deployment.md`, assumptions, cuts, interview prep
 - **Appendix A:** the brief, unchanged
 
@@ -31,13 +35,13 @@ Codex cannot create accounts, enter credentials or run usability tests. These st
 | Before Codex starts | **H1.** Create an empty public GitHub repo named `coaching-fees` and clone it. Copy this file to `docs/PLAN.md` inside it |
 | Before Codex starts | **H2.** Install the BoardUI skill and MCP server (commands below), then restart Codex |
 | Before Codex starts | **H3.** Allow network access for Codex (below). It needs npm, the BoardUI CLI and later the database |
-| After task T0.1 | **H4.** Import the repo into Vercel so each push deploys. Set `NEXT_PUBLIC_PROTO=1` |
 | During Phase 0 (optional) | **H9.** Set up 21st.dev (command below). Copy up to 3 components for the gaps listed in B3a into `docs/inbox/21st/`. The free plan allows 2 copies a day |
 | During Phase 0 (optional) | **H10.** Read MotionSites' terms of use. If they allow this use, choose one hero prompt and save it as `docs/inbox/motionsites-hero.txt` |
-| At Gate 0 | **H5.** Run the five-second test with 3 people, check on a real phone, have a Hindi reader check the copy, then sign off |
-| Before Phase 1 | **H6.** Create a Neon Postgres project with `main` and `dev` branches. Put the `dev` pooled connection string in `.env.local` as `DATABASE_URL`. Also add Vercel environment variables (B12) and remove `NEXT_PUBLIC_PROTO` from production |
-| Before Phase 5 (optional) | **H7.** Add `ANTHROPIC_API_KEY` to `.env.local` and Vercel. The app works without it, using template text |
-| Phase 7 | **H8.** Read the TDD and correct anything you cannot defend in the interview. Test the live app in a private window. Upload the ZIP |
+| Any time after Gate 0 | **H5.** Run the five-second test with 3 people, check on a real phone, have a Hindi reader check the copy, then sign off. Gate 0 says how to open the app on a phone without deploying |
+| Before Phase 1 | **H6.** Install Python 3.14 and PostgreSQL 17, and create a database named `coaching_fees`. Put its connection string in `.env.local` as `DATABASE_URL`, such as `postgres://postgres:<password>@localhost:5432/coaching_fees`. Allow network access for Codex (H3), because Django's tests connect to it |
+| Before Phase 5 (optional) | **H7.** Add `ANTHROPIC_API_KEY` to `.env.local`. The app works without it, using template text |
+| After Phase 7, when you choose | **H4.** The Vercel part. The steps are in T8.1 |
+| Phase 8 | **H8.** Read the TDD and correct anything you cannot defend in the interview. Test the live app in a private window. Upload the ZIP |
 
 **H2 commands.** Run these from the repo root:
 
@@ -55,6 +59,7 @@ The skill installs to `~/.agents/skills/`. BoardUI's page says Codex takes one c
 
 ```toml
 sandbox_mode = "workspace-write"
+approval_policy = "on-request"
 
 [sandbox_workspace_write]
 network_access = true
@@ -66,6 +71,10 @@ To allow it for one session only:
 codex --config sandbox_workspace_write.network_access=true
 ```
 
+**Expect git approvals.** This sandbox keeps `.git` read-only, so Codex may ask before `git commit` and `git push`. Approve these. If it offers to stop asking for that command, accept, because the plan commits at least once per task.
+
+**On Windows,** the file is `%USERPROFILE%\.codex\config.toml`, and Codex runs natively in PowerShell with its Windows sandbox. That sandbox can stop child processes when a command ends, so a server left running in the background may not reach the next command. The test tools in this plan therefore start their own server.
+
 **H9 command.** This prints the 21st.dev MCP settings for Codex. Add `--write` to save them, then paste in an API key created at https://21st.dev/mcp:
 
 ```bash
@@ -76,32 +85,16 @@ H9 and H10 never block Codex. If `docs/inbox/` is empty, Codex builds those piec
 
 ## A2. Prompts to give Codex
 
-**To start:**
-
-```text
-Read docs/PLAN.md in full. Then do Phase 0 tasks in order, starting at T0.1. Follow the working rules in A3. Stop at Gate 0 and tell me what you need from me.
-```
-
-**After Gate 0 is signed off:**
-
-```text
-Gate 0 passed. Changes from testing: <list them, or "none">. Apply those changes, then continue from docs/progress.md through Phase 1. Read only the sections each task names, and follow A5 on usage. Stop when a step needs me.
-```
-
-**To continue in any later session:**
-
-```text
-Read AGENTS.md and docs/progress.md. Find the next task in docs/PLAN.md with grep, and read only that task and the sections it names. Follow A5 on usage. Stop at the end of this phase, or when a step needs me.
-```
+`docs/PROMPTS.md` holds the one prompt for the whole build. It runs through to Gate 7 without stopping between phases. A new session resumes from it and `docs/progress.md`.
 
 ## A3. Working rules for Codex
 
-1. Read all of this file once, before T0.1. After that, read only the current task and the sections it names (A5).
+1. Never read this whole file. Read only the sections the current phase of the prompt names, plus the current task and the sections it names (A5).
 2. Do tasks in order. Commit at least once per task, with a message starting with the task ID, such as `T2.3: allocate payments oldest first`.
 3. Run `npm run check` before every commit. Never commit failing code. Never squash or force-push, because the reviewers read the history.
 4. After each task, add one line to `docs/progress.md`: task ID, what was done, anything left open.
 5. **When the spec is silent,** choose the simplest thing that meets the brief, record it in `docs/decisions.md`, and continue. If it is a client fact you assumed, also add it to the assumption register in `docs/TDD.md`.
-6. **Stop and ask the human only** at a gate, at a human step in A1, or when a test's expected value in B8 looks wrong.
+6. **Stop and ask the human only** when `docs/PROMPTS.md` says to: at Gate 7 or Gate 8, when H6 is not done, after a third failed attempt at one problem, when usage is low, or when a test's expected value in B8 looks wrong.
 7. **Never change an expected value in B8 to make a test pass.** Those numbers were calculated independently. Fix the code.
 8. Never invent client facts without labelling them. Never add real personal data.
 9. Keep code small: no abstraction with one implementation, no config for a value that never changes, no scaffolding for later. When you take a shortcut with a known ceiling, mark it with a `LIMIT:` comment naming the ceiling and the upgrade path. These feed the TDD.
@@ -110,6 +103,9 @@ Read AGENTS.md and docs/progress.md. Find the next task in docs/PLAN.md with gre
 12. Use only free BoardUI items. Check with `npx boardui@latest list` when unsure. **Do not substitute a lookalike for a BoardUI component that exists.**
 13. Use React Bits, 21st.dev and MotionSites only as B3a allows. Record everything brought in from them in `docs/third-party.md`.
 14. Follow A5 at all times. Do not spend usage on anything this spec did not ask for.
+15. Do not deploy or touch Vercel in Phases 0 to 7. Everything runs and is checked on this computer. "Production build" means `npm run build` then `npm run start`, locally, with Django running.
+16. The commands in this file are written for a Unix shell. If you are in PowerShell, use the equivalents.
+17. If the sandbox blocks git, ask the human for approval. Do not work around it.
 
 ## A4. `AGENTS.md` content
 
@@ -120,14 +116,18 @@ Codex reads `AGENTS.md` automatically and has a size limit per file, so it stays
 
 Full spec: docs/PLAN.md. Progress: docs/progress.md. Decisions: docs/decisions.md.
 
+Current job: docs/PROMPTS.md. In a new session or after a context summary, re-read it and docs/progress.md, then continue from the next unfinished task. Do not stop between tasks or phases.
+
 ## Rules that always apply
 - Money is integer paise. Never use floats for money. Display only through lib/format.ts.
 - Balances are always calculated from allocations, never stored.
-- Dates are 'YYYY-MM-DD' strings. "Today" comes only from lib/clock.ts. Never call new Date() for business logic.
-- lib/domain/* is pure: no database, no clock, no network.
-- lib/domain/risk.ts and lib/services/risk.ts must never import messaging, reminder, payment or ledger write code.
+- Dates are datetime.date in Django and 'YYYY-MM-DD' strings in JSON. "Today" comes only from backend/fees/clock.py.
+- In Python, never use round() for money or scores. B8 says what to use instead.
+- backend/fees/domain/* is pure: no database, no clock, no network.
+- backend/fees/domain/risk.py and backend/fees/services/risk.py must never import messaging, reminder, payment or ledger write code.
 - Parent routes never return risk data. The accounts role never sees risk data.
-- Every query and action checks the session role and scope on the server.
+- The browser talks only to Next.js. Pages call lib/data and lib/actions, which call Django through lib/backend.ts.
+- Only Django decides access. Every Django view uses @api(role=...), except the webhook and cron views, which have their own secrets.
 - All parent-facing text goes through lib/i18n, in Hindi and English.
 - Every screen has loading, empty and error states. No dead controls. No hover-only behaviour.
 - Free BoardUI components first. Use the boardui skill and MCP. Do not build lookalikes.
@@ -138,6 +138,8 @@ Full spec: docs/PLAN.md. Progress: docs/progress.md. Decisions: docs/decisions.m
 - Use BoardUI semantic tokens, never raw colours, outside the accent ramp in styles/theme.css.
 - Run `npm run check` before each commit. Commit messages start with the task ID. Never squash or force-push.
 - Never commit secrets. .env.example holds names only.
+- Development is local. Do not deploy or touch Vercel until the human starts Phase 8.
+- Spec commands are for a Unix shell. In PowerShell, use the equivalents. If the sandbox blocks git, ask for approval.
 ```
 
 ## A5. Use usage carefully
@@ -146,9 +148,9 @@ Codex usage, free tiers and paid calls are all limited. Running out before Phase
 
 ### Reading
 
-- **Read this whole file once only.** It is over 100 KB, so re-reading it is expensive. Afterwards, find a heading with `grep -n "^### T4.1" docs/PLAN.md` and read that range with `sed -n`.
+- **Never read this whole file.** It is over 100 KB, and a new session would lose it anyway. Each phase of the prompt names the sections to read. Find a heading with `grep -n "^### T4.1" docs/PLAN.md` and read that range with `sed -n`. In PowerShell, use `Select-String -Path docs/PLAN.md -Pattern '^### T4.1'`, then `Get-Content docs/PLAN.md | Select-Object -Skip <start> -First <count>`.
 - Search before opening a file, and read line ranges rather than whole files.
-- Never read `node_modules`, `.next`, `package-lock.json`, generated files in `drizzle/`, or `docs/screens/` as text.
+- Never read `node_modules`, `.next`, `.venv`, `package-lock.json`, generated files in `backend/fees/migrations/`, or `docs/screens/` as text.
 - Read a BoardUI component's source only when you need its props, and only that component.
 - Limit command output, for example `| tail -40`. Never print seed rows or full build logs.
 
@@ -162,12 +164,12 @@ Codex usage, free tiers and paid calls are all limited. Running out before Phase
 
 | When | Run |
 |---|---|
-| While working on logic | The one test file: `npx vitest run tests/refund.test.ts` |
+| While working on logic | The one test file: `npm run py -- backend/manage.py test fees.tests.test_refund --keepdb` |
 | Before each commit | `npm run check` |
 | After changing one screen | `npm run screens -- --only=dues`, and view only the 360 px image |
 | End of each phase | `npm run test:e2e` |
 | T0.15 and T7.3 only | Full `npm run screens`, viewing every image |
-| T1.3 and T7.4 only | Full 2,600-student seed. Otherwise use `npm run db:seed -- --small` (200 students) |
+| T1.3, T4.3 and T8.1 only | Full 2,600-student seed. Otherwise use `npm run db:seed -- --small` (200 students) |
 
 ### When stuck
 
@@ -176,9 +178,9 @@ Codex usage, free tiers and paid calls are all limited. Running out before Phase
 
 ### Sessions
 
-- One Codex session per phase, then start a new one. `docs/progress.md` must hold everything needed to resume, so old history is not needed.
-- If a session grows long mid-phase, commit, update `docs/progress.md`, and start a new session.
-- Use high reasoning only for B8 rules, the webhook, the reminder service, refunds and access checks. Use the default for screens, and a lower level for documents and moving copy. The human sets this in Codex.
+- One prompt runs the whole build. `docs/progress.md` must hold everything needed to resume, so a new session needs no old history.
+- If a session ends or its context is summarised, re-read `docs/PROMPTS.md` and `docs/progress.md`, then continue from the next unfinished task.
+- The human sets High reasoning in Codex for the run, because B8 rules, the webhook, the reminder service, refunds and access checks need it.
 - No parallel agents or cloud tasks unless the human asks.
 - Keep only the BoardUI MCP server on. Turn on 21st.dev's only for T0.13, then turn it off.
 
@@ -186,9 +188,9 @@ Codex usage, free tiers and paid calls are all limited. Running out before Phase
 
 | Resource | Limit | Rule |
 |---|---|---|
-| Neon free tier | Storage and compute are limited | One project, with a `dev` branch. Tests use PGlite, never Neon. Small seed during development |
-| Vercel free tier | Builds are limited, and cron runs at most daily | Commit often, but push at the end of a screen batch or phase, so each push is worth a build |
-| GitHub Actions | One workflow | Runs on push to `main` only. No matrix builds |
+| Neon free tier | Storage and compute are limited | Used only in Phase 8. Development and tests use local Postgres |
+| Vercel free tier | Builds are limited, and cron runs at most daily | Not used until Phase 8 |
+| GitHub Actions | One workflow | Runs on push to `main` only. No matrix builds. Push at the end of each phase, not after every commit |
 | Anthropic API | Paid per call | At most one call per task, saved after it succeeds. Tests use a fake `call`. One real call by hand in T5.3 |
 | 21st.dev | 2 free copies a day. `get_component` and `generate` are paid | Only the 3 gaps in B3a. Free `search` only. **Do not buy a plan** unless the human decides to |
 | MotionSites | Paid plan, price not public | One prompt at most. The human decides whether it is worth paying for |
@@ -196,7 +198,7 @@ Codex usage, free tiers and paid calls are all limited. Running out before Phase
 
 ### If usage runs low
 
-The human checks with Codex's `/status` command. Keep about a quarter of the allowance for Phase 7, and do not start Phase 6 below that.
+The human checks with Codex's `/status` command. Keep about a quarter of the allowance for Phases 7 and 8, and do not start Phase 6 below that.
 
 When usage is low, finish the current task, commit, update `docs/progress.md` and stop. Then cut in this order:
 
@@ -206,7 +208,7 @@ When usage is low, finish the current task, commit, update `docs/progress.md` an
 
 **Never cut:** the core flows, money and access tests, deployment, the TDD or `deployment.md`.
 
-**For the human:** give one prompt per phase, and put all feedback in one message rather than many small ones. Do not ask Codex to redo work that passes its checks.
+**For the human:** put all feedback in one message rather than many small ones. Do not ask Codex to redo work that passes its checks.
 
 ---
 
@@ -229,32 +231,41 @@ When usage is low, finish the current task, commit, update `docs/progress.md` an
 
 | Layer | Choice | Why |
 |---|---|---|
-| App | Next.js 16 App Router, React 19, TypeScript | BoardUI's documented path. Server rendering suits low-end phones |
+| Frontend | Next.js 16 App Router, React 19, TypeScript | BoardUI's documented path. Server rendering suits low-end phones |
 | Styling and UI | Tailwind CSS v4, BoardUI | BoardUI requires React 19 and Tailwind v4 |
-| Database | Postgres on Neon, using its pooled connection string | Money needs transactions, constraints and row locks |
-| Database access | Drizzle with `drizzle-orm/node-postgres` and `pg` | Works the same locally and in production. **Do not use `drizzle-orm/neon-http`: it has no interactive transactions, and money paths need them** |
-| Validation | Zod | Every action and webhook input |
-| Auth | Own code using `node:crypto` | Phone OTP plus staff passwords, with no extra library |
-| Tests | Vitest, PGlite, Playwright, `@axe-core/playwright` | `npm test` runs with no Docker and no external database |
+| Backend | Django 5.2 LTS on Python 3.14, with plain views that return JSON | Owns all rules, access checks, money transactions, reminders and risk scoring |
+| Database | PostgreSQL 17: local in development, Neon in production | Money needs transactions, constraints and row locks |
+| Database access | Django ORM and migrations, with `psycopg` | `transaction.atomic` and `select_for_update` cover the money paths |
+| Validation | Django forms on every Django input | Next.js forwards input and decides nothing |
+| Auth | Django sessions, Django's password hashers, and our own phone OTP | No extra library |
+| Frontend tests | Vitest, Playwright, `@axe-core/playwright` | Screens, flows, layout and accessibility |
+| Backend tests | Django's test runner on local Postgres | Row locks and constraints need a real Postgres |
 | Animation | CSS first, then `motion` on staff routes and `/demo` only | The React Bits components chosen in B3a need it. One library keeps the weight down |
-| AI text | `@anthropic-ai/sdk` | Counsellor call brief only. Added in Phase 5 |
-| Hosting | Vercel with Vercel Cron | Free daily cron is enough |
+| AI text | `anthropic` Python SDK | Counsellor call brief only. Added in Phase 5 |
+| Hosting | Two Vercel projects from one repo, set up last in Phase 8 | Vercel runs Django as one function. Its Services feature could hold both apps in one project, but it is in beta |
 
-**Allowed packages beyond the scaffold and what BoardUI installs:** `drizzle-orm`, `pg`, `zod`, `motion`, `@anthropic-ai/sdk`. Dev only: `drizzle-kit`, `@types/pg`, `vitest`, `@electric-sql/pglite`, `@playwright/test`, `@axe-core/playwright`, `tsx`, `marked`, `bestzip`.
+**Allowed Python packages,** pinned in `backend/requirements.txt`: `Django>=5.2,<5.3`, `psycopg[binary]`, `dj-database-url`, `python-dotenv`, `tzdata`, and from Phase 5 `anthropic`. Dev only, in `backend/requirements-dev.txt`: `ruff`. `tzdata` is required, because Python on Windows ships no time zone data. `backend/.python-version` holds `3.14`, so Vercel matches development.
+
+**Allowed JavaScript packages beyond the scaffold and what BoardUI installs:** `motion`, `zod`. Dev only: `vitest`, `@playwright/test`, `@axe-core/playwright`, `tsx`, `marked`, `bestzip`.
 
 ### Scripts in `package.json`
+
+`scripts/py.mjs` runs Python from `.venv` on Windows or Linux, and falls back to `python` where `.venv` does not exist, such as CI. It keeps every script below the same on both.
 
 | Script | Runs |
 |---|---|
 | `dev`, `build`, `start` | Next.js |
+| `dev:api` | Django on port 8000 |
+| `py` | `node scripts/py.mjs`, so `npm run py -- backend/manage.py <command>` works everywhere |
 | `lint`, `typecheck` | ESLint, `tsc --noEmit` |
 | `test` | Vitest |
-| `check` | lint, typecheck and test |
+| `check:py` | `ruff check backend`, `manage.py check` and `manage.py test --keepdb` |
+| `check` | lint, typecheck, test and, from T1.1, `check:py` |
 | `test:e2e` | Playwright tests |
-| `screens` | Screenshot script (see T0.14). `--only=<route>` limits it to one screen |
-| `db:generate`, `db:migrate` | Drizzle Kit |
-| `db:seed` | `tsx scripts/seed.ts`: full seed from empty. `--small` seeds 200 fleet students plus all named students |
-| `db:reset` | Drop everything, migrate, seed |
+| `screens` | Screenshot script (see T0.2). `--only=<route>` limits it to one screen |
+| `db:generate`, `db:migrate` | `manage.py makemigrations`, `manage.py migrate` |
+| `db:seed` | `manage.py seed`: full seed from empty. `--small` seeds 200 fleet students plus all named students |
+| `db:reset` | Flush everything, migrate, seed |
 
 ### Repository layout
 
@@ -268,30 +279,44 @@ app/
           staff/students/[code]/refund, staff/automation,
           staff/export/dues.csv/route.ts, staff/export/receipts.csv/route.ts
   (counsellor)/counsellor/tasks
-  api/webhooks/payment/route.ts
-  api/cron/reminders/route.ts, api/cron/risk/route.ts, api/cron/demo-reset/route.ts
   proto/page.tsx                    Phase 0 index, removed in Phase 7
 components/base, components/application    BoardUI source, edit only if necessary
 components/app/                     our own: Money, StatusChip, AgeingBar, EmptyState, ErrorState, PageShell
 components/vendor/reactbits, vendor/21st    adapted outside components, never imported by parent routes
 lib/
-  config.ts  types.ts  format.ts  clock.ts  auth.ts  crypto.ts
+  config.ts  types.ts  format.ts  backend.ts  reminder-text.ts
   i18n/en.ts  i18n/hi.ts  i18n/index.ts
-  domain/    dates, money, ledger, refund, reminders, matching, risk, phone   (pure)
-  data/      dues, receipts, dashboard, ledger, refund, automation, counsellor (build view models)
-  actions/   auth, payments, refund, automation, counsellor, demo             (server actions)
-  services/  payments, reminders, risk                                         (transactions)
-  db/schema.ts  db/client.ts
-  fixtures/                         Phase 0 only, gone by the end of Phase 5
-scripts/ seed.ts  screens.ts  build-tdd.ts
-tests/   *.test.ts
+  data/      dues, receipts, dashboard, ledger, refund, automation, counsellor (fetch view models from Django)
+  actions/   auth, payments, refund, automation, counsellor, demo             (server actions that call Django)
+  fixtures/  clock.ts                Phase 0 only, gone by the end of Phase 5
+scripts/ screens.ts  build-tdd.ts  py.mjs
+tests/   *.test.ts                  frontend only
 e2e/     *.spec.ts
-drizzle/ migrations
-docs/    PLAN.md  TDD.md  progress.md  decisions.md  prototype-notes.md  third-party.md  screens/
+backend/
+  manage.py  requirements.txt  requirements-dev.txt  .python-version  vercel.json
+  config/    settings.py  urls.py  wsgi.py
+  fees/
+    models.py  urls.py  clock.py  auth.py
+    domain/    dates, money, ledger, refund, reminders, matching, risk, phone   (pure)
+    services/  payments, reminders, refunds, risk                                (transactions)
+    views/     auth, dues, receipts, dashboard, ledger, refund, automation,
+               counsellor, demo, exports, webhooks, cron
+    management/commands/seed.py
+    migrations/
+    tests/     test_*.py
+docs/    PLAN.md  PROMPTS.md  TDD.md  progress.md  decisions.md  prototype-notes.md  third-party.md  screens/
 docs/inbox/                         the human's copied components and prompts, gitignored
 ```
 
-**The key seam:** pages call only `lib/data/*` and `lib/actions/*`. In Phase 0 these read fixtures and a cookie. In later phases, the same function signatures read the database. **Pages and components should not change when the data becomes real.**
+### How the two apps talk
+
+- **The browser talks only to Next.js.** Pages call `lib/data/*` and `lib/actions/*`, which call Django from the server through `lib/backend.ts`.
+- **`lib/backend.ts` is one small file.** It adds `X-Internal-Key: $INTERNAL_API_SECRET`, forwards the browser's `sid` cookie, sets `cache: "no-store"`, and times out after 10 seconds. A 401 redirects to the right sign-in page. A 403 with code `consent_required` redirects to `/consent`. Anything else unexpected throws, so `error.tsx` shows.
+- **Django returns each B5 view model exactly:** camelCase keys, paise as integers and dates as `YYYY-MM-DD`. Formatting and language stay in Next.js, so all copy lives in `lib/i18n`.
+- **Only Django decides access.** `lib/data` and `lib/actions` hold no rules. They forward and display.
+- **Two routes reach Django directly:** the payment webhook, as a gateway would call it, and the cron jobs. Each has its own secret (B9).
+
+**The key seam:** pages call only `lib/data/*` and `lib/actions/*`. In Phase 0 these read fixtures and a cookie. In later phases, the same function signatures call Django. **Pages and components should not change when the data becomes real.**
 
 ## B2. BoardUI
 
@@ -1022,7 +1047,7 @@ Hindi:
 
 ## B7. Data model
 
-All IDs are `uuid` with a default. Money is `bigint` in `{ mode: "number" }`, in paise. Dates are `date` in string mode. All tables have `created_at timestamptz default now()`.
+These are Django models in `backend/fees/models.py`. All IDs are `UUIDField(primary_key=True, default=uuid4)`. Money is `BigIntegerField`, in paise. Dates are `DateField`. All tables have `created_at` with `auto_now_add`. CHECKs and partial uniques are `CheckConstraint` and `UniqueConstraint(condition=...)` in `Meta.constraints`, so the database enforces them. Where a table says "PK on" several columns, use a unique constraint on them, and keep the normal `id`.
 
 | Table | Columns and constraints |
 |---|---|
@@ -1031,8 +1056,7 @@ All IDs are `uuid` with a default. Money is `bigint` in `{ mode: "number" }`, in
 | `students` | `code` unique, `full_name`, `batch_id` FK, `status` enum active or withdrawn, `enrolled_on`, `withdrawn_on` null |
 | `guardians` | `phone` unique in E.164, `full_name`, `language` enum hi or en |
 | `guardian_students` | `guardian_id`, `student_id`, `is_primary`. PK on both |
-| `staff_users` | `email` unique, `full_name`, `password_hash`, `role` enum accounts or counsellor, `centre_id` null (null means all centres) |
-| `sessions` | `token_hash` unique, `subject_type` enum guardian or staff, `subject_id`, `expires_at` |
+| `staff_users` | `email` unique, `full_name`, `password_hash` from `make_password`, `role` enum accounts or counsellor, `centre_id` null (null means all centres) |
 | `otp_challenges` | `phone`, `code_hash`, `expires_at`, `attempts` default 0, `consumed_at` null. Index on phone and created_at |
 | `login_attempts` | `email`, `at`. Index on email and at |
 | `consents` | `guardian_id`, `student_id`, `wording_version`, `language`, `otp_challenge_id` FK, `granted_at`, `withdrawn_at` null. Partial unique on guardian and student where `withdrawn_at` is null |
@@ -1045,7 +1069,7 @@ All IDs are `uuid` with a default. Money is `bigint` in `{ mode: "number" }`, in
 | `receipt_counters` | `centre_id`, `fy`, `next_seq`. PK on centre and fy |
 | `payment_events` | `event_id` PK, `payload` jsonb, `result` enum allocated, queued, failed or pending, `unmatched_id` null, `payment_id` null, `received_at` |
 | `unmatched_payments` | `event_id` null, `reference` null, `amount_paise`, `reason` enum (see S4), `suggested_instalment_id` null FK, `status` enum open, matched or rejected, `received_on`, `resolved_by` null, `resolved_at` null, `resolution_note` null, `payment_id` null |
-| `reminder_log` | `instalment_id` FK, `step` int, `language`, `channel` default `whatsapp_mock`, `body`, `amount_paise`, `sent_on`. **Unique on instalment and step** |
+| `reminder_log` | `instalment_id` FK, `step` int, `language`, `channel` default `whatsapp_mock`, `amount_paise`, `sent_on`. **Unique on instalment and step** |
 | `refunds` | `student_id` unique FK, `policy_id` FK, `withdrawal_date`, `reason`, `net_paise`, `paid_paise`, `total_days`, `elapsed_days`, `earned_paise`, `refund_paise`, `still_payable_paise`, `taxable_paise`, `cgst_paise`, `sgst_paise`, `deadline`, `status` enum draft, approved or paid, `created_by`, `approved_by` null, `approved_at` null, `paid_on` null |
 | `attendance_weekly` | `student_id`, `week_start`, `attended`, `held`. PK on student and week. CHECK `attended <= held` |
 | `test_scores` | `student_id`, `test_date`, `test_name`, `score`, `max_score`. PK on student, date and name |
@@ -1054,15 +1078,25 @@ All IDs are `uuid` with a default. Money is `bigint` in `{ mode: "number" }`, in
 | `audit_log` | `actor_type`, `actor_id`, `action`, `entity`, `entity_id`, `before` jsonb, `after` jsonb. Written on every money change |
 | `app_settings` | `key` PK, `value`. Holds `demo_today` |
 
-**View `instalment_balances`:** instalment fields plus student, batch and centre IDs, `paid_paise = coalesce(sum(allocations.amount_paise), 0)`, and `balance_paise = amount_paise - paid_paise`. All dues queries use this view. **Balance is never a column.**
+**View `instalment_balances`:** instalment fields plus student, batch and centre IDs, `paid_paise = coalesce(sum(allocations.amount_paise), 0)`, and `balance_paise = amount_paise - paid_paise`. Create it with `migrations.RunSQL`, and read it through a model with `managed = False`. All dues queries use this view. **Balance is never a column.**
+
+Sessions use Django's own `django_session` table. `reminder_log` stores facts, not text: Next.js renders the message from B6 when it is displayed, so all copy stays in `lib/i18n`.
 
 ## B8. Rules and test values
 
-Each rule is a pure function in `lib/domain`, with a table-driven test using exactly these values. All values below were calculated by running a reference implementation. Amounts are paise.
+Each rule is a pure function in `backend/fees/domain`, with a table-driven test using exactly these values. All values below were calculated by running a reference implementation, then run again in Python with the rules below. Every value held. Amounts are paise.
 
-### B8.1 Dates (`dates.ts`)
+**Translating to Python.** Some logic below is in JavaScript notation. Keep the logic and the values, and apply these rules:
 
-`diffDays(a, b)` is a minus b in whole days, computed with `Date.UTC`. `addDays(date, n)`. `financialYear(date)` runs April to March.
+- Names become snake_case: `diffDays` becomes `diff_days`.
+- Dates are `datetime.date`, so `diff_days(a, b)` is `(a - b).days`.
+- `Math.floor(a / b)` on integers is `a // b`. Never use `/` on money.
+- **`Math.round(x)` is `math.floor(x + 0.5)`. Never use Python's `round()`.** It rounds halves to the even number, so `round(2.5)` is 2, and scores would change.
+- Keep the float expressions in B8.9 in the order written, because the expected values depend on them.
+
+### B8.1 Dates (`dates.py`)
+
+`diff_days(a, b)` is a minus b in whole days. `add_days(date, n)`. `financialYear(date)` runs April to March.
 
 | Input | Expected |
 |---|---|
@@ -1071,9 +1105,9 @@ Each rule is a pure function in `lib/domain`, with a table-driven test using exa
 | `financialYear("2027-04-01")` | `2027-28` |
 | IST date at `2026-11-01T20:00:00Z` | `2026-11-02` |
 
-`lib/clock.ts`: `today()` returns `app_settings.demo_today` when `DEMO_MODE=true`. Otherwise it returns the IST date from `Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" })`.
+`backend/fees/clock.py`: `today()` returns `app_settings.demo_today` when `DEMO_MODE=true`. Otherwise it returns the current date in `ZoneInfo("Asia/Kolkata")`.
 
-### B8.2 Phone (`phone.ts`)
+### B8.2 Phone (`phone.py`)
 
 Strip spaces and hyphens, remove a leading `+91`, `91` or `0` when 10 digits follow, then require `^[6-9]\d{9}$`, and return `+91…`.
 
@@ -1082,11 +1116,14 @@ Strip spaces and hyphens, remove a leading `+91`, `91` or `0` when 10 digits fol
 | `98765 43210`, `+919876543210`, `09876543210`, `919876543210`, `98765-43210` | `+919876543210` |
 | `12345`, `5876543210` | null |
 
-### B8.3 GST (`money.ts`, assumed 18% included in the fee)
+### B8.3 GST (`money.py`, assumed 18% included in the fee)
 
-```ts
-taxable = Math.round(amount * 10000 / (10000 + rateBps));
-gst = amount - taxable; cgst = Math.floor(gst / 2); sgst = gst - cgst;
+```python
+d = 10000 + rate_bps
+taxable = (2 * amount * 10000 + d) // (2 * d)   # rounds half up, with no floats
+gst = amount - taxable
+cgst = gst // 2
+sgst = gst - cgst
 ```
 
 | Amount | Taxable | CGST | SGST |
@@ -1098,7 +1135,7 @@ gst = amount - taxable; cgst = Math.floor(gst / 2); sgst = gst - cgst;
 
 The parts must always add to the amount.
 
-### B8.4 Ledger (`ledger.ts`)
+### B8.4 Ledger (`ledger.py`)
 
 `splitNet(net, n)`: each instalment is `floor(net / n)`, and the last takes the remainder. Discounts are set at enrolment only (assumption).
 
@@ -1130,20 +1167,27 @@ The parts must always add to the amount.
 |---|---|---|---|---|---|
 | Bucket | not_due | 1–30 | 31–60 | 61–90 | 90+ |
 
-### B8.5 Refund (`refund.ts`)
+### B8.5 Refund (`refund.py`)
 
-```ts
-export interface RefundResult {
-  totalDays: number; elapsedDays: number; earned: number; refund: number;
-  stillPayable: number; deadline: string;
-  taxable: number; cgst: number; sgst: number;   // GST split of refund
-}
-totalDays   = diffDays(sessionEnd, sessionStart) + 1;
-elapsedDays = clamp(diffDays(withdrawalDate, sessionStart) + 1, 0, totalDays);
-earned      = Math.floor(net * elapsedDays / totalDays);   // rounded in the parent's favour
-refund      = Math.max(0, paid - earned);
-stillPayable= Math.max(0, earned - paid);
-deadline    = addDays(withdrawalDate, deadlineDays);       // 10
+```python
+@dataclass(frozen=True)
+class RefundResult:
+    total_days: int
+    elapsed_days: int
+    earned: int
+    refund: int
+    still_payable: int
+    deadline: date
+    taxable: int      # GST split of refund
+    cgst: int
+    sgst: int
+
+total_days    = diff_days(session_end, session_start) + 1
+elapsed_days  = max(0, min(total_days, diff_days(withdrawal_date, session_start) + 1))
+earned        = net * elapsed_days // total_days          # rounded in the parent's favour
+refund        = max(0, paid - earned)
+still_payable = max(0, earned - paid)
+deadline      = add_days(withdrawal_date, deadline_days)  # 10
 ```
 
 Session `2026-04-01` to `2027-03-31`:
@@ -1162,7 +1206,7 @@ Session `2026-04-01` to `2027-03-31`:
 | With discount | 10800000 | 5400000 | 2026-11-02 | 216 | 6391232 | 0 | 991232 | 2026-11-12 |
 | Paid nothing | 12000000 | 0 | 2026-11-02 | 216 | 7101369 | 0 | 7101369 | 2026-11-12 |
 
-**Service rules (`lib/actions/refund.ts`):**
+**Service rules (`services/refunds.py`):**
 
 - Use the policy linked to the student's plan, not the latest one.
 - Draft: recalculate from current data on every load. A payment during draft changes the figures.
@@ -1170,7 +1214,7 @@ Session `2026-04-01` to `2027-03-31`:
 - Approved and paid are read-only. One refund per student. **There is no override in this version.**
 - Still payable above 0 is shown to staff, and never collected automatically.
 
-### B8.6 Over 60 days late (`ledger.ts`)
+### B8.6 Over 60 days late (`ledger.py`)
 
 The client's headline metric. Consider only instalments past due (`daysFromDue > 0`). The denominator is the sum of their amounts. The numerator adds:
 
@@ -1190,7 +1234,7 @@ Today `2026-11-02`:
 
 **Expected:** numerator 26000, denominator 50000, result 52%.
 
-### B8.7 Reminder steps (`reminders.ts`)
+### B8.7 Reminder steps (`reminders.py`)
 
 Steps are `[-7, -3, 0, 3, 7, 15, 30]` days from the due date (assumed).
 
@@ -1220,13 +1264,13 @@ nextStep(dueDate, today, sentSteps):
 | 2026-10-10 | 2026-10-20 | −7, −3 | 7 |
 | 2026-10-10 | 2026-10-25 | −7, −3, 7 | 15 |
 
-`renderReminder(language, step, vars)`: step below 0 uses `reminder.before`, 0 uses `reminder.today`, above 0 uses `reminder.after`.
+`renderReminder(language, step, vars)` is in Next.js, in `lib/reminder-text.ts`: step below 0 uses `reminder.before`, 0 uses `reminder.today`, above 0 uses `reminder.after`.
 
-**`sendDueReminders(db, today)` (`lib/services/reminders.ts`). Reminders are never queued.** Each run works out what is due from current balances, so there is nothing to cancel, and so nothing can fail to cancel.
+**`send_due_reminders(today)` (`services/reminders.py`). Reminders are never queued.** Each run works out what is due from current balances, so there is nothing to cancel, and so nothing can fail to cancel.
 
 1. Select instalments where balance is above 0, the student is active, and no open unmatched payment has this `suggested_instalment_id`. Include the sent steps and the primary guardian.
 2. Apply `nextStep`, and drop nulls.
-3. For each chunk of 200, in a transaction: `SELECT id FROM instalments WHERE id = ANY($1) FOR UPDATE`, recalculate balances, drop any now at zero, render with the **current** balance in the guardian's language, and bulk insert into `reminder_log` with `ON CONFLICT DO NOTHING`.
+3. For each chunk of 200, in `transaction.atomic()`: lock the rows with `Instalment.objects.select_for_update().filter(id__in=chunk)`, recalculate balances, drop any now at zero, and insert into `reminder_log` with the **current** balance and the guardian's language, using `bulk_create(rows, ignore_conflicts=True)`.
 4. Return `{ sent, skipped }`.
 
 The payment transaction locks the same instalment row, so a reminder cannot slip out while a payment is being processed.
@@ -1235,9 +1279,9 @@ The payment transaction locks the same instalment row, so a reminder cannot slip
 
 **Derived, never stored:** the "next" step and "stopped" reasons shown in S2 and S4.
 
-### B8.8 Payment matching (`matching.ts`)
+### B8.8 Payment matching (`matching.py`)
 
-`decidePayment({ status, found, studentActive, balance, amount })`, checked in this order:
+`decide_payment(status, found, student_active, balance, amount)`, checked in this order:
 
 | Condition | Result |
 |---|---|
@@ -1249,29 +1293,29 @@ The payment transaction locks the same instalment row, so a reminder cannot slip
 | amount differs from balance | queue `amount_mismatch` |
 | otherwise | `{ action: "allocate" }` |
 
-**`POST /api/webhooks/payment`.** Read the raw body. Verify `x-signature`, which is hex HMAC-SHA256 of the raw body with `PAYMENT_WEBHOOK_SECRET`, using `crypto.timingSafeEqual`. Reject with 401 on failure. Validate with Zod:
+**`POST /api/webhooks/payment`,** on Django. Read the raw `request.body`. Verify `x-signature`, which is hex HMAC-SHA256 of the raw body with `PAYMENT_WEBHOOK_SECRET`, using `hmac.compare_digest`. Reject with 401 on failure. Validate with a Django form:
 
-```ts
+```text
 { event_id: string, reference: string | null, amount_paise: positive int,
   status: "success" | "failed" | "pending", paid_on: "YYYY-MM-DD" }
 ```
 
-Then, in **one transaction** (`processPaymentEvent` in `lib/services/payments.ts`):
+Then, in **one `transaction.atomic()`** (`process_payment_event` in `services/payments.py`):
 
-1. `INSERT INTO payment_events … ON CONFLICT DO NOTHING`. If it already exists, return 200 and stop.
-2. Find and lock the instalment `FOR UPDATE`, using `reference`.
-3. Apply `decidePayment`.
-4. **Allocate:** insert the payment and allocation, take the next receipt number by updating `receipt_counters` with `RETURNING`, insert the receipt with its GST split, and write `audit_log`.
+1. `PaymentEvent.objects.get_or_create(event_id=...)`. If it already existed, return 200 and stop.
+2. Find and lock the instalment with `select_for_update()`, using `reference`.
+3. Apply `decide_payment`.
+4. **Allocate:** insert the payment and allocation, take the next receipt number by locking the `receipt_counters` row with `select_for_update()` and incrementing it, insert the receipt with its GST split, and write `audit_log`.
 5. **Queue:** insert `unmatched_payments`, with `suggested_instalment_id` set when the instalment is known. **Nothing is marked paid.**
 6. Save the result on the event, and return 200.
 
 **Receipt number format:** `{centre_code}/{fy}/{seq padded to 6}`, such as `MLV/2026-27/000123`.
 
-**Pay token (`lib/crypto.ts`):** `{instalmentId}.{base64url(HMAC-SHA256(instalmentId, SESSION_SECRET))}`. It is verified by recomputing with `timingSafeEqual`, so **no table is needed**. Reminder links work without sign-in because a parent on a low-end phone tapping from WhatsApp should not face an OTP first. The page shows only first name, amount and due date.
+**Pay token:** `Signer(salt="pay-token", sep=".")` from `django.core.signing`, signing the instalment ID, which gives `{instalmentId}.{signature}`. `unsign` verifies it, so **no table is needed**. Reminder links work without sign-in because a parent on a low-end phone tapping from WhatsApp should not face an OTP first. The page shows only first name, amount and due date.
 
 **Counter payments and queue resolution** use one shared function that allocates and creates the receipt. Excess from a counter payment goes to the queue as `excess_counter_payment`. Matching a queue item with an amount above the chosen instalment's balance allocates oldest first from that instalment on, and returns an error if any excess remains.
 
-### B8.9 Dropout-risk score (`risk.ts`)
+### B8.9 Dropout-risk score (`risk.py`)
 
 **A transparent score decides, and Claude only writes words.** With no real outcome data, a trained model would be false precision. So the weights are stated openly, and real outcomes collect from the first day to allow proper training later.
 
@@ -1324,7 +1368,7 @@ Attendance rows below are percent present per week. Every expected value below c
 - `att >= 5`: "Attendance 60% in the last 4 weeks, was 90%" (or "Attendance 60% in the last 4 weeks" with no prior)
 - `test >= 5`: "Test scores down from 69% to 49%"
 
-**`shouldCreateTask({ band, score, openTaskExists, lastFalseFlag, today })`:** true only when the band is high, no task is open, and either there is no false flag in the last 30 days (30 included) or the score is at least 15 above that flag's score.
+**`should_create_task(band, score, open_task_exists, last_false_flag, today)`:** true only when the band is high, no task is open, and either there is no false flag in the last 30 days (30 included) or the score is at least 15 above that flag's score.
 
 | Band | Open task | Last false flag | Score | Expected |
 |---|---|---|---|---|
@@ -1348,46 +1392,52 @@ Attendance rows below are percent present per week. Every expected value below c
 
 **Enforced guard rails:**
 
-- `tests/risk-isolation.test.ts` reads the import lines of `lib/domain/risk.ts` and `lib/services/risk.ts` and fails if they import `reminders`, `payments`, `refund` or `lib/actions`.
+- `test_risk_isolation.py` reads the imports of `domain/risk.py` and `services/risk.py` with `ast`, and fails if they import `reminders`, `payments`, `refunds` or `views`.
 - A database test runs the risk job and asserts row counts in `reminder_log`, `payments`, `allocations`, `instalments` and `refunds` are unchanged.
 - Tests assert a parent session and an accounts session cannot read tasks or flags.
 
-**Call brief (`ensureCallBrief` in `lib/services/risk.ts`).** Claude receives only numbers, **never name, phone or student code**:
+**Call brief (`ensure_call_brief` in `services/risk.py`).** Claude receives only numbers, **never name, phone or student code**:
 
-```ts
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { z } from "zod";
+```python
+import json
+import os
 
-const BriefSchema = z.object({ brief: z.string() });
+import anthropic
+from pydantic import BaseModel
 
-const SYSTEM = `You write a two-sentence note for a school counsellor about to phone a parent.
+
+class Brief(BaseModel):
+    brief: str
+
+
+SYSTEM = """You write a two-sentence note for a school counsellor about to phone a parent.
 Use only the facts provided. Do not say the student will drop out. Do not guess causes.
-Do not mention money or suggest any fee action. Suggest an open, supportive question to ask.`;
+Do not mention money or suggest any fee action. Suggest an open, supportive question to ask."""
 
-// features example: { overdueInstalments: 2, oldestOverdueDays: 70, attendanceRecentPct: 60,
-//                     attendancePriorPct: 90, testRecentPct: 49, testEarlierPct: 69 }
-export async function callModel(features: object): Promise<string | null> {
-  const client = new Anthropic();
-  const response = await client.messages.parse(
-    {
-      model: process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5",
-      max_tokens: 2000,
-      system: SYSTEM,
-      messages: [{ role: "user", content: JSON.stringify(features) }],
-      output_config: { effort: "low", format: zodOutputFormat(BriefSchema) },
-    },
-    { timeout: 15_000, maxRetries: 1 },
-  );
-  if (response.stop_reason !== "end_turn") return null; // includes "refusal"
-  return response.parsed_output?.brief ?? null;
-}
+
+# features example: {"overdueInstalments": 2, "oldestOverdueDays": 70, "attendanceRecentPct": 60,
+#                    "attendancePriorPct": 90, "testRecentPct": 49, "testEarlierPct": 69}
+def call_model(features: dict) -> str | None:
+    client = anthropic.Anthropic()
+    response = client.with_options(timeout=15.0, max_retries=1).messages.parse(
+        model=os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5"),
+        max_tokens=2000,
+        system=SYSTEM,
+        messages=[{"role": "user", "content": json.dumps(features)}],
+        output_format=Brief,
+        output_config={"effort": "low"},
+    )
+    if response.stop_reason != "end_turn":  # includes "refusal"
+        return None
+    return response.parsed_output.brief if response.parsed_output else None
 ```
 
-`generateBrief(features, call = callModel)` is the tested function:
+`pydantic` comes with `anthropic`, so it needs no separate line in `requirements.txt`.
+
+`generate_brief(features, call=call_model)` is the tested function:
 
 - No `ANTHROPIC_API_KEY`: return template.
-- Wrap `call` in try/catch. Any error, timeout, refusal or null: template.
+- Wrap `call` in `try/except Exception`. Any error, timeout, refusal or None: template.
 - Reject text over 400 characters or containing `₹`: template.
 - Log the failure category only, with no student data.
 
@@ -1395,11 +1445,11 @@ Template: `Flagged because: {reasons joined with "; "}. Ask how things are going
 
 Save the text and source on the task, so each task calls the model at most once.
 
-**Evaluation.** `tests/risk-eval.test.ts` holds about 30 labelled synthetic cases, and prints precision and recall for the High band. Put the numbers in the TDD, clearly marked as synthetic. They show the logic behaves as designed, not that it predicts real dropout. S5's accuracy figure comes from real counsellor marks.
+**Evaluation.** `test_risk_eval.py` holds about 30 labelled synthetic cases, and prints precision and recall for the High band. Put the numbers in the TDD, clearly marked as synthetic. They show the logic behaves as designed, not that it predicts real dropout. S5's accuracy figure comes from real counsellor marks.
 
 ## B9. Server actions and endpoints
 
-Every action begins with a role check, validates with Zod, and returns `{ ok: true, … }` or `{ ok: false, code, message }`. Every action that takes a student or instalment ID checks scope: parents through `guardian_students`, staff through `centre_id`.
+Each action below is a Next.js server action in `lib/actions/*` that forwards to one Django view of the same name in snake_case, at `/api/<name>`. **Every Django view is wrapped in `@api(role=..., form=...)` from `fees/auth.py`.** The decorator checks `X-Internal-Key`, loads the session, checks the role, parses JSON and validates it with the Django form. Views return `{ "ok": true, … }` or `{ "ok": false, "code", "message" }`. Every view that takes a student or instalment ID checks scope: parents through `guardian_students`, staff through `centre_id`. Read endpoints for `lib/data/*` use the same decorator.
 
 | Action | Role | Input |
 |---|---|---|
@@ -1419,35 +1469,43 @@ Every action begins with a role check, validates with Zod, and returns `{ ok: tr
 | `submitMockPayment` | Public, token checked | token, outcome |
 | `setDemoDate`, `runRemindersNow`, `resetDemo` | Accounts, and only when `DEMO_MODE=true` | date, none, none |
 
-**OTP:** 6 digits from `crypto.randomInt`, stored as HMAC with `SESSION_SECRET`. 5-minute expiry, 5 tries, 3 sends per 10 minutes per phone. Single use. Known and unknown numbers get the same response. Mock send: when `DEMO_MODE=true` the code shows on the sign-in screen.
+**`submitMockPayment` is the exception.** It stands in for an outside gateway, so the Next.js action itself signs a real payload with `PAYMENT_WEBHOOK_SECRET` and POSTs it to `$BACKEND_URL/api/webhooks/payment`.
 
-**Passwords:** `scrypt` with a random salt, from `node:crypto`. Limit 10 failures per 15 minutes per email.
+**OTP:** 6 digits from `secrets.randbelow`, stored as `salted_hmac` of phone and code, and compared with `constant_time_compare`. 5-minute expiry, 5 tries, 3 sends per 10 minutes per phone. Single use. Known and unknown numbers get the same response. Mock send: when `DEMO_MODE=true` the response includes the code, and the sign-in screen shows it.
 
-**Sessions:** 32 random bytes in cookie `sid`, stored only as SHA-256. `httpOnly`, `secure` in production, `sameSite=lax`. Parents 30 days, staff 12 hours.
+**Passwords:** `make_password` and `check_password` from `django.contrib.auth.hashers`. Limit 10 failures per 15 minutes per email.
 
-| Endpoint | Protection | Behaviour |
+**Sessions:** Django's database sessions, with `SESSION_COOKIE_NAME = "sid"`. On sign-in, call `request.session.cycle_key()`, store the subject type and ID, and call `set_expiry`: parents 30 days, staff 12 hours. `lib/actions/auth.ts` reads `sid` from Django's `Set-Cookie` with `getSetCookie()`, then sets it on the browser response: `httpOnly`, `sameSite=lax`, the same max age, and `secure` whenever `APP_URL` starts with `https://`, so a local production build over http can still sign in. Only server actions change this cookie. Keep `SESSION_SAVE_EVERY_REQUEST` off, so read requests never need to.
+
+| Endpoint, on Django | Protection | Behaviour |
 |---|---|---|
-| `POST /api/webhooks/payment` | HMAC | B8.8 |
-| `GET /api/cron/reminders` | `Authorization: Bearer $CRON_SECRET` | `sendDueReminders(db, today())` |
+| `POST /api/webhooks/payment` | HMAC, no internal key | B8.8 |
+| `GET /api/cron/reminders` | `Authorization: Bearer $CRON_SECRET`, compared with `constant_time_compare` | `send_due_reminders(today())` |
 | `GET /api/cron/risk` | Same | Score all active students, save flags, create tasks |
 | `GET /api/cron/demo-reset` | Same, and only when `DEMO_MODE=true` | Restore named demo data |
-| `GET /staff/export/*.csv` | Accounts session, centre scope | CSV download |
 
-**`vercel.json`.** Vercel's free cron runs at most daily and fires within the stated hour:
+`GET /staff/export/*.csv` are Next.js route handlers that forward to Django views with `@api(role="accounts")`, which apply centre scope and write the CSV with Python's `csv` module.
+
+**`backend/vercel.json`.** The crons belong to the Django project, so Vercel calls Django directly. Vercel's free cron runs at most daily and fires within the stated hour:
 
 ```json
-{ "crons": [
-  { "path": "/api/cron/reminders",  "schedule": "0 5 * * *" },
-  { "path": "/api/cron/risk",       "schedule": "30 5 * * *" },
-  { "path": "/api/cron/demo-reset", "schedule": "30 20 * * *" }
-] }
+{
+  "functions": { "config/wsgi.py": { "maxDuration": 60 } },
+  "crons": [
+    { "path": "/api/cron/reminders",  "schedule": "0 5 * * *" },
+    { "path": "/api/cron/risk",       "schedule": "30 5 * * *" },
+    { "path": "/api/cron/demo-reset", "schedule": "30 20 * * *" }
+  ]
+}
 ```
 
 The reminder time is therefore about 10:30 to 11:30 IST. The date used is always `today()`, and in demo mode the frozen date.
 
+**Database settings in `config/settings.py`:** `DATABASES["default"]` comes from `dj_database_url.parse(os.environ["DATABASE_URL"], conn_max_age=0)`, and also sets `"DISABLE_SERVER_SIDE_CURSORS": True`, because Neon's pooled connection runs in transaction mode. `USE_TZ = True`. `load_dotenv` reads `.env.local` from the repo root, so both apps share one file in development, and it does nothing in production, where the file does not exist.
+
 ## B10. Seed data
 
-`scripts/seed.ts` uses a seeded random generator (mulberry32 with seed `20261102`), so every run gives identical data. **All names and phone numbers are invented.** Split it in two: `seedFleet()` runs once, and `seedNamed()` is safe to re-run and powers Reset demo.
+`fees/management/commands/seed.py` uses `random.Random(20261102)`, so every run gives identical data. **All names and phone numbers are invented.** Split it in two: `seed_fleet()` runs once, and `seed_named()` is safe to re-run and powers Reset demo. Insert with `bulk_create(batch_size=1000)`.
 
 **Organisation (assumed):**
 
@@ -1462,7 +1520,7 @@ The due dates differ because the brief says each centre keeps its own sheet. The
 
 - Each centre has 4 batches: JEE 2027 Morning, JEE 2027 Evening, NEET 2027 Morning, NEET 2027 Evening. That makes 16 batches, all with session `2026-04-01` to `2027-03-31`.
 - JEE plans: 4 × ₹30,000. NEET plans: 3 × ₹40,000. Gross ₹1,20,000.
-- Seed the staff users below, and Refund Policy v1 from B6. No message is ever really sent, so the invented phone numbers receive nothing.
+- Seed the staff users below, and Refund Policy v1, copying its text from B6 into `fees/policy_text.py`. No message is ever really sent, so the invented phone numbers receive nothing.
 
 **Staff users.** Passwords come from `SEED_DEMO_PASSWORD`:
 
@@ -1472,7 +1530,7 @@ The due dates differ because the brief says each centre keeps its own sheet. The
 | `accounts.mlv@demo.test` | accounts | MLV only |
 | `counsellor@demo.test` | counsellor | All centres |
 
-**Named students (`seedNamed`), all in centre MLV unless stated.** These are the only students the demo path changes.
+**Named students (`seed_named`), all in centre MLV unless stated.** These are the only students the demo path changes.
 
 | Code | Name | Batch | State on 2 Nov | Guardian phone | Language |
 |---|---|---|---|---|---|
@@ -1496,23 +1554,25 @@ Replace the "Sample …" names with invented realistic ones in the seed.
 - **Risk:** `STU-0733` also has one open task. Seed 11 closed tasks across the fleet, 8 called and 3 false flags, so the accuracy tile has data.
 - **Unmatched queue, 6 items:** one per reason from S4, plus one more unknown reference. Kavya's has a suggested instalment.
 
-**Fleet (`seedFleet`):** the rest, up to **2,600 students** in total, split evenly across batches, codes `STU-0001` to `STU-2600`.
+**Fleet (`seed_fleet`):** the rest, up to **2,600 students** in total, split evenly across batches, codes `STU-0001` to `STU-2600`.
 
 - About 2% share a guardian with a sibling. About 70% of guardians prefer Hindi. Phones are `+9190001xxxxx`.
 - About 15% have a discount of ₹6,000, ₹12,000 or ₹24,000, with reason Merit or Sibling.
 - Past instalments mix on-time, late and part-paid payments. **Tune the weights so `over60Pct` on `2026-11-02` falls between 11% and 13%,** the client's baseline. A test asserts this.
-- Keep generation in a pure `buildFleet()` and insertion separate, so `tests/seed.test.ts` checks the rows without a database.
+- Keep generation in a pure `build_fleet()` and insertion separate, so `test_seed.py` checks the rows without a database.
 - Weekly attendance from 6 Apr to 26 Oct and 7 monthly tests per student. Design the mix so about 60 students score High, about 100 score Watch, and about 30 new students have too little data.
 - Insert `reminder_log` rows for past steps, so the first run on 2 Nov only sends what is truly due that day.
 
-**`resetDemo()`:** for named students, delete payments, allocations, receipts, reminders, consents, refunds, tasks, flags and queue items, then re-run `seedNamed()`, and set `demo_today` to `2026-11-02`. Receipt counters are not rewound, because gaps in demo numbering do not matter.
+**`reset_demo()`:** for named students, delete payments, allocations, receipts, reminders, consents, refunds, tasks, flags and queue items, then re-run `seed_named()`, and set `demo_today` to `2026-11-02`. Receipt counters are not rewound, because gaps in demo numbering do not matter.
 
 ## B11. Security
 
 | Requirement | How |
 |---|---|
-| Access control | Server-side checks on every query and action. Tests attempt to cross each boundary |
-| Validation | Zod on all inputs, with database constraints behind it |
+| Access control | Django checks every query and action through `@api`. Tests attempt to cross each boundary |
+| Validation | Django forms on all inputs, with database constraints behind them |
+| Between the apps | Django's `/api/*` requires `X-Internal-Key`. The `sid` cookie lives on the Next.js domain, so no browser holds a cookie for Django's domain |
+| CSRF | Next.js server actions compare Origin with Host, and the cookie is `sameSite=lax`. Django's CSRF middleware is off on purpose, because nothing reaches its views with a browser's cookie. The TDD says so openly |
 | Secrets | Environment only. `.env.example` has names only. `.env*` in `.gitignore` except the example |
 | Webhook | HMAC, constant-time compare, idempotent |
 | Pay links | Signed token. Minimal data. `noindex`. `Referrer-Policy: same-origin` |
@@ -1530,36 +1590,47 @@ Replace the "Sample …" names with invented realistic ones in the seed.
 `.env.example`, names only:
 
 ```text
-DATABASE_URL=
-SESSION_SECRET=
-PAYMENT_WEBHOOK_SECRET=
-CRON_SECRET=
-APP_URL=
+# Both apps
 DEMO_MODE=
+INTERNAL_API_SECRET=
+PAYMENT_WEBHOOK_SECRET=
+
+# Django only
+DATABASE_URL=
+DJANGO_SECRET_KEY=
+DJANGO_ALLOWED_HOSTS=
+DJANGO_DEBUG=
+CRON_SECRET=
 SEED_DEMO_PASSWORD=
 ANTHROPIC_API_KEY=
 ANTHROPIC_MODEL=
+
+# Next.js only
+BACKEND_URL=
+APP_URL=
 NEXT_PUBLIC_PROTO=
 ```
+
+**Local values in `.env.local`:** `BACKEND_URL=http://localhost:8000`, `APP_URL=http://localhost:3000`, `DEMO_MODE=true`, `DJANGO_DEBUG=true`, `DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1`, and `NEXT_PUBLIC_PROTO=1` until T7.2. Codex generates `DJANGO_SECRET_KEY`, `INTERNAL_API_SECRET`, `PAYMENT_WEBHOOK_SECRET`, `CRON_SECRET` and `SEED_DEMO_PASSWORD` with Python's `secrets.token_urlsafe`, writes them only to this file, and never prints them. The human supplies `DATABASE_URL`.
 
 `DATABASE_URL` is required from Phase 1. `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` are optional. The default model is `claude-opus-5-5`, and a short brief costs well under one US cent per call. Change the variable to use a cheaper model.
 
 ## B13. Tests
 
-Test what loses money or trust if wrong. No snapshot tests, and no tests of getters.
+Test what loses money or trust if wrong. No snapshot tests, and no tests of getters. Backend tests are in `backend/fees/tests/` and run on local Postgres, never on Neon.
 
 | File | Covers |
 |---|---|
-| `tests/domain/*.test.ts` | All of B8, using those exact values |
-| `tests/payments.test.ts` | PGlite. Each decision row, idempotency, bad signature, receipt numbers unique over 20 payments, GST parts sum |
-| `tests/reminders.test.ts` | PGlite. Pay then run: no message. Part pay then run: new amount. Outage: one message. Double run: no duplicate. Held item: no message. Withdrawn: no message |
-| `tests/refund.test.ts` | PGlite. Approve freezes figures and stops reminders. Blocked by open queue item. Second refund refused |
-| `tests/access.test.ts` | PGlite. Parent A cannot read parent B's dues or receipts. Counsellor cannot reach fee data. Single-centre accounts sees only that centre. Accounts and parents cannot read risk data |
-| `tests/otp.test.ts` | Expiry, attempts, reuse, send limit, same response for unknown numbers |
-| `tests/risk-isolation.test.ts` | Import guard, and no side effects |
-| `tests/risk-brief.test.ts` | Fake `call` that throws, returns null, returns over-long text, returns text with `₹`. Each gives the template |
-| `tests/risk-eval.test.ts` | Synthetic precision and recall |
-| `tests/seed.test.ts` | Row counts, sample rows match the brief exactly, `over60Pct` within 11–13% |
+| `test_domain_*.py` | All of B8, using those exact values. Uses `SimpleTestCase` and `subTest`, with no database |
+| `test_payments.py` | Each decision row, idempotency, bad signature, receipt numbers unique over 20 payments, GST parts sum |
+| `test_reminders.py` | Pay then run: no message. Part pay then run: new amount. Outage: one message. Double run: no duplicate. Held item: no message. Withdrawn: no message |
+| `test_refund.py` | Approve freezes figures and stops reminders. Blocked by open queue item. Second refund refused |
+| `test_access.py` | Parent A cannot read parent B's dues or receipts. Counsellor cannot reach fee data. Single-centre accounts sees only that centre. Accounts and parents cannot read risk data. A request without `X-Internal-Key` is refused. **Walks every URL pattern and fails on any view without `@api`,** except the webhook and cron views |
+| `test_otp.py` | Expiry, attempts, reuse, send limit, same response for unknown numbers |
+| `test_risk_isolation.py` | Import guard, and no side effects |
+| `test_risk_brief.py` | Fake `call` that raises, returns None, returns over-long text, returns text with `₹`. Each gives the template |
+| `test_risk_eval.py` | Synthetic precision and recall |
+| `test_seed.py` | Row counts, sample rows match the brief exactly, `over60Pct` within 11–13% |
 | `e2e/golden.spec.ts` | At 360 px: parent OTP, consent, dues, pay, receipt. Then accounts: reminder stopped, dashboard changed. One run in Hindi |
 | `e2e/controls.spec.ts` | Every control in B5's tables does what the table says |
 | `e2e/layout.spec.ts` | Each screen at 360 × 640 and 1280 × 800: no sideways scroll (`scrollWidth <= innerWidth`), no console errors, axe has no serious or critical violations. On `/dues`: Pay button's bottom edge within 640 px in both languages |
@@ -1567,7 +1638,7 @@ Test what loses money or trust if wrong. No snapshot tests, and no tests of gett
 | `tests/motion-boundary.test.ts` | Reads imports under `app/(parent)`, `app/(public)/pay` and `app/(public)/mock-gateway`, and fails on `motion`, `gsap`, `three`, `ogl` or `components/vendor` |
 | `e2e/reduced-motion.spec.ts` | With `reducedMotion: "reduce"`: S1 tiles and `/demo` show final content at once. Without it: after a payment, the tile ends on the exact `inr()` value |
 
-**CI, `.github/workflows/ci.yml`:** on push, Node 22, `npm ci`, `npm run check`, and `npm run build` with dummy env values.
+**CI, `.github/workflows/ci.yml`:** on push, Node 22 and Python 3.14, a `postgres:17` service, `npm ci`, `pip install` of both requirements files, `npm run check`, and `npm run build` with dummy env values.
 
 ---
 
@@ -1581,14 +1652,14 @@ Each task lists what to do and how it is accepted. **Every task also requires:**
 
 **Not in this phase:** database, real sign-in, API routes, cron, business logic beyond simple display.
 
-**How the fake data works:** `lib/data/*` returns view models (B5) from `lib/fixtures/`. `lib/actions/*` write a small JSON cookie named `proto` (for example `{ "role": "parent", "ishitaPaid": true }`). This keeps the same server components and server actions as the final app, and it works on Vercel, where memory does not persist. With no cookie, `/dues` shows Ishita's parent and staff routes show the accounts user, so automated checks can reach every page.
+**How the fake data works:** `lib/data/*` returns view models (B5) from `lib/fixtures/`. `lib/actions/*` write a small JSON cookie named `proto` (for example `{ "role": "parent", "ishitaPaid": true }`). This keeps the same server components and server actions as the final app, and it will also work on Vercel, where memory does not persist. The cookie has no `secure` flag, so it works on a phone over the local network at Gate 0. With no cookie, `/dues` shows Ishita's parent and staff routes show the accounts user, so automated checks can reach every page.
 
 ### T0.1 Scaffold
 
 From the repo root:
 
 ```bash
-npx create-next-app@latest . --ts --tailwind --eslint --app --no-src-dir --import-alias "@/*" --use-npm
+npx create-next-app@latest . --ts --tailwind --eslint --app --no-src-dir --import-alias "@/*" --use-npm --yes
 ```
 
 If it objects to the `docs/` folder, scaffold in a temporary folder and move the files in.
@@ -1605,14 +1676,16 @@ Then:
 
 - Root layout with both fonts (B2). Accent ramp and primary button tokens (B3).
 - Add the A4 text to `AGENTS.md`, keeping BoardUI's section.
-- Create `lib/config.ts`, `.env.example`, `docs/progress.md`, `docs/decisions.md`, `docs/third-party.md`. Add `docs/inbox/` and `dist/` to `.gitignore`.
+- Create `lib/config.ts`, `.env.example`, `docs/progress.md`, `docs/decisions.md`, `docs/third-party.md`. Add `docs/inbox/` and `dist/` to `.gitignore`. Create `.env.local` with `NEXT_PUBLIC_PROTO=1`. Confirm with `git check-ignore` that `.env.local` is ignored and `.env.example` is not: the scaffold's `.gitignore` may ignore both, so add `!.env.example` if needed.
 - Add `package.json` scripts from B1, Vitest and Playwright (`npx playwright install chromium`), and CI.
 
-**Accept:** `npm run build` succeeds. A page with a BoardUI Button shows the teal accent. A line of Hindi renders in Noto Sans Devanagari. **Then tell the human to do H4.**
+**Accept:** `npm run build` succeeds. A page with a BoardUI Button shows the teal accent. A line of Hindi renders in Noto Sans Devanagari.
 
 ### T0.2 Shared code
 
 `lib/types.ts` (all view models from B5), `lib/format.ts`, `lib/i18n/*` with all of B6, `lib/clock.ts` returning `2026-11-02`, the preview helper (B4), and in `components/app/`: `Money`, `StatusChip`, `AgeingBar`, `EmptyState`, `ErrorState`, `PageShell`.
+
+Also `scripts/screens.ts` (`npm run screens`), so every screen can be checked as it is built. It uses a server already answering on port 3000, or else starts `next dev` itself and stops it at the end. It saves PNGs to `docs/screens/` for each route that exists, each state and each language where relevant, at 360 × 640 and 1280 × 800. `--only=<route>` limits it to one screen.
 
 **Accept:** a unit test for `inr` and `t()` passes. A missing Hindi key fails the type check.
 
@@ -1639,7 +1712,7 @@ Then `lib/data/*` and `lib/actions/*` as fixture-and-cookie versions with their 
 | Demo date to 9 Nov and run | Mohit's −7 appears. Ishita's 30 appears only if unpaid |
 | Reset demo | Clears the `proto` cookie |
 
-**Accept:** every action in this table works through the UI.
+**Accept:** calling each action changes what the data functions return, as this table says. T0.12 checks the same table through the UI.
 
 ### T0.4 to T0.11 Screens
 
@@ -1662,7 +1735,7 @@ Build one task and one commit per screen, following B5 fully, including all its 
 
 `/proto`: a list of all routes, with loading, empty and error links for each. Also `/demo` as written in B5.
 
-**Accept:** every link opens the right thing.
+**Accept:** every link opens the right thing, and every row of the T0.3 table works through the UI.
 
 ### T0.13 Motion and outside components
 
@@ -1678,10 +1751,10 @@ Read B3a first, then:
 
 ### T0.14 Automated UI checks
 
-- `scripts/screens.ts` (`npm run screens`): starts from a running server and saves PNGs to `docs/screens/` for each route, each state and each language where relevant, at 360 × 640 and 1280 × 800. `--only=<route>` limits it to one screen.
 - `e2e/layout.spec.ts`, `e2e/controls.spec.ts`, `e2e/perf.spec.ts`, `e2e/reduced-motion.spec.ts` from B13.
+- `playwright.config.ts` uses `webServer` to run `npm run start`, so the test command starts and stops its own server.
 
-**Accept:** all pass against `npm run build && npm run start`. Fix failures. Don't weaken the checks.
+**Accept:** all pass after `npm run build`. Fix failures. Don't weaken the checks.
 
 ### T0.15 Self-review
 
@@ -1695,9 +1768,11 @@ Run `npx lighthouse` on `/dues` with mobile settings if a browser is available. 
 
 Tag the commit `v0-prototype`. Write `docs/prototype-notes.md` with what was changed and why.
 
-### Gate 0: Codex stops here
+### Gate 0: Codex checks, then continues
 
-Write `docs/gate-0.md` listing each check below with its result, and the deployed URL. **Stop and ask the human.**
+Write `docs/gate-0.md` listing each check below with its result, and mark the human checks as not yet run. **Then continue to Phase 1,** unless `docs/PROMPTS.md` says to stop at Gate 0.
+
+Nothing is deployed yet, so the human tests on a phone over the local network: run `npm run build`, then `npm run start -- -H 0.0.0.0`, find the computer's IPv4 address with `ipconfig`, and open `http://<that address>:3000/dues` on a phone on the same Wi-Fi. Once Django exists, also run `npm run dev:api` in a second terminal, and sign in with +91 90000 00587.
 
 | Check | Who |
 |---|---|
@@ -1713,107 +1788,112 @@ Write `docs/gate-0.md` listing each check below with its result, and the deploye
 | **Hindi read:** a Hindi reader checks all copy | Human |
 | **Sign-off** on the look and flows | Human |
 
-The human then gives the results. Codex applies the changes, and adds what the test changed to `docs/prototype-notes.md`. Those notes become the TDD's UI section, and they are real evidence of design judgement.
+The human gives the results when the test is done, at any later point. Codex applies the changes, and adds what the test changed to `docs/prototype-notes.md`. Those notes become the TDD's UI section, and they are real evidence of design judgement.
 
 ## Phase 1. Foundation
 
 Needs H6.
 
-### T1.1 Schema
+### T1.1 Django project and schema
 
-`lib/db/schema.ts` per B7, including the view, all CHECKs and partial unique indexes. `lib/db/client.ts` with `pg.Pool` (`max: 5`) and `drizzle-orm/node-postgres`. Generate and apply migrations. A test helper creates a migrated PGlite database per test file.
+- Create `.venv`, then `backend/` with `requirements.txt`, `requirements-dev.txt`, `.python-version` and the `config` project, as B1 lays out. Add `.venv/` and `__pycache__/` to `.gitignore`.
+- Settings per B9. `INSTALLED_APPS` holds only `django.contrib.sessions` and `fees`. Middleware holds only `SecurityMiddleware`, `SessionMiddleware` and `CommonMiddleware` (B11).
+- `fees/models.py` per B7, including the view, all CHECKs and partial unique indexes. Generate and apply migrations.
+- Fill `.env.local` per B12, and update `.env.example`.
+- Add `scripts/py.mjs` and the new scripts from B1. Update CI per B13. Add Django to Playwright's `webServer` list, using `npm run py -- backend/manage.py runserver 8000 --noreload`.
+- In `AGENTS.md`, replace the "Active stack decision" section and the rules it changes with the A4 text, keeping the Next.js and BoardUI sections. This plan now specifies Django, so nothing overrides it. Add a line to `docs/decisions.md` saying so.
 
-**Accept:** migrations apply to PGlite and to the dev database. A test proves that a bad `fee_plans` row is rejected, a duplicate `reminder_log` key is rejected, and a second open `counsellor_tasks` row for a student is rejected.
+**Accept:** migrations apply to the dev database. A test proves that a bad `fee_plans` row is rejected, a duplicate `reminder_log` key is rejected, and a second open `counsellor_tasks` row for a student is rejected.
 
 ### T1.2 Pure rules for dates and phones
 
-`lib/domain/dates.ts`, `phone.ts`, plus real `lib/clock.ts`.
+`fees/domain/dates.py`, `phone.py`, plus `fees/clock.py`.
 
 **Accept:** B8.1 and B8.2 pass.
 
 ### T1.3 Seed
 
-`money.ts` and `ledger.ts` (B8.3, B8.4, B8.6), since the seed needs them. Then `scripts/seed.ts` per B10.
+`money.py` and `ledger.py` (B8.3, B8.4, B8.6), since the seed needs them. Then `fees/management/commands/seed.py` per B10.
 
-**Accept:** `tests/seed.test.ts` passes. It finds 2,600 students, the three sample rows exactly as in the brief, and `over60Pct` between 11% and 13%. It runs twice with identical results. The full seed finishes in under 3 minutes against Neon.
+**Accept:** `test_seed.py` passes. It finds 2,600 students, the three sample rows exactly as in the brief, and `over60Pct` between 11% and 13%. It runs twice with identical results. The full seed finishes in under 3 minutes against the dev database.
 
 ### T1.4 Sign-in
 
-`lib/crypto.ts`, `lib/auth.ts` (`getSession`, `requireParent`, `requireStaff(role)`), `requestOtp`, `verifyOtp`, `staffLogin`, `logout`. Call a guard at the top of each page and action, rather than relying on middleware. Wire P1 and `/staff/login` to real data.
+Django: `fees/auth.py` with `@api` (B9), and the views `request_otp`, `verify_otp`, `staff_login`, `logout` and `me`. Next.js: `lib/backend.ts` (B1) and `lib/actions/auth.ts`. Wire P1 and `/staff/login` to real data. Access is enforced in Django, not in Next.js middleware.
 
-**Accept:** `tests/otp.test.ts` passes. All roles sign in on the deployed app, and each is sent to the right home page: `/dues`, `/staff/dashboard`, `/counsellor/tasks`.
+**Accept:** `test_otp.py` passes, and `test_access.py` covers the routes so far. All roles sign in on a local production build, and each is sent to the right home page: `/dues`, `/staff/dashboard`, `/counsellor/tasks`.
 
 ### T1.5 Consent
 
-`grantConsent`, the consent check in `requireParent`, and the declined state.
+`grant_consent`, a consent check inside `@api(role="parent")` that returns 403 `consent_required`, and the declined state.
 
 **Accept:** a new guardian cannot reach `/dues` until consent is saved. The row holds wording version, language, time and OTP reference.
 
-**Phase 1 exit:** review the auth diff for missing role checks. The deployed app signs in. Fixtures still power everything else.
+**Phase 1 exit:** review the auth diff for missing role checks. The app signs in on a local production build. Fixtures still power everything else.
 
 ## Phase 2. Money loop
 
 ### T2.1 Dues on real data
 
-`lib/data/dues.ts` per the `DuesVM` contract, with all modes.
+A Django view that returns the `DuesVM` contract with all modes, and `lib/data/dues.ts` calling it.
 
 **Accept:** Ishita's parent sees ₹15,000, "Was due 10 Oct", "23 days overdue". Mohit's sees ₹40,000, "Due 15 Nov". Aarav's sees the next instalment. The page was not changed, only the data function.
 
 ### T2.2 Ledger on real data
 
-`lib/data/ledger.ts`. Timeline can come in Phase 3.
+A Django view for the S2 view model, and `lib/data/ledger.ts`. Timeline can come in Phase 3.
 
 **Accept:** all values on S2 match B10 for each named student. Centre scope is enforced.
 
 ### T2.3 Payment service
 
-`matching.ts` (B8.8), and `lib/services/payments.ts`: `processPaymentEvent`, plus the shared allocate-and-receipt function.
+`domain/matching.py` (B8.8), and `services/payments.py`: `process_payment_event`, plus the shared allocate-and-receipt function.
 
-**Accept:** `tests/payments.test.ts` passes, and each row of B8.8.
+**Accept:** `test_payments.py` passes, and each row of B8.8.
 
 ### T2.4 Webhook, pay token and mock gateway
 
-`/api/webhooks/payment`, pay token, `/pay/[token]`, `/mock-gateway/[token]`, `submitMockPayment` (signs a real payload and POSTs to the webhook at `APP_URL`), and the result page.
+`POST /api/webhooks/payment` on Django, the pay token, `/pay/[token]`, `/mock-gateway/[token]`, `submitMockPayment` (B9), and the result page.
 
 **Accept:** paying as Ishita's parent marks the instalment paid. A bad signature gets 401. Replaying the event changes nothing. A tampered token gets "not valid". Wrong amount marks nothing paid and creates a queue item, and P2 shows "checking it".
 
 ### T2.5 Receipts
 
-`lib/data/receipts.ts`, `/receipts`, `/receipts/[id]`. Parents see only their own.
+Django views for the receipt list and receipt, `lib/data/receipts.ts`, `/receipts`, `/receipts/[id]`. Parents see only their own.
 
 **Accept:** a ₹15,000 receipt shows taxable ₹12,711.86, CGST ₹1,144.07, SGST ₹1,144.07, total ₹15,000, a GSTIN and a number like `MLV/2026-27/…`. Printing hides controls.
 
 ### T2.6 Counter payments
 
-`recordCounterPayment` and its Modal.
+`record_counter_payment`, `recordCounterPayment` and its Modal.
 
 **Accept:** paying ₹50,000 across ₹15,000, ₹30,000 and ₹30,000 balances allocates per B8.4. Excess goes to the queue.
 
-**Phase 2 exit:** review all money code for floats and missing transactions. Parent can sign in, pay and get a GST receipt on the deployed app.
+**Phase 2 exit:** review all money code for floats and missing transactions. Parent can sign in, pay and get a GST receipt on a local production build.
 
 ## Phase 3. Automation
 
 ### T3.1 Reminder rule and templates
 
-`reminders.ts` (B8.7), and `renderReminder` in both languages.
+`domain/reminders.py` (B8.7), and `renderReminder` in both languages in `lib/reminder-text.ts`.
 
 **Accept:** every row of the B8.7 table passes.
 
 ### T3.2 Reminder service and cron
 
-`lib/services/reminders.ts`, `/api/cron/reminders`, `vercel.json`, and a timeline in S2.
+`services/reminders.py`, `GET /api/cron/reminders`, `backend/vercel.json`, and a timeline in S2. `backend/vercel.json` has no effect until Phase 8, so test the route locally by sending the `Authorization` header.
 
-**Accept:** `tests/reminders.test.ts` passes. Cron without the secret gets 401.
+**Accept:** `test_reminders.py` passes. Cron without the secret gets 401.
 
 ### T3.3 S4 on real data
 
-`lib/data/automation.ts`, Sent, Upcoming, Stopped and Needs a call lists, message Drawer, `resolveUnmatched`, and queue Drawer.
+Django views for S4, and `lib/data/automation.ts`, which fills `body` with `renderReminder`. Sent, Upcoming, Stopped and Needs a call lists, message Drawer, `resolve_unmatched`, and queue Drawer.
 
 **Accept:** every S4 control works. A resolved item shows who resolved it. Concurrent resolution returns an error rather than paying twice.
 
 ### T3.4 Demo controls
 
-`setDemoDate`, `runRemindersNow`, `resetDemo`, `/api/cron/demo-reset`. Actions refuse unless `DEMO_MODE=true`.
+`set_demo_date`, `run_reminders_now`, `reset_demo`, `GET /api/cron/demo-reset`. Views refuse unless `DEMO_MODE=true`.
 
 **Accept, the stop-on-payment proof, as an e2e test:**
 
@@ -1823,33 +1903,33 @@ Needs H6.
 4. Mohit's parent gets the −7 message in Hindi. Nothing goes to Ishita's parent.
 5. Reset restores everything.
 
-**Phase 3 exit:** full security self-review: webhook, cron auth, OTP, access scope. Record findings in `docs/decisions.md` and fix them.
+**Phase 3 exit:** full security self-review: webhook, cron auth, OTP, internal key, access scope. Record findings in `docs/decisions.md` and fix them.
 
 ## Phase 4. Staff tools
 
 ### T4.1 Refund rule
 
-`refund.ts` (B8.5).
+`domain/refund.py` (B8.5).
 
 **Accept:** all 11 rows pass.
 
 ### T4.2 Refund screen and states
 
-`lib/data/refund.ts`, `saveRefundDraft`, `approveRefund`, `markRefundPaid`, `/refund-policy` from `refund_policies`.
+`services/refunds.py`, Django views for `save_refund_draft`, `approve_refund` and `mark_refund_paid`, `lib/data/refund.ts`, and `/refund-policy` from `refund_policies`.
 
-**Accept:** `tests/refund.test.ts` passes. Aarav with withdrawal date 2 Nov shows ₹18,986.31. An open queue item blocks approval, with a link. Approval stops reminders, and P2 shows the refund. **No editable amount exists: `e2e/controls.spec.ts` asserts this.**
+**Accept:** `test_refund.py` passes. Aarav with withdrawal date 2 Nov shows ₹18,986.31. An open queue item blocks approval, with a link. Approval stops reminders, and P2 shows the refund. **No editable amount exists: `e2e/controls.spec.ts` asserts this.**
 
 ### T4.3 Dashboard
 
-`lib/data/dashboard.ts` with SQL aggregates over `instalment_balances`.
+A Django view using ORM aggregates over `instalment_balances`, and `lib/data/dashboard.ts`.
 
 **Before writing:** keep it to four tiles, a table and one bar per row. No other charts. Totals must reconcile.
 
-**Accept:** a test on a small hand-counted data set matches every bucket. Named-student totals match S2. All-centres totals equal the sum of centres. Paying ₹15,000 lowers the numbers by exactly ₹15,000. The page responds in under 2 s with 2,600 students. The MLV-only user sees only MLV.
+**Accept:** a test on a small hand-counted data set matches every bucket. Named-student totals match S2. All-centres totals equal the sum of centres. Paying ₹15,000 lowers the numbers by exactly ₹15,000. The page responds in under 2 s with 2,600 students, using the full seed for this check. The MLV-only user sees only MLV.
 
 ### T4.4 Exports
 
-`dues.csv` and `receipts.csv`, respecting centre scope.
+`dues.csv` and `receipts.csv` (B9), respecting centre scope.
 
 **Accept:** both open as valid CSV. Totals match the dashboard. Fields that could start a spreadsheet formula (`=`, `+`, `-`, `@`) are prefixed with a single quote.
 
@@ -1859,35 +1939,35 @@ Fixtures are deleted by the end of this phase.
 
 ### T5.1 Score
 
-`risk.ts` (B8.9) and `shouldCreateTask`.
+`domain/risk.py` (B8.9) and `should_create_task`.
 
 **Accept:** every row of both tables passes.
 
 ### T5.2 Risk job
 
-`lib/services/risk.ts`, `/api/cron/risk`. Skip withdrawn students. Save flags, create tasks.
+`services/risk.py`, `GET /api/cron/risk`. Skip withdrawn students. Save flags, create tasks.
 
-**Accept:** `tests/risk-isolation.test.ts` passes. Riya has a High task, Arjun is Watch with no task, Neha is under "Not enough data", and Ishita has no flag.
+**Accept:** `test_risk_isolation.py` passes. Riya has a High task, Arjun is Watch with no task, Neha is under "Not enough data", and Ishita has no flag.
 
 ### T5.3 Call brief
 
-`npm install @anthropic-ai/sdk`. Then `callModel`, `generateBrief` and `ensureCallBrief` exactly as in B8.9.
+Add `anthropic` to `requirements.txt`. Then `call_model`, `generate_brief` and `ensure_call_brief` exactly as in B8.9.
 
-**Accept:** `tests/risk-brief.test.ts` passes. With a key set, one real brief is generated and read for sense, and its request contains no name, phone or code. Without a key, the template shows and the app works.
+**Accept:** `test_risk_brief.py` passes. With a key set, one real brief is generated and read for sense, and its request contains no name, phone or code. Without a key, the template shows and the app works.
 
 ### T5.4 S5 on real data
 
-`lib/data/counsellor.ts`, `closeTask`.
+Django views for S5, `close_task`, and `lib/data/counsellor.ts`.
 
 **Accept:** every S5 control works. A false flag needs a note, closes the task, and changes the accuracy figure. Re-running the job does not re-create that task. An accounts session is refused.
 
 ### T5.5 Evaluation
 
-`tests/risk-eval.test.ts`, and put results in `docs/TDD.md` marked as synthetic.
+`test_risk_eval.py`, and put results in `docs/TDD.md` marked as synthetic.
 
 ### T5.6 Remove fixtures
 
-Delete `lib/fixtures/` and the `proto` cookie code.
+Delete `lib/fixtures/`, `lib/clock.ts` and the `proto` cookie code.
 
 **Accept:** grep finds no references. All tests pass.
 
@@ -1919,35 +1999,64 @@ Delete `/proto`, the `?state=` helper, `NEXT_PUBLIC_PROTO` and any related code.
 ### T7.3 Final reviews
 
 - Search history and files for secrets: `git log -p | grep -iE "sk-|password=|secret="`, plus a check that `.env.local` was never committed.
-- Check every action starts with a role check.
+- Confirm `test_access.py` still walks every URL pattern and passes.
+- Remove notes from `docs/progress.md` and `docs/decisions.md` that are about tools and not the product, such as notification sounds and model routing calls.
 - Collect `LIMIT:` comments for the TDD's limits section.
 - Re-run `npm run screens` and the T0.15 passes.
 - Check `docs/third-party.md` is complete, and that no prompt text from `docs/inbox/` was committed.
 
-### T7.4 Production setup
+### T7.4 Documents, ready except for the live link
 
-**Human:** set production env vars in Vercel, with `DEMO_MODE=true`.
-
-**Codex:** apply migrations and seed against `main` when given the URL for that session only, then delete it from the session.
-
-**Accept:** the reviewer's path (D2) works on the live URL in a private window.
-
-### T7.5 Documents
-
-- `docs/TDD.md` per D1, with screenshots.
+- `docs/TDD.md` per D1, with screenshots. Use the placeholder `<LIVE_URL>` where the live link goes. If the human's Gate 0 results have not come yet, use `<GATE_0_RESULTS>` wherever the TDD depends on them, and never invent findings.
 - `scripts/build-tdd.ts`: render it with `marked` to HTML, then to `dist/TDD.pdf` with Playwright's `page.pdf()`. Include the Hindi font.
-- `dist/deployment.md` per D2. **It holds demo passwords, so it is not committed:** add `dist/` to `.gitignore`. Ask the human for the live URL and demo password.
+- `dist/deployment.md` per D2, using the same placeholder. **It holds demo passwords, so it is not committed:** `dist/` is in `.gitignore`.
+
+**Accept:** both documents exist, and the "Run locally" steps in D2 work on a fresh clone.
+
+### Gate 7: Codex stops here
+
+Development is finished. Tell the human: read the TDD and correct what you cannot defend, then start Phase 8 when ready.
+
+## Phase 8. Deploy and hand in (later)
+
+Starts only when the human says so. Nothing in Phases 0 to 7 depends on it.
+
+### T8.1 The Vercel part (human)
+
+The repo becomes two Vercel projects, because Next.js and Django build separately. Both redeploy on each push.
+
+1. **Database.** Create a Neon Postgres project in the region nearest Mumbai. Copy its pooled connection string.
+2. **Django project.** Import the GitHub repo into Vercel, and set Root Directory to `backend`. Add Production environment variables with new values: `DATABASE_URL` from step 1, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS=.vercel.app`, `INTERNAL_API_SECRET`, `PAYMENT_WEBHOOK_SECRET`, `CRON_SECRET`, `SEED_DEMO_PASSWORD` and `DEMO_MODE=true`. `ANTHROPIC_API_KEY` is optional. Deploy, then note its URL.
+3. **Next.js project.** Import the same repo again, leaving Root Directory at the top. Add `BACKEND_URL` with the URL from step 2, the same `INTERNAL_API_SECRET` and `PAYMENT_WEBHOOK_SECRET`, and `DEMO_MODE=true`. Deploy, then set `APP_URL` to this project's URL and redeploy.
+4. **Region.** In each project's Functions settings, choose Mumbai (`bom1`) if your plan offers it. Each page makes a call from Next.js to Django and from Django to the database, so distance adds up.
+5. **Migrate and seed** the production database from your own terminal, not through Codex, so the connection string stays out of the session. Close the terminal afterwards:
+
+```powershell
+$env:DATABASE_URL="<production connection string>"; $env:SEED_DEMO_PASSWORD="<production demo password>"; npm run db:migrate; npm run db:seed
+```
+
+6. **Cron.** In the Django project's Cron Jobs settings, confirm the three jobs appear, and run `reminders` once by hand.
+
+**Accept:** the reviewer's path (D2) works on the live URL in a private window, and the manual cron run returns 200. This setup comes from Vercel's documentation and has not been tried on this repo, so allow time to fix what comes up.
+
+### T8.2 Final documents (Codex)
+
+The human gives the live URL, or says there is none, and the demo password.
+
+- Replace `<LIVE_URL>` in `docs/TDD.md` and `dist/deployment.md`. With no live app, remove that line from the TDD, because the brief asks for the link only "if you deployed it", and describe the deployment in `deployment.md` as planned, not as done.
+- If any `<GATE_0_RESULTS>` placeholder is left, ask the human for the results first.
+- Rebuild `dist/TDD.pdf`, and put the demo password in `dist/deployment.md` only. With no live app and no password, say reviewers use the value they set for `SEED_DEMO_PASSWORD`.
 - Package from the `dist` folder:
 
 ```bash
 npx bestzip submission.zip TDD.pdf deployment.md
 ```
 
-**Accept:** the ZIP holds exactly two files and is at most 25 MB. The first lines of the TDD hold the GitHub URL and live link.
+**Accept:** the ZIP holds exactly two files and is at most 25 MB. The first lines of the TDD hold the GitHub URL and, if there is one, the live link.
 
-### Gate 7: Codex stops here
+### Gate 8: Codex stops here
 
-Tell the human: read the TDD and correct what you cannot defend, test the live app in a private window, confirm the repo is public and the history is intact, then upload. Do H8.
+Tell the human: read the final TDD, test the live app in a private window if there is one, confirm the repo is public and the history is intact, then upload. Do H8.
 
 ---
 
@@ -1957,7 +2066,7 @@ Tell the human: read the TDD and correct what you cannot defend, test the live a
 
 1. **GitHub URL and live link, at the very top**
 2. **Problem and business case.** The working below
-3. **Architecture and why.** One Next.js app and Postgres. What was rejected and why: separate services, a queue, a chart library, an auth library
+3. **Architecture and why.** A Next.js frontend, a Django backend and Postgres. Give the human's own reason for choosing Django, and state the cost honestly: two apps to run and deploy, and an extra network call per page. Explain why the browser talks only to Next.js. What was rejected and why: a queue, a chart library, an auth library, Vercel Services (in beta)
 4. **Data model.** From B7, grouped, with the rule that balance is never stored
 5. **Main flows.** Pay, reminder, refund, flag. A short diagram for each
 6. **How the AI works.** Signals, bands, unsure and wrong behaviour, guard rails, evaluation with its limits
@@ -1993,8 +2102,8 @@ The ₹79.2 lakh leaves out late money, so bringing ₹1.87 crore a year in on t
 
 ## D2. `deployment.md` outline
 
-1. **Run locally:** Node 22, clone, `npm ci`, copy `.env.example` to `.env.local`, fill values, `npm run db:migrate`, `npm run db:seed`, `npm run dev`. **Test on a fresh clone.**
-2. **Deployment:** Vercel plus Neon, cron from `vercel.json`, how migrations and seed are run.
+1. **Run locally:** Node 22, Python 3.14, PostgreSQL 17. Clone, `npm ci`, create `.venv`, `pip install` from `backend/requirements.txt`, create the database, copy `.env.example` to `.env.local`, fill values, `npm run db:migrate`, `npm run db:seed`, then `npm run dev:api` in one terminal and `npm run dev` in another. **Test on a fresh clone.**
+2. **Deployment:** two Vercel projects plus Neon, cron from `backend/vercel.json`, how migrations and seed are run.
 3. **Environment variables:** names only, from B12.
 4. **Demo logins:**
 
@@ -2070,7 +2179,9 @@ Copy into the TDD. Add anything from `docs/decisions.md` that assumes a client f
 - Tally XML is untested on a real install.
 - Hindi was checked by one reader, not professionally reviewed.
 - The app was tested on the devices available, not on a range of low-end phones.
-- Reminder job capacity was tested only on seed volume.
+- Reminder job capacity was tested only on seed volume, and must finish inside the function's 60-second limit.
+- Each page adds a network call from Next.js to Django, and both can start cold on Vercel, so a first load after idle is slower than a single app would be.
+- Django stores session keys as they are in `django_session`. A custom session backend could hash them.
 - Outside components were adapted by hand, and the licence question in A23 is still open.
 
 ## D6. Interview preparation (for the human)

@@ -1,5 +1,7 @@
 # Decisions
 
+- 2026-11-03 — docs/PLAN.md now specifies Django in full, so the earlier notes about overriding a Node backend no longer apply. The build now runs from one prompt. The human's Gate 0 test no longer blocks Phase 1, and its results are applied when given.
+
 - 2026-11-03 — T0.3 uses 12 named students plus 48 fictional sample students (three per batch), not the Phase 1 full 2,600-student seed. Dashboard balance/ageing totals reconcile against these sample ledgers; its 12.1% historical baseline is a labelled synthetic fixture indicator until the Django metric is implemented. Demo mutations and reminder runs change named examples only. All contact data, call outcomes, messages and the sample `llm` brief are fictional/prewritten; no provider was called.
 - 2026-11-03 — Prototype display choice for Gate 0 review: an upcoming instalment within 30 days gets the primary pay view (Mohit); later instalments appear as Next under No dues (Aarav and paid Ishita). This resolves the supplied examples without changing any fee balance or due date. It is a proposed UI choice, not a client policy.
 - 2026-11-03 — Refund prototypes use precomputed B8/B10 snapshots at their supplied dates. Approval/read-only/blocked states are simulated; arbitrary-date calculation and persisted financial snapshots remain Django work after Gate 0. Prototype counter and gateway actions only update demo cookie data, never real money.
