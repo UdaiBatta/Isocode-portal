@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { RiBankCardLine, RiBankLine, RiSmartphoneLine } from "@remixicon/react";
 import { Button } from "@/components/base/buttons/button";
@@ -23,6 +23,7 @@ type Method = (typeof methods)[number]["id"];
 // Long enough for the three steps to read. A real gateway takes longer than the local demo call.
 const PROCESSING_MS = 2100;
 const STEP_MS = 700;
+const noSubscription = () => () => {};
 
 export function MockGateway({ token, language, amount }: { token: string; language: Language; amount: number }) {
   const router = useRouter();
@@ -30,6 +31,8 @@ export function MockGateway({ token, language, amount }: { token: string; langua
   const [failed, setFailed] = useState(false);
   const [method, setMethod] = useState<Method>("upi");
   const inFlight = useRef(false);
+  // False in the server HTML. A tap before the page is interactive would otherwise be lost, which slow phones make likely.
+  const ready = useSyncExternalStore(noSubscription, () => true, () => false);
   function pay(outcome: "success" | "failed" | "wrong_amount") {
     if (inFlight.current) return;
     inFlight.current = true;
@@ -63,14 +66,14 @@ export function MockGateway({ token, language, amount }: { token: string; langua
       </Radio>)}
     </RadioGroup>
     <div className="flex flex-col gap-3">
-      <Button onClick={() => pay("success")} className="w-full text-headline-medium">{t(language, "pay.button", { amount: inr(amount) })}</Button>
+      <Button disabled={!ready} onClick={() => pay("success")} className="w-full text-headline-medium">{t(language, "pay.button", { amount: inr(amount) })}</Button>
       <p className="text-body-2-regular text-text-secondary">{ct(language, "checkout.receiptNote")}</p>
     </div>
     <div className="flex flex-col gap-2">
       <p className="text-body-2-regular text-text-secondary">{t(language, "pay.outcomes")}</p>
       <ButtonGroup aria-label={t(language, "pay.outcomes")} className="w-full">
-        <ButtonGroupItem onClick={() => pay("failed")} className="flex-1">{t(language, "pay.failAction")}</ButtonGroupItem>
-        <ButtonGroupItem onClick={() => pay("wrong_amount")} className="flex-1">{t(language, "pay.wrongAction")}</ButtonGroupItem>
+        <ButtonGroupItem disabled={!ready} onClick={() => pay("failed")} className="flex-1">{t(language, "pay.failAction")}</ButtonGroupItem>
+        <ButtonGroupItem disabled={!ready} onClick={() => pay("wrong_amount")} className="flex-1">{t(language, "pay.wrongAction")}</ButtonGroupItem>
       </ButtonGroup>
     </div>
     {failed ? <p role="alert" className="text-body-regular text-text-error-primary">{t(language, "common.loadFailed")}</p> : null}
