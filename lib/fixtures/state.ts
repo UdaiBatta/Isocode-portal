@@ -18,6 +18,7 @@ const stateSchema = z.object({
   date: dateSchema.optional(),
   languages: z.record(z.string(), z.enum(["hi", "en"])).optional(),
   payments: z.array(paymentSchema).max(12).optional(),
+  paymentResults: z.record(z.string(), z.object({ token: z.string(), result: z.enum(["paid", "failed", "checking", "already_paid"]), amount: moneySchema, receiptId: z.string().nullable() })).optional(),
   held: z.array(z.object({ id: z.string().max(30), amount: moneySchema, on: dateSchema, instalmentId: z.string().max(50).optional(), reason: z.enum(["amount_mismatch", "excess_counter_payment"]) })).max(6).optional(),
   resolved: z.record(z.string(), z.object({ action: z.enum(["match", "reject"]), note: noteSchema })).optional(),
   refunds: z.record(z.string(), refundSchema).optional(),

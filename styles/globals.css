@@ -5,6 +5,10 @@
 .parent-surface :is(button, a) { min-height: 3rem; }
 .parent-surface input:not([type="checkbox"]) { min-height: 3rem; }
 
+.payment-tick path { stroke-dasharray: 40; animation: payment-tick 200ms ease-out both; }
+@keyframes payment-tick { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
+@media print { .parent-surface { max-width: none; padding: 0; } }
+
 html[lang="hi"],
 [lang="hi"] {
   line-height: 1.6;

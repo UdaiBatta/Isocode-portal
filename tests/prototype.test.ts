@@ -15,7 +15,7 @@ import { getAutomation } from "@/lib/data/automation";
 import { getRefund } from "@/lib/data/refund";
 import { getCounsellor } from "@/lib/data/counsellor";
 import { getReceipt, getReceipts } from "@/lib/data/receipts";
-import { getPayDetails } from "@/lib/data/payments";
+import { getPayDetails, getPaymentResult } from "@/lib/data/payments";
 import { submitMockPayment, recordCounterPayment, resolveUnmatched } from "@/lib/actions/payments";
 import { saveRefundDraft, approveRefund, markRefundPaid } from "@/lib/actions/refund";
 import { setDemoDate, runRemindersNow, resetDemo } from "@/lib/actions/demo";
@@ -202,5 +202,17 @@ describe("prototype fixtures and state changes", () => {
     vi.stubEnv("APP_URL", "https://demo.example.test");
     await setLanguage({ language: "en" });
     expect(cookieWrites.slice(-2)).toEqual([{ name: "proto", secure: true }, { name: "lang", secure: true }]);
+  });
+
+  it("reads payment results from recorded attempts and gates the private receipt", async () => {
+    const paid = await submitMockPayment({ token: "STU-0587-3", outcome: "success" });
+    if (!paid.ok) throw new Error("Expected a successful simulated payment");
+    expect(await getPaymentResult("STU-0587-3", "paid")).toBeNull();
+    expect(await getPaymentResult("STU-0219-3", paid.eventId)).toBeNull();
+    expect(await getPaymentResult("STU-0587-3", paid.eventId)).toMatchObject({ result: "paid", amount: 1500000, canViewReceipt: false });
+    session({ role: "parent", phone: "+919000000587", consent: true });
+    expect(await getPaymentResult("STU-0587-3", paid.eventId)).toMatchObject({ canViewReceipt: true });
+    session({ phone: "+919000000412" });
+    expect(await getPaymentResult("STU-0587-3", paid.eventId)).toMatchObject({ canViewReceipt: false });
   });
 });

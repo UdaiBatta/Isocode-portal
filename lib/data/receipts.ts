@@ -2,6 +2,9 @@ import { readProto, fail, requirePrototypeRole } from "@/lib/fixtures/state";
 import { receiptsFor } from "@/lib/fixtures/views";
 import { students } from "@/lib/fixtures/catalog";
 import { parentContext, requireCentre } from "./scope";
+import { ORG } from "@/lib/config";
+
+export async function getReceiptOrganisation() { return ORG; }
 
 export async function getReceipts(studentId?: string) {
   const { state, student } = await parentContext(studentId);

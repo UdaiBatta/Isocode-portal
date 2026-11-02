@@ -41,4 +41,7 @@ test("clear, withdrawn, due-today and preview states render", async ({ page, con
   await page.goto("/dues?state=empty"); await expect(page.getByText("No dues", { exact: true })).toBeVisible();
   await page.goto("/dues?state=loading"); await expect(page.getByRole("status", { name: "Loading" })).toBeVisible();
   await page.goto("/dues?state=error"); await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(page).toHaveURL(/\/dues$/);
+  await expect(page.getByText("Due today", { exact: true })).toBeVisible();
 });

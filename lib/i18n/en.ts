@@ -106,4 +106,8 @@ export const en = {
   "refund.paid": "Refund paid",
   "refund.draft": "Draft",
   "common.back": "Back",
+  "receipt.item": "Item",
+  "receipt.amount": "Amount",
+  "receipt.sample": "(sample)",
+  "receipt.method.other": "Other",
 } as const;

@@ -1,5 +1,5 @@
 import { readProto } from "@/lib/fixtures/state";
-import { ledgerFor, studentFor } from "@/lib/fixtures/views";
+import { ledgerFor, studentFor, receiptsFor } from "@/lib/fixtures/views";
 import { today } from "@/lib/clock";
 
 export async function getPayDetails(token: string) {
@@ -12,4 +12,16 @@ export async function getPayDetails(token: string) {
     if (!instalment || ledger.student.status === "withdrawn") return null;
     return { firstName: studentFor(code).name.split(" ")[0], amount: instalment.balance, dueDate: instalment.dueDate, paid: instalment.balance === 0, payUrl: instalment.payUrl };
   } catch { return null; }
+}
+
+export async function getPaymentResult(token: string, eventId: unknown) {
+  const state = await readProto();
+  if (typeof eventId !== "string") return null;
+  const event = state.paymentResults?.[eventId];
+  if (!event || event.token !== token) return null;
+  const student = studentFor(token.slice(0, 8));
+  const receipt = event.receiptId ? receiptsFor(state, student.code).find((item) => item.id === event.receiptId) : null;
+  const parentCanAccess = state.role === "parent" && state.consent === true && state.phone === student.phone;
+  const staffCanAccess = state.role === "accounts" && (!state.centreId || state.centreId === (student.centreId ?? "MLV"));
+  return { ...event, receiptNumber: receipt?.number ?? null, parentCanAccess, canViewReceipt: parentCanAccess || staffCanAccess };
 }

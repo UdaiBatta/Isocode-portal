@@ -15,18 +15,24 @@ export async function submitMockPayment(input: unknown) {
     const ledger = ledgerFor(state, code, on);
     const instalment = ledger.instalments.find((item) => item.id === token);
     if (!instalment || ledger.student.status === "withdrawn") fail("invalid_link", "This prototype link is not valid.");
-    if (!instalment.balance) return { result: "already_paid", receiptId: null };
-    if (outcome === "failed") return { result: "failed", receiptId: null };
-    if (queueFor(state).some((item) => item.status === "open" && item.suggested?.instalmentId === token)) return { result: "checking", receiptId: null };
+    const finish = (result: "paid" | "failed" | "checking" | "already_paid", amount: number, receiptId: string | null = null) => {
+      const events = state.paymentResults ??= {};
+      const eventId = `demo-event-${Object.keys(events).length + 1}`;
+      events[eventId] = { token, result, amount, receiptId };
+      return { result, receiptId, eventId };
+    };
+    if (!instalment.balance) return finish("already_paid", instalment.amount);
+    if (outcome === "failed") return finish("failed", instalment.balance);
+    if (queueFor(state).some((item) => item.status === "open" && item.suggested?.instalmentId === token)) return finish("checking", instalment.balance);
     if (outcome === "wrong_amount") {
       const held = state.held ??= [];
       if (held.length >= 6) fail("demo_full", "Reset the demo before recording more activity.");
       held.push({ id: `held-${held.length + 1}`, amount: instalment.balance > 100000 ? instalment.balance - 100000 : instalment.balance + 1, on, instalmentId: token, reason: "amount_mismatch" });
-      return { result: "checking", receiptId: null };
+      return finish("checking", held.at(-1)!.amount);
     }
     const payments = state.payments ??= [];
     payments.push({ studentCode: code, amount: instalment.balance, on, method: "gateway", instalmentId: token });
-    return { result: "paid", receiptId: `demo-receipt-${payments.length}` };
+    return finish("paid", instalment.balance, `demo-receipt-${payments.length}`);
   });
 }
 

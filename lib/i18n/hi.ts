@@ -108,4 +108,8 @@ export const hi: Record<keyof typeof en, string> = {
   "refund.paid": "रिफंड दे दिया गया",
   "refund.draft": "ड्राफ्ट",
   "common.back": "वापस",
+  "receipt.item": "विवरण",
+  "receipt.amount": "राशि",
+  "receipt.sample": "(नमूना)",
+  "receipt.method.other": "अन्य",
 };
