@@ -41,11 +41,11 @@ export default async function PaymentResult({ params, searchParams }: { params: 
   ];
   return <PageShell className="flex flex-col gap-6">
     <div className="flex justify-end"><LanguageSwitcher language={language} /></div>
-    <PaymentGraphic kind={outcome.graphic} />
-    <div className="flex flex-col gap-2">
-      <h1 className="text-title-1-medium">{t(language, outcome.title)}</h1>
+    <div className="flex flex-col items-center gap-2 text-center">
+      <PaymentGraphic kind={outcome.graphic} />
+      <h1 className="mt-2 text-title-1-medium text-balance">{t(language, outcome.title)}</h1>
       <Money paise={view.amount} prominent />
-      {outcome.help ? <p className="text-body-regular text-text-secondary">{ct(language, outcome.help)}</p> : null}
+      {outcome.help ? <p className="text-body-regular text-balance text-text-secondary">{ct(language, outcome.help)}</p> : null}
     </div>
     <dl className="flex flex-col gap-2 rounded-2xl bg-background-secondary-default p-4">
       {details.filter(([, value]) => value).map(([label, value]) => <div key={label} className="flex justify-between gap-4 text-body-2-regular"><dt className="shrink-0 text-text-secondary">{label}</dt><dd className="text-end"><bdi>{value}</bdi></dd></div>)}
@@ -55,6 +55,6 @@ export default async function PaymentResult({ params, searchParams }: { params: 
       {view.result === "failed" ? <ButtonLink href={`/mock-gateway/${token}`} className="w-full text-headline-medium">{t(language, "common.retry")}</ButtonLink> : null}
       <ButtonLink href={view.parentCanAccess ? `/dues?student=${encodeURIComponent(token.slice(0, 8))}` : "/login"} variant="secondary" className="w-full">{t(language, "pay.backToDues")}</ButtonLink>
     </div>
-    <p className="text-body-2-regular text-text-secondary">{ct(language, "result.testNote")}</p>
+    <p className="text-center text-body-2-regular text-text-secondary">{ct(language, "result.testNote")}</p>
   </PageShell>;
 }
