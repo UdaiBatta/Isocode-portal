@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AuthCard } from "@/components/application/auth/auth-card";
-import { Input } from "@/components/base/input/input";
-import { InputOtp } from "@/components/base/input-otp/input-otp";
+import { AuthCardFrame as AuthCard } from "@/components/application/auth/auth-card-frame";
 import { Button } from "@/components/base/buttons/button";
 import { LinkButton } from "@/components/base/buttons/link-button";
 import { requestOtp, verifyOtp } from "@/lib/actions/auth";
 import { t } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
+import { cx } from "@/utils/cx";
 
-export function ParentLogin({ language, next, demo }: { language: Language; next: string; demo: boolean }) {
+const InputOtp = lazy(() => import("@/components/base/input-otp/input-otp").then((module) => ({ default: module.InputOtp })));
+
+export function ParentLogin({ language, next, demo, tagline }: { language: Language; next: string; demo: boolean; tagline: string }) {
   const router = useRouter();
   const [phone, setPhone] = useState("");
   const [step, setStep] = useState<"phone" | "code">("phone");
@@ -64,14 +65,14 @@ export function ParentLogin({ language, next, demo }: { language: Language; next
   }
 
   return (
-    <AuthCard title={t(language, step === "phone" ? "login.title" : "login.codeTitle")} description={null} providers={[]} className="max-w-none rounded-none border-0 p-0 shadow-none sm:p-0 [&_h1]:text-title-1-medium">
+    <AuthCard title={t(language, step === "phone" ? "login.title" : "login.codeTitle")} description={step === "phone" ? tagline : null} className="max-w-none gap-8 rounded-none border-0 p-0 shadow-none sm:p-0 [&_h1]:text-title-1-medium">
       <form noValidate onSubmit={(event) => { event.preventDefault(); if (step === "phone") send(); else verify(code); }} className="flex flex-col gap-6" aria-busy={pending}>
-        {step === "phone" ? <Input type="tel" name="phone" inputMode="tel" autoComplete="tel-national" label={<span className="text-headline-medium">{t(language, "login.phone")}</span>} placeholder="90000 00587" leadingAddon={<span className="text-text-primary">+91</span>} value={phone} onChange={setPhone} isInvalid={!!error} validationBehavior="aria" isDisabled={pending} fieldClassName="min-h-12" inputClassName="text-headline-regular placeholder:text-text-secondary" /> : <>
+        {step === "phone" ? <label htmlFor="parent-phone" className="flex flex-col gap-2 text-headline-medium">{t(language, "login.phone")}<span className={cx("flex min-h-12 items-center gap-3 rounded-2lg border bg-background-primary-default px-3 shadow-xs focus-within:ring-2 focus-within:ring-border-focus-ring", error ? "border-border-error-default" : "border-border-button-default")}><span className="text-body-regular text-text-primary">+91</span><input id="parent-phone" type="tel" name="phone" inputMode="tel" autoComplete="tel-national" placeholder="90000 00587" value={phone} onChange={(event) => setPhone(event.target.value)} aria-invalid={!!error} aria-describedby={error ? "parent-login-error" : undefined} disabled={pending} className="min-w-0 flex-1 bg-transparent text-headline-regular text-text-primary outline-none placeholder:text-text-secondary" /></span></label> : <>
           <p className="text-body-regular text-text-secondary">{t(language, "login.codeSentTo", { phone })}</p>
-          <InputOtp value={code} onChange={setCode} onComplete={verify} isDisabled={pending} isInvalid={!!error} aria-label={t(language, "login.codeTitle")} getDigitLabel={(n, total) => t(language, "login.digit", { n, total })} className="gap-1" />
+          <Suspense fallback={<p role="status" className="text-body-regular">{t(language, "common.loading")}</p>}><InputOtp value={code} onChange={setCode} onComplete={verify} isDisabled={pending} isInvalid={!!error} aria-label={t(language, "login.codeTitle")} getDigitLabel={(n, total) => t(language, "login.digit", { n, total })} className="gap-1" /></Suspense>
           {demo ? <p className="text-body-regular text-text-secondary">{t(language, "login.demoCode", { code: "123456" })}</p> : null}
         </>}
-        {error ? <p role="alert" className="text-body-regular text-text-error-primary">{message(error)}</p> : null}
+        {error ? <p id="parent-login-error" role="alert" className="text-body-regular text-text-error-primary">{message(error)}</p> : null}
         <Button type="submit" disabled={pending || (step === "code" && code.length !== 6)} className="w-full text-headline-medium">{t(language, pending ? "common.loading" : step === "phone" ? "login.sendCode" : "login.continue")}</Button>
         {step === "code" ? <>
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -79,7 +80,7 @@ export function ParentLogin({ language, next, demo }: { language: Language; next
             <LinkButton disabled={pending} variant="secondary" onClick={() => { setStep("phone"); setCode(""); setError(""); }}>{t(language, "login.changeNumber")}</LinkButton>
           </div>
           <p className="text-body-regular text-text-secondary">{t(language, "login.noCodeHelp")}</p>
-        </> : <LinkButton href="/staff/login" variant="secondary">{t(language, "login.staff")}</LinkButton>}
+        </> : <LinkButton href="/staff/login" variant="secondary" className="self-center">{t(language, "login.staff")}</LinkButton>}
       </form>
     </AuthCard>
   );

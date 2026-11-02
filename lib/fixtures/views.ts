@@ -3,7 +3,7 @@ import { refundSnapshots, refundPolicy } from "./operations";
 import type { ProtoState } from "./state";
 import type { AgeingRow, AutomationVM, CounsellorVM, DashboardVM, DuesVM, InstalmentVM, LedgerVM, ReceiptVM, RefundVM, ReminderRow, TaskRow, StudentFilters, StudentRowVM, StudentStatus, StudentsVM } from "@/lib/types";
 import { inr, dateLabel } from "@/lib/format";
-import { t } from "@/lib/i18n";
+import { renderReminder } from "@/lib/reminder-text";
 
 export { refundPolicy };
 const reminderSteps = [-7, -3, 0, 3, 7, 15, 30];
@@ -214,11 +214,11 @@ export function automationFor(state: ProtoState, today: string): AutomationVM {
     for (const instalment of ledger.instalments) {
       const timeline = ledger.timeline.find((item) => item.instalmentId === instalment.id)!;
       const language = state.languages?.[source.phone] ?? source.language;
-      const message = (step: number) => t(language, step < 0 ? "reminder.before" : step > 0 ? "reminder.after" : "reminder.today", { student: source.name, amount: inr(instalment.balance || instalment.amount), date: dateLabel(instalment.dueDate, language, today), link: `/pay/${instalment.id}` });
+      const message = (step: number) => renderReminder(language, step, { student: source.name, amount: inr(instalment.balance || instalment.amount), date: dateLabel(instalment.dueDate, language, today), link: `/pay/${instalment.id}` });
       const row: ReminderRow = { instalmentId: instalment.id, studentCode: source.code, studentName: source.name, step: timeline.next?.step ?? null, on: timeline.next?.on ?? null, language, amount: instalment.balance, body: timeline.next ? message(timeline.next.step) : null, stoppedReason: timeline.stopped };
       result.sent.push(...timeline.sent.map((entry) => {
         const amount = state.sent?.find((sent) => sent.instalmentId === instalment.id && sent.step === entry.step)?.amount ?? (source.code === "STU-0587" && entry.on >= instalment.dueDate ? 1500000 : instalment.amount);
-        return { ...row, amount, step: entry.step, on: entry.on, language: entry.language, body: t(entry.language, entry.step < 0 ? "reminder.before" : entry.step > 0 ? "reminder.after" : "reminder.today", { student: source.name, amount: inr(amount), date: dateLabel(instalment.dueDate, entry.language, today), link: `/pay/${instalment.id}` }), stoppedReason: null };
+        return { ...row, amount, step: entry.step, on: entry.on, language: entry.language, body: renderReminder(entry.language, entry.step, { student: source.name, amount: inr(amount), date: dateLabel(instalment.dueDate, entry.language, today), link: `/pay/${instalment.id}` }), stoppedReason: null };
       }));
       if (row.stoppedReason) result.stopped.push(row);
       else if (row.on && daysBetween(row.on, today) <= 7) result.upcoming.push(row);

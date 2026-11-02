@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AuthCard } from "@/components/application/auth/auth-card";
+import { AuthCardFrame as AuthCard } from "@/components/application/auth/auth-card-frame";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { Button } from "@/components/base/buttons/button";
 import { LinkButton } from "@/components/base/buttons/link-button";
@@ -18,7 +18,7 @@ export function ParentConsent({ language, students, declined, next }: { language
   const [pending, startTransition] = useTransition();
   const names = students.map((student) => student.name).join(" / ");
   if (declined) return <div className="flex flex-col gap-8"><p className="text-headline-regular">{t(language, "consent.declined")}</p><LogoutButton language={language} /></div>;
-  return <AuthCard title={t(language, "consent.title")} description={null} providers={[]} className="max-w-none rounded-none border-0 p-0 shadow-none sm:p-0 [&_h1]:text-title-1-medium">
+  return <AuthCard title={t(language, "consent.title")} description={null} className="max-w-none rounded-none border-0 p-0 shadow-none sm:p-0 [&_h1]:text-title-1-medium">
     <form onSubmit={(event) => { event.preventDefault(); if (!agree || pending) return; startTransition(async () => {
       try { const result = await grantConsent({ studentIds: students.map((student) => student.id), wordingVersion: "v1" }); if (result.ok) { router.push(next); router.refresh(); } else setFailed(true); }
       catch { setFailed(true); }
