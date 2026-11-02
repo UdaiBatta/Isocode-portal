@@ -176,7 +176,7 @@
 
   /* Text */
   --color-text-primary:         var(--color-neutral-950);
-  --color-text-secondary:       var(--color-neutral-500);
+  --color-text-secondary:       var(--color-neutral-600);
   --color-text-tertiary:        var(--color-neutral-400);
   --color-text-disabled:        var(--color-neutral-300);
   --color-text-disabled-danger: var(--color-red-300);

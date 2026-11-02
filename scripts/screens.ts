@@ -37,6 +37,7 @@ async function main() {
           const page = await context.newPage();
           for (const route of selected) {
             await context.clearCookies({ name: "proto" });
+            if (route.path.startsWith("/staff/") && route.path !== "/staff/login") await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "accounts" })), url: origin }]);
             if (["/consent", "/receipts"].includes(route.path) || route.name === "receipt" || route.name === "payment-result") {
               const state = {
                 role: "parent", phone: "+919000000587", consent: route.path !== "/consent", otp: { attempts: 0, sends: 1, verified: true },
@@ -51,6 +52,7 @@ async function main() {
               const url = new URL(route.path, origin);
               if (state !== "normal") url.searchParams.set("state", state);
               await page.goto(url.toString());
+              await page.waitForLoadState("networkidle");
               await page.evaluate(() => document.fonts.ready);
               assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Horizontal overflow: ${url} at ${width}px`);
               const name = route.name.replaceAll("/", "-");

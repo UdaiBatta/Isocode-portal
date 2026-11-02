@@ -1,5 +1,7 @@
 # Decisions
 
+- 2026-11-03 — Accessibility checking found BoardUI secondary text at 4.42:1 on staff cards and 3.97:1 on neutral chips. The light-theme secondary-text token now uses neutral 600, keeping the existing semantic roles while meeting contrast requirements.
+
 - 2026-11-03 — docs/PLAN.md now specifies Django in full, so the earlier notes about overriding a Node backend no longer apply. The build now runs from one prompt. The human's Gate 0 test no longer blocks Phase 1, and its results are applied when given.
 
 - 2026-11-03 — T0.3 uses 12 named students plus 48 fictional sample students (three per batch), not the Phase 1 full 2,600-student seed. Dashboard balance/ageing totals reconcile against these sample ledgers; its 12.1% historical baseline is a labelled synthetic fixture indicator until the Django metric is implemented. Demo mutations and reminder runs change named examples only. All contact data, call outcomes, messages and the sample `llm` brief are fictional/prewritten; no provider was called.
