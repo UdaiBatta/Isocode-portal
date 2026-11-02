@@ -1,5 +1,7 @@
 # Progress
 
+- 2026-11-03 — T0.12 complete: gated /proto with normal/loading/empty/error links for every product route, plus gated /demo roles, sample sign-ins and six-step reviewer path. Prototype links prepare only allowlisted sample roles; the result link records an actual mock attempt. All 17 normal index links pass on both widths; counsellor role denial passes. 31 unit tests, type/lint and production build pass; screenshots inspected. No copied design inputs were available. Next: T0.13 motion, then T0.14 automated sweep and T0.15 Gate 0 review.
+
 - 2026-11-03 — T0.11 complete: S5 accuracy, open/closed calls, Watch and Not enough data, reason/brief Drawer, parent tel link and noted outcomes. False flag needs a note, closes the task and updates accuracy; no fee amounts or actions are rendered. Both phone/desktop outcome paths pass; 30 unit tests, type/lint checks and production build pass. Screens inspected. Summaries and scores remain clearly synthetic fixtures until Phase 5. Next: T0.12 index and reviewer demo.
 
 - 2026-11-03 — T0.10 complete: S4 reminder tabs/filters and exact-message Drawer, unmatched queue with student/instalment choice and required rejection notes, demo date/run/reset controls. UI test proves paid Ishita is stopped and Kavya's queue item matches with a receipt; both widths and axe pass. 30 unit tests, type/lint checks and production build pass; responsive screenshots inspected. Reminder sending remains cookie simulation. Next: T0.11 counsellor tasks.

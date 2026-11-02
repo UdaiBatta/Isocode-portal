@@ -1,5 +1,7 @@
 # Decisions
 
+- 2026-11-03 — The prototype index has an allowlisted, NEXT_PUBLIC_PROTO-gated role-preparation action so reviewer links work across parent/accounts/counsellor screens. It preserves financial changes; its payment-result link explicitly records a mock attempt. This helper is prototype-only and must be removed with the prototype controls.
+
 - 2026-11-03 — Accessibility checking found BoardUI secondary text at 4.42:1 on staff cards and 3.97:1 on neutral chips. The light-theme secondary-text token now uses neutral 600, keeping the existing semantic roles while meeting contrast requirements.
 
 - 2026-11-03 — docs/PLAN.md now specifies Django in full, so the earlier notes about overriding a Node backend no longer apply. The build now runs from one prompt. The human's Gate 0 test no longer blocks Phase 1, and its results are applied when given.

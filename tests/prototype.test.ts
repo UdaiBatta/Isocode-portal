@@ -16,6 +16,8 @@ import { getRefund } from "@/lib/data/refund";
 import { getCounsellor } from "@/lib/data/counsellor";
 import { getReceipt, getReceipts } from "@/lib/data/receipts";
 import { getPayDetails, getPaymentResult } from "@/lib/data/payments";
+import { openPrototypeRoute } from "@/lib/actions/prototype";
+import { getAuthState } from "@/lib/data/auth";
 import { submitMockPayment, recordCounterPayment, resolveUnmatched } from "@/lib/actions/payments";
 import { saveRefundDraft, approveRefund, markRefundPaid } from "@/lib/actions/refund";
 import { setDemoDate, runRemindersNow, resetDemo } from "@/lib/actions/demo";
@@ -31,6 +33,13 @@ beforeEach(() => { jar.clear(); cookieWrites.length = 0; vi.stubEnv("NEXT_PUBLIC
 afterEach(() => vi.unstubAllEnvs());
 
 describe("prototype fixtures and state changes", () => {
+  it("bounds reviewer role preparation to known prototype links", async () => {
+    expect(await openPrototypeRoute({ key: "../../admin", state: "normal" })).toMatchObject({ ok: false });
+    expect(await openPrototypeRoute({ key: "consent", state: "normal" })).toMatchObject({ ok: true, next: "/consent" });
+    expect(await getAuthState()).toMatchObject({ role: "parent", consent: false });
+    expect(await openPrototypeRoute({ key: "dashboard", state: "empty" })).toMatchObject({ ok: true, next: "/staff/dashboard?state=empty" });
+    expect(await getAuthState()).toMatchObject({ role: "accounts" });
+  });
   it("matches the three supplied sample rows and keeps every batch populated", async () => {
     expect(namedStudents).toHaveLength(12);
     expect(centres).toHaveLength(4);
