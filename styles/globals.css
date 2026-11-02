@@ -4,6 +4,12 @@
 
 .parent-surface :is(button, a) { min-height: 3rem; }
 .parent-surface input:not([type="checkbox"]) { min-height: 3rem; }
+.parent-surface a:active { transform: scale(0.98); }
+.parent-surface a { transition: transform 150ms ease-out; }
+.refund-lines { animation: calculation-in 150ms ease-out both; }
+.reminder-new { animation: reminder-highlight 1s ease-out both; }
+@keyframes calculation-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes reminder-highlight { 0%, 85% { background: var(--color-accent-50); } 100% { background: transparent; } }
 
 .payment-tick path { stroke-dasharray: 40; animation: payment-tick 200ms ease-out both; }
 @keyframes payment-tick { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
@@ -17,8 +23,10 @@ html[lang="hi"],
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  .blur-word { opacity: 1 !important; filter: none !important; transform: none !important; }
 }
 
 /* ---------------------------------------------------------------------------

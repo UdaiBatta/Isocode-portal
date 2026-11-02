@@ -2,7 +2,7 @@
 
 import { useTemplateCopy } from "@/components/foundations/template-copy/template-copy";
 
-import { useState, type ComponentType } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import {
   RiArrowDownCircleFill,
   RiArrowUpCircleFill,
@@ -48,7 +48,7 @@ export type StatTone = "blue" | "orange" | "purple" | "pink" | "sky" | "emerald"
 export type Stat = {
   icon: IconComponent;
   label: string;
-  value: string;
+  value: ReactNode;
   delta: string;
   deltaColor: "lime" | "rose" | "neutral";
   /** Footer variant: icon tile tint (defaults to blue). */

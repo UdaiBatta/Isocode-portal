@@ -13,6 +13,7 @@ import { ButtonGroup, ButtonGroupItem } from "@/components/base/buttons/button-g
 import { LinkButton } from "@/components/base/buttons/link-button";
 import { AgeingBar } from "./AgeingBar";
 import { EmptyState } from "./EmptyState";
+import CountUp from "@/components/vendor/reactbits/CountUp/CountUp";
 import { exportCsv } from "@/lib/actions/exports";
 import { inr, dateLabel } from "@/lib/format";
 import type { AgeingRow, DashboardVM } from "@/lib/types";
@@ -20,6 +21,7 @@ import type { AgeingRow, DashboardVM } from "@/lib/types";
 type Directory = { centres: { id: string; name: string }[]; students: { code: string; name: string }[] };
 export function DuesDashboard({ view, directory, filters }: { view: DashboardVM; directory: Directory; filters: { group: "centre" | "batch"; centre?: string; batch?: string; q?: string } }) {
   const router = useRouter();
+  const counterKey = `dues:${filters.centre ?? "all"}:${filters.batch ?? "all"}`;
   const [expanded, setExpanded] = useState<string[]>([]);
   const [query, setQuery] = useState(filters.q ?? "");
   const [pending, startTransition] = useTransition();
@@ -50,10 +52,10 @@ export function DuesDashboard({ view, directory, filters }: { view: DashboardVM;
   return <>
     <header className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-title-1-medium">Dues dashboard</h1><p className="mt-2 text-body-regular text-text-secondary">Across centres and batches · {dateLabel(view.today, "en", view.today)}</p></div></header>
     <StatCards stats={[
-      { icon: RiCoinsLine, label: "Total outstanding", value: inr(view.totals.outstanding), delta: "Includes not due", deltaColor: "neutral" },
-      { icon: RiTimeLine, label: "Overdue", value: inr(view.totals.overdue), delta: "Past due dates", deltaColor: "neutral" },
-      { icon: RiPercentLine, label: "Over 60 days late", value: `${view.totals.over60Pct}%`, delta: "Target 6%", deltaColor: "neutral" },
-      { icon: RiRefund2Line, label: "Refunds due", value: String(view.totals.refundsDue), delta: `${view.totals.refundsLate} past 10 days`, deltaColor: view.totals.refundsLate ? "rose" : "neutral" },
+      { icon: RiCoinsLine, label: "Total outstanding", value: <CountUp to={view.totals.outstanding} storageKey={`${counterKey}:outstanding`} />, delta: "Includes not due", deltaColor: "neutral" },
+      { icon: RiTimeLine, label: "Overdue", value: <CountUp to={view.totals.overdue} storageKey={`${counterKey}:overdue`} />, delta: "Past due dates", deltaColor: "neutral" },
+      { icon: RiPercentLine, label: "Over 60 days late", value: <CountUp to={view.totals.over60Pct} format="percent" storageKey={`${counterKey}:late`} />, delta: "Target 6%", deltaColor: "neutral" },
+      { icon: RiRefund2Line, label: "Refunds due", value: <CountUp to={view.totals.refundsDue} format="integer" storageKey={`${counterKey}:refunds`} />, delta: `${view.totals.refundsLate} past 10 days`, deltaColor: view.totals.refundsLate ? "rose" : "neutral" },
     ]} />
     <div className="flex flex-wrap items-end gap-4">
       <SegmentedControl aria-label="Group dues" selectedKeys={[filters.group]} onSelectionChange={(keys) => navigate({ group: String(Array.from(keys)[0]), batch: undefined })}><SegmentedControlItem id="centre">By centre</SegmentedControlItem><SegmentedControlItem id="batch">By batch</SegmentedControlItem></SegmentedControl>
