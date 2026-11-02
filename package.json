@@ -8,9 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "check": "npm run lint && npm run typecheck && npm test",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "screens": "tsx scripts/screens.ts"
   },
   "dependencies": {
     "@internationalized/date": "^3.12.4",

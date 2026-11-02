@@ -2,6 +2,8 @@
 
 Spec: docs/PLAN.md. Progress: docs/progress.md. Decisions: docs/decisions.md.
 
+Current execution sequence: docs/PROMPTS.md. Prompts 1–12 run locally; do not deploy or wait for Vercel. Complete only the current prompt, push its commits and stop. Gate 0 still precedes backend implementation.
+
 ## Active stack decision
 
 The human selected React + BoardUI with a Django + PostgreSQL backend. Next.js is the frontend scaffold only. Django owns production authentication, permissions, validation, ORM, migrations, money transactions, reminders and risk scoring. This overrides the Node backend, Drizzle, pg and PGlite instructions in PLAN.md. Preserve all B8 expected values when translating to Python. Read docs/decisions.md before implementing a phase.

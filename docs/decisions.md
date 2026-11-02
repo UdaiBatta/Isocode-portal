@@ -1,5 +1,8 @@
 # Decisions
 
+- 2026-11-03 — The new docs/PROMPTS.md supersedes the original development-time H4/Vercel pause. Prompts 1–12 are local only. This session completes Prompt 1 (T0.1 already verified, then T0.2–T0.3), pushes task commits and stops. The previously selected Django backend stays in force despite old Node/PGlite references in the prompt collection. No hosting configuration is changed.
+- 2026-11-03 — Prompt 1 explicitly brings the screenshot script forward from T0.14. It discovers existing static routes; dynamic examples will be added with their actual screens. The preview helper and root loading/error/empty states use the same shared components the screens will use. The five shared loading/status/empty strings absent from B6 were added in both languages; the supplied dictionaries themselves were extracted directly from PLAN.md.
+
 - 2026-11-02 — The attached build spec is the working plan. The client brief takes precedence if they conflict. No application design or client facts have been added.
 - 2026-11-02 — Follow Phase 0 first and pause at the human setup steps under A3.6. Do not replace missing BoardUI components with lookalikes, install another UI system, or start backend work before Gate 0.
 - 2026-11-02 — No sub-agents or cloud tasks: A5 explicitly prohibits them unless the human asks. No paid model calls have been made during preflight.
