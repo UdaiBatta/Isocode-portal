@@ -164,7 +164,7 @@ export function Tab({ className, children, icon: Icon, count, ref, ...props }: T
                 "inline-flex items-center justify-center rounded-sm px-1 py-px text-caption-1-medium whitespace-nowrap",
                 isSelected
                   ? "bg-tab-count-selected-background text-accent-600"
-                  : "bg-black/10 text-text-primary opacity-50",
+                  : "bg-background-tertiary-default text-text-primary",
               )}
             >
               {count}

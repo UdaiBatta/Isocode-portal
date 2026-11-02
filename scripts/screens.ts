@@ -56,6 +56,7 @@ async function main() {
               await page.goto(url.toString());
               await page.waitForLoadState("networkidle");
               await page.evaluate(() => document.fonts.ready);
+              await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
               assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Horizontal overflow: ${url} at ${width}px`);
               const name = route.name.replaceAll("/", "-");
               await page.screenshot({ path: `docs/screens/${name}-${language}-${state}-${width}.png`, fullPage: true });
