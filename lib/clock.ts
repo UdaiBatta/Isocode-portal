@@ -1,3 +1,5 @@
+import { readProto } from "@/lib/fixtures/state";
+
 export async function today(): Promise<string> {
-  return "2026-11-02";
+  return (await readProto()).date ?? "2026-11-02";
 }

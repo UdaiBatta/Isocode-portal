@@ -1,5 +1,11 @@
 export type Language = "hi" | "en";
 
+export interface ReceiptSummaryVM { id: string; number: string; issuedOn: string; amount: number }
+export interface ReceiptVM extends ReceiptSummaryVM {
+  student: { code: string; name: string; batch: string; centre: string };
+  method: string; taxable: number; cgst: number; sgst: number;
+}
+
 export interface InstalmentVM {
   id: string; seq: number; dueDate: string; amount: number; paid: number; balance: number;
   status: "paid" | "overdue" | "due_today" | "upcoming";
