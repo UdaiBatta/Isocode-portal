@@ -10,7 +10,7 @@ export async function getPayDetails(token: string) {
     const ledger = ledgerFor(state, code, await today());
     const instalment = ledger.instalments.find((item) => item.id === token);
     if (!instalment || ledger.student.status === "withdrawn") return null;
-    return { firstName: studentFor(code).name.split(" ")[0], amount: instalment.balance, dueDate: instalment.dueDate, paid: instalment.balance === 0, payUrl: instalment.payUrl };
+    return { firstName: studentFor(code).name.split(" ")[0], seq: instalment.seq, amount: instalment.balance, dueDate: instalment.dueDate, paid: instalment.balance === 0, payUrl: instalment.payUrl };
   } catch { return null; }
 }
 
@@ -23,5 +23,6 @@ export async function getPaymentResult(token: string, eventId: unknown) {
   const receipt = event.receiptId ? receiptsFor(state, student.code).find((item) => item.id === event.receiptId) : null;
   const parentCanAccess = state.role === "parent" && state.consent === true && state.phone === student.phone;
   const staffCanAccess = state.role === "accounts" && (!state.centreId || state.centreId === (student.centreId ?? "MLV"));
-  return { ...event, receiptNumber: receipt?.number ?? null, parentCanAccess, canViewReceipt: parentCanAccess || staffCanAccess };
+  const reference = event.on ? `TXN-${event.on.replaceAll("-", "")}-${eventId.split("-").at(-1)!.padStart(4, "0")}` : null;
+  return { ...event, firstName: student.name.split(" ")[0], seq: Number(token.at(-1)), reference, receiptNumber: receipt?.number ?? null, parentCanAccess, canViewReceipt: parentCanAccess || staffCanAccess };
 }

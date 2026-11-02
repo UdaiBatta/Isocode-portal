@@ -18,7 +18,7 @@ for (const language of ["hi", "en"] as Language[]) test(`parent signs in, pays a
   await expect(page).toHaveURL(/\/dues$/);
   await page.getByRole("link", { name: t(language, "dues.pay", { amount: "₹15,000" }), exact: true }).click();
   await expect(page.getByRole("note")).toHaveText(t(language, "pay.testMode"));
-  await page.getByRole("button", { name: t(language, "pay.successAction"), exact: true }).click();
+  await page.getByRole("button", { name: t(language, "pay.button", { amount: "₹15,000" }), exact: true }).click();
   await expect(page).toHaveURL(/\/pay\/STU-0587-3\/result\?e=demo-event-/);
   await expect(page.getByRole("heading", { name: t(language, "pay.success"), exact: true })).toBeVisible();
   await expect(page.getByText("₹15,000", { exact: true })).toBeVisible();
@@ -65,7 +65,7 @@ test("public payment is minimal, result URLs cannot fake success, receipts requi
   await expect(page.getByRole("heading", { name: "Fee payment for Ishita", exact: true })).toBeVisible();
   await expect(page.getByText("Ishita Sharma", { exact: true })).toHaveCount(0);
   await page.getByRole("link", { name: "Pay ₹15,000", exact: true }).click();
-  await page.getByRole("button", { name: "Pay successfully", exact: true }).click();
+  await page.getByRole("button", { name: "Pay ₹15,000", exact: true }).click();
   await expect(page.getByRole("link", { name: "View receipt", exact: true })).toHaveAttribute("href", /\/login\?next=/);
   await page.getByRole("link", { name: "View receipt", exact: true }).click();
   await expect(page).toHaveURL(/\/login\?next=/);

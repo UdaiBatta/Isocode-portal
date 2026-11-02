@@ -11,7 +11,7 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) test(`staff to
     const before = await page.evaluate(() => Number(sessionStorage.getItem("dues:all:all:outstanding")));
     expect(before).toBeGreaterThan(1500000);
     await page.goto("/mock-gateway/STU-0587-3");
-    await page.getByRole("button", { name: t("hi", "pay.successAction"), exact: true }).click();
+    await page.getByRole("button", { name: t("hi", "pay.button", { amount: "₹15,000" }), exact: true }).click();
     await expect(page).toHaveURL(/\/result\?e=/);
     await page.goto("/staff/dashboard"); await page.waitForLoadState("networkidle");
     await page.waitForTimeout(650);

@@ -6,7 +6,7 @@ export const codeSchema = z.string().regex(/^STU-\d{4}$/);
 export const dateSchema = z.iso.date();
 export const moneySchema = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
 const noteSchema = z.string().max(300);
-const paymentSchema = z.object({ studentCode: codeSchema, amount: moneySchema, on: dateSchema, method: z.enum(["gateway", "cash", "cheque", "bank"]), instalmentId: z.string().max(50).optional() });
+const paymentSchema = z.object({ studentCode: codeSchema, amount: moneySchema, on: dateSchema, method: z.enum(["upi", "card", "netbanking", "gateway", "cash", "cheque", "bank"]), instalmentId: z.string().max(50).optional() });
 const refundSchema = z.object({ withdrawalDate: dateSchema, reason: z.enum(["Personal", "Moved city", "Changed course", "Health", "Other"]), status: z.enum(["draft", "approved", "paid"]) });
 const stateSchema = z.object({
   role: z.enum(["parent", "accounts", "counsellor"]).optional(),
@@ -18,7 +18,7 @@ const stateSchema = z.object({
   date: dateSchema.optional(),
   languages: z.record(z.string(), z.enum(["hi", "en"])).optional(),
   payments: z.array(paymentSchema).max(12).optional(),
-  paymentResults: z.record(z.string(), z.object({ token: z.string(), result: z.enum(["paid", "failed", "checking", "already_paid"]), amount: moneySchema, receiptId: z.string().nullable() })).optional(),
+  paymentResults: z.record(z.string(), z.object({ token: z.string(), result: z.enum(["paid", "failed", "checking", "already_paid"]), amount: moneySchema, receiptId: z.string().nullable(), method: z.enum(["upi", "card", "netbanking"]).optional(), on: dateSchema.optional() })).optional(),
   held: z.array(z.object({ id: z.string().max(30), amount: moneySchema, on: dateSchema, instalmentId: z.string().max(50).optional(), reason: z.enum(["amount_mismatch", "excess_counter_payment"]) })).max(6).optional(),
   resolved: z.record(z.string(), z.object({ action: z.enum(["match", "reject"]), note: noteSchema })).optional(),
   refunds: z.record(z.string(), refundSchema).optional(),

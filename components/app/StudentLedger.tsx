@@ -18,6 +18,7 @@ import { Tooltip, TooltipTrigger } from "@/components/base/tooltip/tooltip";
 import { toast } from "@/components/base/toast/toast";
 import { recordCounterPayment } from "@/lib/actions/payments";
 import { inr, dateLabel, rupeesToPaise } from "@/lib/format";
+import { methodLabel } from "@/lib/i18n/checkout";
 import type { InstalmentVM, LedgerVM } from "@/lib/types";
 import { StatusChip } from "./StatusChip";
 import { EmptyState } from "./EmptyState";
@@ -39,7 +40,7 @@ export function StudentLedger({ view, today }: { view: LedgerVM; today: string }
   ];
   const payments: ColumnDef<LedgerVM["payments"][number]>[] = [
     { accessorKey: "on", header: "Date", cell: ({ row }) => dateLabel(row.original.on, "en", today) },
-    { accessorKey: "method", header: "Method" },
+    { accessorKey: "method", header: "Method", cell: ({ row }) => methodLabel("en", row.original.method) },
     { accessorKey: "amount", header: "Amount", cell: ({ row }) => <span className="tabular-nums">{inr(row.original.amount)}</span> },
     { accessorKey: "receiptId", header: "Receipt", cell: ({ row }) => row.original.receiptId ? <LinkButton variant="secondary" href={`/receipts/${row.original.receiptId}`}>View receipt</LinkButton> : "—" },
   ];
@@ -54,7 +55,7 @@ export function StudentLedger({ view, today }: { view: LedgerVM; today: string }
     </ButtonGroup>
     <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Fee plan</h2><p className="text-body-regular">Gross {inr(view.plan.gross)} · Discount {inr(view.plan.discount)}{view.plan.discountReason ? ` (${view.plan.discountReason})` : ""} · Net {inr(view.plan.net)}</p></section>
     <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Instalments</h2><DataTable label="Student instalments" data={view.instalments} columns={columns} renderCard={(item) => <div className="flex flex-col gap-3"><div className="flex justify-between gap-3"><span>Instalment {item.seq} · {dateLabel(item.dueDate, "en", today)}</span><StatusChip status={item.partPaid ? "part_paid" : item.status} /></div><p className="text-body-regular">Amount {inr(item.amount)} · Paid {inr(item.paid)}</p><p className="text-headline-medium tabular-nums">Balance {inr(item.balance)}</p><p className="text-body-2-regular">{item.daysOverdue} days overdue</p></div>} /></section>
-    <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Payments</h2>{view.payments.length ? <DataTable label="Student payments" data={view.payments} columns={payments} renderCard={(item) => <div className="flex flex-wrap justify-between gap-3"><span>{dateLabel(item.on, "en", today)} · {item.method}</span><span className="tabular-nums">{inr(item.amount)}</span>{item.receiptId ? <LinkButton href={`/receipts/${item.receiptId}`} variant="secondary">View receipt</LinkButton> : null}</div>} /> : <EmptyState title="No payments recorded" />}</section>
+    <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Payments</h2>{view.payments.length ? <DataTable label="Student payments" data={view.payments} columns={payments} renderCard={(item) => <div className="flex flex-wrap justify-between gap-3"><span>{dateLabel(item.on, "en", today)} · {methodLabel("en", item.method)}</span><span className="tabular-nums">{inr(item.amount)}</span>{item.receiptId ? <LinkButton href={`/receipts/${item.receiptId}`} variant="secondary">View receipt</LinkButton> : null}</div>} /> : <EmptyState title="No payments recorded" />}</section>
     <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Reminder timeline</h2><ol className="flex flex-col gap-5 border-s border-separator-border ps-5">{view.timeline.map((line) => <li key={line.instalmentId} className="flex flex-col gap-2"><h3 className="text-body-medium">Instalment {line.instalmentId.split("-").at(-1)}</h3>{line.sent.map((sent) => <p key={`${sent.step}-${sent.on}`} className="text-body-2-regular text-text-secondary">Sent {sent.step > 0 ? "+" : ""}{sent.step} · {dateLabel(sent.on, "en", today)} · {sent.language === "hi" ? "Hindi" : "English"}</p>)}{line.stopped ? <p className="text-body-medium">Stopped: {line.stopped}</p> : line.next ? <p className="text-body-medium">Next {line.next.step > 0 ? "+" : ""}{line.next.step} · {dateLabel(line.next.on, "en", today)}</p> : <p className="text-body-2-regular">No more steps</p>}</li>)}</ol></section>
     <Modal isOpen={open} onOpenChange={setOpen} aria-label="Record counter payment"><ModalHeader title="Record payment" description="The payment is allocated to the oldest unpaid instalment first." /><ModalBody><form className="flex flex-col gap-5" onSubmit={(event) => {
       event.preventDefault(); const form = new FormData(event.currentTarget); setError("");

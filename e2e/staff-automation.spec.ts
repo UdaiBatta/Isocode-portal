@@ -5,7 +5,7 @@ import { t } from "../lib/i18n";
 test("automation shows stop-on-payment and resolves a matched payment", async ({ page, context }) => {
   await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "accounts" })), url: "http://127.0.0.1:3001" }]);
   await page.goto("/mock-gateway/STU-0587-3");
-  await page.getByRole("button", { name: t("hi", "pay.successAction"), exact: true }).click();
+  await page.getByRole("button", { name: t("hi", "pay.button", { amount: "₹15,000" }), exact: true }).click();
   await expect(page).toHaveURL(/\/result\?e=/);
   await page.goto("/staff/automation");
   await page.getByRole("radio", { name: "Stopped", exact: true }).click();

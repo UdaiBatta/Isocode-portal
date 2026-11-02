@@ -8,7 +8,7 @@ import { today } from "@/lib/clock";
 
 export async function submitMockPayment(input: unknown) {
   return mutateProto(null, async (state) => {
-    const { token, outcome } = z.object({ token: z.string().regex(/^STU-\d{4}-[1-4]$/), outcome: z.enum(["success", "failed", "wrong_amount"]) }).parse(input);
+    const { token, outcome, method } = z.object({ token: z.string().regex(/^STU-\d{4}-[1-4]$/), outcome: z.enum(["success", "failed", "wrong_amount"]), method: z.enum(["upi", "card", "netbanking"]).default("upi") }).parse(input);
     const code = token.slice(0, 8);
     requireCentre({}, code);
     const on = await today();
@@ -18,7 +18,7 @@ export async function submitMockPayment(input: unknown) {
     const finish = (result: "paid" | "failed" | "checking" | "already_paid", amount: number, receiptId: string | null = null) => {
       const events = state.paymentResults ??= {};
       const eventId = `demo-event-${Object.keys(events).length + 1}`;
-      events[eventId] = { token, result, amount, receiptId };
+      events[eventId] = { token, result, amount, receiptId, method, on };
       return { result, receiptId, eventId };
     };
     if (!instalment.balance) return finish("already_paid", instalment.amount);
@@ -31,7 +31,7 @@ export async function submitMockPayment(input: unknown) {
       return finish("checking", held.at(-1)!.amount);
     }
     const payments = state.payments ??= [];
-    payments.push({ studentCode: code, amount: instalment.balance, on, method: "gateway", instalmentId: token });
+    payments.push({ studentCode: code, amount: instalment.balance, on, method, instalmentId: token });
     return finish("paid", instalment.balance, `demo-receipt-${payments.length}`);
   });
 }
