@@ -1,3 +1,4 @@
+import { AuthLayout } from "@/components/app/AuthLayout";
 import { PageShell } from "@/components/app/PageShell";
 import { PageSkeleton } from "@/components/app/PageSkeleton";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -13,8 +14,5 @@ export default async function Login({ searchParams }: { searchParams: Promise<Se
   const state = previewState(params);
   if (state === "loading") return <PageSkeleton language={view.language} />;
   if (state === "empty") return <PageShell><EmptyState title={t(view.language, "login.noCodeHelp")} /></PageShell>;
-  return <PageShell className="flex min-h-dvh flex-col gap-12">
-    <header className="flex items-center justify-between gap-2"><span className="text-headline-medium">Company A</span><LanguageSwitcher language={view.language} /></header>
-    <ParentLogin language={view.language} next={view.next} demo={view.demo} />
-  </PageShell>;
+  return <AuthLayout variant="parent" language={view.language} action={<LanguageSwitcher language={view.language} />}><ParentLogin language={view.language} next={view.next} demo={view.demo} tagline={view.language === "hi" ? "बकाया देखें, फीस भरें और रसीद पाएँ।" : "Check dues, pay fees and get your receipts."} /></AuthLayout>;
 }

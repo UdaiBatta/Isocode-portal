@@ -25,6 +25,15 @@
 @keyframes pg-draw { from { opacity: 0; stroke-dashoffset: 1; } 20% { opacity: 1; } to { stroke-dashoffset: 0; } }
 @keyframes pg-spark { 0% { opacity: 0; transform: translateY(10px); } 35% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
 @keyframes pay-step { from { opacity: 0.25; } }
+
+/* Sign-in brand panel: a faded dot grid and an accent glow. */
+.auth-panel::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(var(--color-accent-200) 1px, transparent 1.2px); background-size: 18px 18px; mask-image: radial-gradient(ellipse 80% 70% at 60% 45%, #000 20%, transparent 80%); }
+.auth-panel::after { content: ""; position: absolute; top: 4rem; inset-inline-end: -6rem; width: 26rem; height: 26rem; pointer-events: none; border-radius: 9999px; background: radial-gradient(circle, var(--color-accent-100), transparent 65%); }
+
+/* Staff screens: a soft accent wash behind the working area, and one quick rise on load. */
+.staff-wash { background: radial-gradient(120% 90% at 8% 0%, var(--color-accent-100), transparent 60%), radial-gradient(90% 80% at 100% 8%, var(--color-accent-50), transparent 65%), linear-gradient(var(--color-accent-50), var(--color-background-primary-default)); }
+.staff-reveal { animation: staff-reveal 240ms ease-out both; }
+@keyframes staff-reveal { from { opacity: 0; transform: translateY(8px); } }
 @media print { .parent-surface { max-width: none; padding: 0; } }
 
 html[lang="hi"],
@@ -39,7 +48,7 @@ html[lang="hi"],
     transition-duration: 0.01ms !important;
   }
   .blur-word { opacity: 1 !important; filter: none !important; transform: none !important; }
-  .pay-graphic *, .pay-step { animation: none !important; }
+  .pay-graphic *, .pay-step, .staff-reveal { animation: none !important; }
 }
 
 /* ---------------------------------------------------------------------------
