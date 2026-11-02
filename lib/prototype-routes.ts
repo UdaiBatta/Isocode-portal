@@ -10,6 +10,7 @@ export const prototypeRoutes = [
   { key: "policy", title: "Refund policy", path: "/refund-policy", role: "public" },
   { key: "staff-login", title: "Staff sign-in", path: "/staff/login", role: "public" },
   { key: "dashboard", title: "Dues dashboard", path: "/staff/dashboard", role: "accounts" },
+  { key: "students", title: "Students", path: "/staff/students", role: "accounts" },
   { key: "ledger", title: "Student ledger", path: "/staff/students/STU-0587", role: "accounts" },
   { key: "refund", title: "Refund calculator", path: "/staff/students/STU-0587/refund", role: "accounts" },
   { key: "automation", title: "Automation", path: "/staff/automation", role: "accounts" },

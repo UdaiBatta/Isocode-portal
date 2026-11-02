@@ -13,5 +13,5 @@ export default async function Automation({ searchParams }: { searchParams: Promi
   if (context.role && context.role !== "accounts") redirect("/staff/login");
   if (state === "loading") return <StaffShell><PageSkeleton language="en" /></StaffShell>;
   const [view, candidates] = await Promise.all([getAutomation(), getPaymentCandidates()]);
-  return <StaffShell><AutomationWorkspace view={state === "empty" ? { ...view, sent: [], upcoming: [], stopped: [], needsCall: [], unmatched: [], unmatchedOpen: 0 } : view} candidates={candidates} tab={query.tab === "unmatched" ? "unmatched" : "reminders"} initialItem={typeof query.item === "string" ? query.item : undefined} /></StaffShell>;
+  return <StaffShell><AutomationWorkspace view={state === "empty" ? { ...view, sent: [], upcoming: [], stopped: [], needsCall: [], unmatched: [], unmatchedOpen: 0 } : view} candidates={candidates} tab={query.tab === "unmatched" ? "unmatched" : "reminders"} initialItem={typeof query.item === "string" ? query.item : undefined} initialFilter={query.filter === "needsCall" ? "needsCall" : undefined} /></StaffShell>;
 }

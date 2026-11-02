@@ -1,7 +1,7 @@
 import { batches, centres, namedStudents, students } from "./catalog";
 import { refundSnapshots, refundPolicy } from "./operations";
 import type { ProtoState } from "./state";
-import type { AgeingRow, AutomationVM, CounsellorVM, DashboardVM, DuesVM, InstalmentVM, LedgerVM, ReceiptVM, RefundVM, ReminderRow, TaskRow } from "@/lib/types";
+import type { AgeingRow, AutomationVM, CounsellorVM, DashboardVM, DuesVM, InstalmentVM, LedgerVM, ReceiptVM, RefundVM, ReminderRow, TaskRow, StudentFilters, StudentRowVM, StudentStatus, StudentsVM } from "@/lib/types";
 import { inr, dateLabel } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
@@ -178,6 +178,32 @@ export function dashboardFor(state: ProtoState, today: string, filters: { group?
     totals: { outstanding: rows.reduce((sum, row) => sum + row.outstanding, 0), overdue: rows.reduce((sum, row) => sum + row.outstanding - row.notDue, 0), over60Pct: 12.1, refundsDue: refunds.length, refundsLate: refunds.filter((item) => item.overdueDeadline).length },
     rows: grouped,
     students: ledgers.filter((ledger) => ledger.student.status === "active" && ledger.plan.balance > 0).map((ledger) => ({ code: ledger.student.code, name: ledger.student.name, balance: ledger.plan.balance, daysOverdue: Math.max(0, ...ledger.instalments.map((item) => item.daysOverdue)) })),
+  };
+}
+
+const STUDENTS_PER_PAGE = 25;
+
+export function studentsFor(state: ProtoState, today: string, filters: StudentFilters = {}): StudentsVM {
+  const scoped = batches.filter((batch) => (!state.centreId || batch.centreId === state.centreId) && (!filters.centre || batch.centreId === filters.centre) && (!filters.batch || batch.id === filters.batch));
+  const query = filters.q?.trim().toLowerCase();
+  const held = queueFor(state).filter((item) => item.status === "open");
+  const all = students.filter((source) => scoped.some((batch) => batch.centreId === (source.centreId ?? "MLV") && batch.name === source.batch) && (!query || `${source.name} ${source.code}`.toLowerCase().includes(query))).map((source): StudentRowVM => {
+    const ledger = ledgerFor(state, source.code, today);
+    const open = ledger.instalments.find((item) => item.balance > 0);
+    const line = ledger.timeline.find((item) => item.instalmentId === open?.id);
+    const daysOverdue = Math.max(...ledger.instalments.map((item) => item.daysOverdue));
+    const latest = ledger.payments.toSorted((a, b) => b.on.localeCompare(a.on))[0];
+    const status: StudentStatus = ledger.student.status === "withdrawn" ? "withdrawn" : !ledger.plan.balance ? "clear" : held.some((item) => item.suggested?.studentCode === source.code) ? "checking" : daysOverdue ? "overdue" : "upcoming";
+    return { id: source.code, code: source.code, name: source.name, batch: source.batch, centre: ledger.student.centre, status, balance: ledger.plan.balance, daysOverdue, next: line?.next?.on ?? null, stopped: line?.stopped ?? null, lastPayment: latest ? { on: latest.on, method: latest.method } : null };
+  }).sort((a, b) => b.daysOverdue - a.daysOverdue || b.balance - a.balance || a.code.localeCompare(b.code));
+  const count = (status: StudentStatus) => all.filter((row) => row.status === status).length;
+  const matching = all.filter((row) => !filters.status || (filters.status === "over60" ? row.status === "overdue" && row.daysOverdue > 60 : row.status === filters.status));
+  const pages = Math.max(1, Math.ceil(matching.length / STUDENTS_PER_PAGE));
+  const page = Math.min(filters.page ?? 1, pages);
+  return {
+    today, canPickCentre: !state.centreId, page, pages,
+    rows: matching.slice((page - 1) * STUDENTS_PER_PAGE, page * STUDENTS_PER_PAGE),
+    counts: { all: all.length, overdue: count("overdue"), over60: all.filter((row) => row.status === "overdue" && row.daysOverdue > 60).length, upcoming: count("upcoming"), clear: count("clear"), checking: count("checking"), withdrawn: count("withdrawn") },
   };
 }
 

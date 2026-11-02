@@ -27,9 +27,9 @@ type QueueItem = AutomationVM["unmatched"][number];
 type Candidate = { code: string; name: string; instalments: { id: string; balance: number; seq: number }[] };
 type ListedReminder = ReminderRow & { id: string };
 
-export function AutomationWorkspace({ view, candidates, tab, initialItem }: { view: AutomationVM; candidates: Candidate[]; tab: "reminders" | "unmatched"; initialItem?: string }) {
+export function AutomationWorkspace({ view, candidates, tab, initialItem, initialFilter = "upcoming" }: { view: AutomationVM; candidates: Candidate[]; tab: "reminders" | "unmatched"; initialItem?: string; initialFilter?: "upcoming" | "needsCall" }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<"sent" | "upcoming" | "stopped" | "needsCall">("upcoming");
+  const [filter, setFilter] = useState<"sent" | "upcoming" | "stopped" | "needsCall">(initialFilter);
   const [message, setMessage] = useState<ReminderRow | null>(null);
   const [queueId, setQueueId] = useState<string | null>(initialItem ?? null);
   const [student, setStudent] = useState("");

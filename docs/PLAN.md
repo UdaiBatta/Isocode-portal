@@ -472,7 +472,7 @@ export const inr = (p: number) =>
 | Place | Motion | Source | What it tells the user |
 |---|---|---|---|
 | P2 Dues | Pressed state on Pay only | CSS | The tap registered |
-| P3 Result | Tick draws once | CSS | The payment worked |
+| P3 Result | A vector receipt prints and its badge lands, once, about 1.2 s in all. The human asked for this, so it is the one exception to the duration limit above. `failed` and `checking` use the same graphic with their own badge | Inline SVG and CSS (`PaymentGraphic`) | The payment worked |
 | S1 tiles | Number counts from old to new, only when it changed since the last visit | React Bits `CountUp`, adapted | The payment really moved the total |
 | S3 Refund | Lines fade in 150 ms when the date changes | CSS | The figures were recalculated |
 | S4 Reminders | New rows highlighted for 1 s after a run | CSS | Which messages just went |
@@ -635,15 +635,16 @@ export interface DuesVM {
 **Routes:** `/pay/[token]` (public, from reminders), `/mock-gateway/[token]`, `/pay/[token]/result?e=<event>`, `/receipts`, `/receipts/[id]`, `/refund-policy` (public).
 
 - **`/pay/[token]`:** first name, amount, due date, Pay. No sign-in, shows nothing else. If paid: "already paid". If invalid: "This link is not valid". `<meta name="robots" content="noindex">`.
-- **`/mock-gateway/[token]`:** a banner "TEST MODE. No real money moves." The amount, and a Button Group with the outcomes below.
-- **Result:** the answer comes first ("Payment received", with a tick drawn once in CSS), then amount, receipt number and View receipt. For a payer without a session, View receipt goes through `/login?next=…`.
+- **`/mock-gateway/[token]`:** a checkout. A banner "TEST MODE. No real money moves.", a summary (first name, instalment number, company, amount, due date), a choice of UPI, card or net banking, and a Pay button stating the amount. Test values are shown as text, and there are no fields to type card or bank details into, so nobody can enter real ones. Pressing Pay shows three steps for about 2 s ("Please do not press back"), then the result. A Button Group below offers the other test outcomes.
+- **Result:** the answer comes first ("Payment received", with the `PaymentGraphic` from B3a), then amount, a details list (paid to, for, paid by, transaction ID, date, receipt number) and View receipt. A note says it was a test payment. For a payer without a session, View receipt goes through `/login?next=…`. Public pages show the first name only.
 - **`/receipts`:** newest first: date, amount, number.
 - **`/receipts/[id]`:** the GST receipt. Company name, GSTIN, receipt number, date, student name and code, batch, centre, method, taxable value, CGST 9%, SGST 9%, total. Print stylesheet hides controls.
 
 | Control | Result |
 |---|---|
 | Pay (`/pay/[token]`) | `/mock-gateway/[token]` |
-| Pay successfully | Sends signed success webhook, then result page: paid |
+| Payment method | Chooses UPI, card or net banking. It is sent with the payment, and shown on the result page, receipt, ledger and roster |
+| Pay ₹X | Sends signed success webhook, then result page: paid |
 | Payment fails | Sends signed failed webhook, then result page: failed, with Try again |
 | Wrong amount | Sends success webhook with amount less ₹1,000, then result page: "checking it". Nothing marked paid |
 | Try again | Back to `/mock-gateway/[token]` |
@@ -688,13 +689,33 @@ export interface AgeingRow {
 |---|---|
 | By centre / By batch | Table regroups, URL updates |
 | Centre select (all-centre users only) | Filters to one centre |
-| Search student | Enter: goes to the ledger if one match, otherwise shows matches. No match: empty state |
+| Search student | Enter: goes to the ledger if one match, otherwise opens the roster with matches. No match: empty state |
 | Centre row | Expands to batches |
-| Batch row | Shows that batch's students |
+| Batch row | Opens the roster filtered to that batch |
 | Student row | `/staff/students/[code]` |
 | Export dues CSV | Downloads `dues-<date>.csv` |
 | Export receipts CSV | Downloads the current month's `receipts-<month>.csv` |
-| Sidebar: Dashboard, Automation, Log out | Navigates, or ends the session |
+| Needs attention links | Payments to check, Parents to call and Students over 60 days late, each opening that list |
+| Sidebar: Dashboard, Students, Automation, Log out | Navigates, or ends the session |
+
+### S1b. Students roster (accounts)
+
+**Route:** `/staff/students?status=&centre=&batch=&q=&page=`
+
+**Layout:** title and export actions, then a card holding search, centre and batch filters, status Tabs with counts (All, Overdue, Over 60 days, Upcoming, Paid up, Being checked, Withdrawn), the table and Pagination (25 per page). Worst first: most days overdue, then largest balance. Columns: Student (initials, name, code), Batch and centre, Status, Outstanding, Overdue by, Next step, Last payment and method. Each name opens S2. Centre scope applies as on S1.
+
+```ts
+export type StudentStatus = "overdue" | "upcoming" | "clear" | "checking" | "withdrawn";
+export interface StudentFilters { status?: StudentStatus | "over60"; centre?: string; batch?: string; q?: string; page?: number }
+export interface StudentRowVM {
+  id: string; code: string; name: string; batch: string; centre: string; status: StudentStatus; balance: number; daysOverdue: number;
+  next: string | null; stopped: string | null; lastPayment: { on: string; method: string } | null;
+}
+export interface StudentsVM {
+  today: string; canPickCentre: boolean; rows: StudentRowVM[]; page: number; pages: number;
+  counts: Record<StudentStatus | "all" | "over60", number>;
+}
+```
 
 ### S2. Student ledger (accounts)
 
@@ -1466,7 +1487,7 @@ Each action below is a Next.js server action in `lib/actions/*` that forwards to
 | `markRefundPaid` | Accounts | refundId |
 | `closeTask` | Counsellor | taskId, outcome (called or false_flag), note |
 | `ensureCallBrief` | Counsellor | taskId |
-| `submitMockPayment` | Public, token checked | token, outcome |
+| `submitMockPayment` | Public, token checked | token, outcome, method (upi, card or netbanking) |
 | `setDemoDate`, `runRemindersNow`, `resetDemo` | Accounts, and only when `DEMO_MODE=true` | date, none, none |
 
 **`submitMockPayment` is the exception.** It stands in for an outside gateway, so the Next.js action itself signs a real payload with `PAYMENT_WEBHOOK_SECRET` and POSTs it to `$BACKEND_URL/api/webhooks/payment`.
@@ -1704,7 +1725,7 @@ Then `lib/data/*` and `lib/actions/*` as fixture-and-cookie versions with their 
 
 | Action | Visible change |
 |---|---|
-| Pay successfully | Ishita's balance becomes clear. Reminder shows "Stopped: paid". Dashboard outstanding and that batch row drop by exactly ₹15,000 |
+| Pay ₹15,000 | Ishita's balance becomes clear. Reminder shows "Stopped: paid". Dashboard outstanding and that batch row drop by exactly ₹15,000 |
 | Wrong amount | P2 shows "checking it". A new queue item appears |
 | Approve refund | Student shows Withdrawn. Reminders stopped. P2 shows the refund |
 | Resolve queue item | Item closes. Ledger updates |
@@ -1853,7 +1874,7 @@ A Django view for the S2 view model, and `lib/data/ledger.ts`. Timeline can come
 
 ### T2.4 Webhook, pay token and mock gateway
 
-`POST /api/webhooks/payment` on Django, the pay token, `/pay/[token]`, `/mock-gateway/[token]`, `submitMockPayment` (B9), and the result page.
+`POST /api/webhooks/payment` on Django, the pay token, `/pay/[token]`, `/mock-gateway/[token]`, `submitMockPayment` (B9), and the result page. Keep the checkout, the three steps and `PaymentGraphic` from Phase 0. The webhook payload carries the method, which is saved on the payment. The result view returns the method, a transaction ID, the date and the first name.
 
 **Accept:** paying as Ishita's parent marks the instalment paid. A bad signature gets 401. Replaying the event changes nothing. A tampered token gets "not valid". Wrong amount marks nothing paid and creates a queue item, and P2 shows "checking it".
 
@@ -1921,11 +1942,11 @@ Django views for S4, and `lib/data/automation.ts`, which fills `body` with `rend
 
 ### T4.3 Dashboard
 
-A Django view using ORM aggregates over `instalment_balances`, and `lib/data/dashboard.ts`.
+A Django view using ORM aggregates over `instalment_balances`, and `lib/data/dashboard.ts`. A second view returns `StudentsVM` (S1b) for `lib/data/students.ts`, filtered, sorted and paged in the database, because there are 2,600 students.
 
 **Before writing:** keep it to four tiles, a table and one bar per row. No other charts. Totals must reconcile.
 
-**Accept:** a test on a small hand-counted data set matches every bucket. Named-student totals match S2. All-centres totals equal the sum of centres. Paying ₹15,000 lowers the numbers by exactly ₹15,000. The page responds in under 2 s with 2,600 students, using the full seed for this check. The MLV-only user sees only MLV.
+**Accept:** the roster's counts and rows match S2 for named students, and respect centre scope. A test on a small hand-counted data set matches every bucket. Named-student totals match S2. All-centres totals equal the sum of centres. Paying ₹15,000 lowers the numbers by exactly ₹15,000. The page responds in under 2 s with 2,600 students, using the full seed for this check. The MLV-only user sees only MLV.
 
 ### T4.4 Exports
 

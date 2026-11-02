@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { RiDashboardLine, RiNotification3Line, RiPhoneLine } from "@remixicon/react";
+import { RiDashboardLine, RiGroupLine, RiNotification3Line, RiPhoneLine } from "@remixicon/react";
 import { WorkspaceSidebar } from "@/components/application/dashboard/dashboard-sidebar";
 import { Drawer, DrawerHeader, DrawerBody } from "@/components/base/drawer/drawer";
 import { Button } from "@/components/base/buttons/button";
@@ -14,9 +14,10 @@ export function StaffShell({ children, counsellor = false }: { children: ReactNo
   const [open, setOpen] = useState(false);
   const items = counsellor ? [{ key: "calls", label: "Call tasks", icon: RiPhoneLine, href: "/counsellor/tasks" }] : [
     { key: "dashboard", label: "Dashboard", icon: RiDashboardLine, href: "/staff/dashboard" },
+    { key: "students", label: "Students", icon: RiGroupLine, href: "/staff/students" },
     { key: "automation", label: "Automation", icon: RiNotification3Line, href: "/staff/automation" },
   ];
-  const nav = <WorkspaceSidebar items={items} selected={counsellor ? "calls" : path.includes("automation") ? "automation" : "dashboard"} footer={<LogoutButton language="en" />} />;
+  const nav = <WorkspaceSidebar items={items} selected={counsellor ? "calls" : path.includes("automation") ? "automation" : path.includes("students") ? "students" : "dashboard"} footer={<LogoutButton language="en" />} />;
   return <div lang="en" className="staff-surface min-h-screen p-4 text-text-primary md:flex md:gap-6 md:p-6">
     <div className="hidden w-60 shrink-0 md:block"><div className="sticky top-6 h-[calc(100dvh-48px)]">{nav}</div></div>
     <div className="mb-6 md:hidden"><Button variant="secondary" onClick={() => setOpen(true)}>Menu</Button></div>
