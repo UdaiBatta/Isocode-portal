@@ -1,5 +1,14 @@
 # Progress
 
+## In progress now
+
+Read this before editing. Each model lists its task and files here when it starts and clears them when it commits. Do not edit a file the other model has listed; add a note under your own name instead.
+
+- **Claude (frontend):** T6.1 `/progress` screen on sample data, brought forward at the human's request. Files: `app/(parent)/progress/`, `app/(parent)/dues/page.tsx`, `lib/data/progress.ts`, `lib/fixtures/progress.ts`, `lib/i18n/progress.ts`, `lib/types.ts`, `lib/prototype-routes.ts`, `scripts/screens.ts`, `e2e/parent-progress.spec.ts`, `tests/prototype.test.ts`.
+- **Codex (backend):** nothing listed.
+
+## Log
+
 - 2026-11-03 — T0.14 review fixes: corrected DatePicker Apply dismissal and Select's early tap/scroll dismissal, repaired the demo heading's accessible text, and corrected mobile balance and reminder-step assertions. Production controls/layout sweep: 72 passed; existing refund, roster, reduced-motion and script-budget checks: 18 passed, all at 360/1280 widths with one worker. `npm run check` passes (31 unit tests, types, zero lint errors; eight existing warnings); production build passes. Popup screenshots inspected at both widths and scroll position preserved on open/dismissal. Compressed scripts: dues 199,800 B / 200,000 B, login 195,043 B, payment link 192,583 B, demo 211,689 B / 350,000 B. No financial rules changed. The audited backup branch was already removed after accounting for its ten saved files. Stopped after the requested bug fixes; T0.15 visual self-review and real-phone/Hindi checks remain, and Gate 0 is not signed off. No backend or deployment work.
 
 - 2026-11-03 — T0.13 complete: adapted the two licensed React Bits sources to changed-value-only 500ms S1 totals and word-only /demo heading; added Pay press, date-change fade and newly-sent reminder highlight, with reduced-motion overrides. No inbox sources existed; third-party register updated. 31 unit tests including motion boundary, type/lint, build and all four reduced-motion cases pass. Dues compressed scripts measured 192,002 B before and 192,003 B after (1 B compression/fingerprint drift, no animation import); /demo 203,851 B. Login is 222,437 B, above the parent budget, and is the first T0.14 repair. Next: T0.14 full UI/performance checks.

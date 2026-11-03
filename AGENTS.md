@@ -9,6 +9,7 @@ Current job: docs/PROMPTS.md. In a new session or after a context summary, re-re
 - Frontend (screens, components, styling, copy, frontend tests and the fixtures screens use): Claude Opus 5.5 on high effort, through the existing Claude chat for `D:\My projects\isocodelabs`. Keep its work in the `coaching-fees` checkout. Codex does not write frontend code.
 - Backend (Django, PostgreSQL, services, jobs and APIs): Codex on GPT-6.1 Sol with high reasoning. Claude does not write backend code. This overrides the earlier default Luna/Jev routing for this project.
 - Code review: Codex on GPT-6.1 Sol with high reasoning reviews every commit, including Claude's.
+- Both models share the `coaching-fees` checkout. Before editing, read "In progress now" at the top of `docs/progress.md`, list your task and files there, stage only your own files, and clear your entry when you commit.
 - This routing authorizes the required model handoffs; do not start unrelated agents or parallel implementation. Preserve existing changes and verify the actual diff and test results after each handoff.
 
 ## Active stack decision
