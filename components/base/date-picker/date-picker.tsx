@@ -17,7 +17,6 @@ import {
   triggerButtonClassName,
 } from "@/components/base/date-picker/shared";
 import { cx } from "@/utils/cx";
-import { useDismissOnOutsidePress } from "@/utils/use-dismiss-on-outside-press";
 
 /**
  * Figma source: Board UI → "Calendar_single" (node 3879:6708).
@@ -116,8 +115,6 @@ export function DatePicker({
     setIsOpen(open);
   };
 
-  useDismissOnOutsidePress(isOpen, () => setIsOpen(false), [triggerRef, popoverRef]);
-
   return localize((
     <>
       {!isExternal && (
@@ -134,6 +131,7 @@ export function DatePicker({
           </span>
         </button>
       )}
+      {/* Modal positioning keeps ancestor scrolling from dismissing Apply. */}
       <Popover
         ref={popoverRef}
         triggerRef={triggerRef}
@@ -141,7 +139,6 @@ export function DatePicker({
         onOpenChange={openChange}
         offset={4}
         placement="bottom end"
-        isNonModal
         className={popoverClassName}
       >
         <Dialog aria-label={ariaLabel} className="outline-none">

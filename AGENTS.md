@@ -4,6 +4,12 @@ Spec: docs/PLAN.md. Progress: docs/progress.md. Decisions: docs/decisions.md.
 
 Current job: docs/PROMPTS.md. In a new session or after a context summary, re-read it and docs/progress.md, then continue from the next unfinished task. Do not stop between tasks or phases.
 
+## Project model routing
+
+- User override: send frontend fixes, changes and improvements to the existing Claude chat for `D:\My projects\isocodelabs`. Keep its work inside this folder and use the `coaching-fees` checkout; do not route it to another project or worktree.
+- Use GPT-6.1 Sol with high reasoning for backend and other implementation work. This overrides the earlier default Luna/Jev routing for this project.
+- This routing authorizes the required model handoffs; do not start unrelated agents or parallel implementation. Preserve existing changes and verify the actual diff and test results after each handoff.
+
 ## Active stack decision
 
 The human selected React + BoardUI with a Django + PostgreSQL backend. Next.js is the frontend scaffold only. Django owns production authentication, permissions, validation, ORM, migrations, money transactions, reminders and risk scoring. This overrides the Node backend, Drizzle, pg and PGlite instructions in PLAN.md. Preserve all B8 expected values when translating to Python. Read docs/decisions.md before implementing a phase.
