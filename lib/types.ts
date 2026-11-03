@@ -11,6 +11,12 @@ export interface ProgressVM {
   tests: { testDate: string; testName: string; score: number; maxScore: number }[];
 }
 
+export interface StudentInfoVM {
+  code: string; name: string; batch: string; centre: string; status: "active" | "withdrawn";
+  enrolledOn: string; guardianPhone: string; preferredLanguage: Language;
+  course: { exam: "JEE" | "NEET"; examYear: string; timing: "Morning" | "Evening"; sessionStart: string; sessionEnd: string; instalments: number };
+}
+
 export interface InstalmentVM {
   id: string; seq: number; dueDate: string; amount: number; paid: number; balance: number;
   status: "paid" | "overdue" | "due_today" | "upcoming";

@@ -8,5 +8,5 @@ export async function getProgress(studentId?: string) {
   const date = await today();
   const refund = refundFor(state, student.code, date);
   const left = refund.status === "approved" || refund.status === "paid" ? refund.input.withdrawalDate : null;
-  return { studentName: student.name, ...progressFor(student.code, left && left < date ? left : date) };
+  return progressFor(student.code, left && left < date ? left : date);
 }

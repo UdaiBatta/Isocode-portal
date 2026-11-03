@@ -14,6 +14,8 @@ export function rupeesToPaise(value: string): number {
   return Number(amount);
 }
 
+export const phoneLabel = (phone: string) => phone.replace(/^\+91(\d{5})(\d{5})$/, "+91 $1 $2");
+
 export function dateLabel(date: string, language: Language, referenceDate: string): string {
   return new Intl.DateTimeFormat(language === "hi" ? "hi-IN" : "en-IN", {
     day: "numeric",

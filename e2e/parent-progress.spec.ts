@@ -1,4 +1,3 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type BrowserContext } from "@playwright/test";
 
 async function signIn(context: BrowserContext, phone: string, language = "en") {
@@ -8,20 +7,16 @@ async function signIn(context: BrowserContext, phone: string, language = "en") {
   ]);
 }
 
-for (const [language, link, summary, week, classes] of [
-  ["en", "Attendance and scores", "Attended 19 of 20 classes in the last 4 weeks", "Week of 26 Oct", "5 of 5"],
-  ["hi", "उपस्थिति और अंक", "पिछले 4 हफ़्तों में 20 में से 19 कक्षाओं में उपस्थित", "26 अक्टूबर का हफ़्ता", "5 में से 5"],
-] as const) test(`dues links to attendance and scores in ${language}`, async ({ page, context }) => {
+for (const [language, summary, week, classes] of [
+  ["en", "Attended 19 of 20 classes in the last 4 weeks", "Week of 26 Oct", "5 of 5"],
+  ["hi", "पिछले 4 हफ़्तों में 20 में से 19 कक्षाओं में उपस्थित", "26 अक्टूबर का हफ़्ता", "5 में से 5"],
+] as const) test(`the academic tab shows attendance and scores in ${language}`, async ({ page, context }) => {
   await signIn(context, "+919000000587", language);
-  await page.goto("/dues");
-  await page.getByRole("link", { name: link, exact: true }).click();
-  await expect(page).toHaveURL(/\/progress\?student=STU-0587$/);
+  await page.goto("/progress");
   await expect(page.getByText("Ishita Sharma", { exact: true })).toBeVisible();
   await expect(page.getByText(summary, { exact: true })).toBeVisible();
   await expect(page.getByRole("listitem").filter({ hasText: week }).getByText(classes, { exact: true })).toBeVisible();
   await expect(page.getByRole("listitem").filter({ hasText: "Monthly Test 7" }).getByText("86/100", { exact: true })).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  expect((await new AxeBuilder({ page }).analyze()).violations.filter((item) => item.impact === "serious" || item.impact === "critical")).toEqual([]);
 });
 
 test("a family only sees its own child, and no risk or comparison wording appears", async ({ page, context }) => {

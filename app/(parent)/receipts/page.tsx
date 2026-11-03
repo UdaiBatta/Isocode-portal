@@ -2,14 +2,16 @@ import { redirect } from "next/navigation";
 import { PageShell } from "@/components/app/PageShell";
 import { PageSkeleton } from "@/components/app/PageSkeleton";
 import { EmptyState } from "@/components/app/EmptyState";
-import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
-import { LogoutButton } from "@/components/app/LogoutButton";
+import { ParentShell, parentSectionClass } from "@/components/app/ParentShell";
+import { StaffFrame } from "@/components/app/StaffPage";
 import { LinkButton } from "@/components/base/buttons/link-button";
 import { getReceipts } from "@/lib/data/receipts";
+import { getFamily } from "@/lib/data/student";
 import { getParentPageContext } from "@/lib/data/auth";
 import { previewState, type SearchParams } from "@/lib/preview";
 import { dateLabel, inr } from "@/lib/format";
 import { t } from "@/lib/i18n";
+import { pt } from "@/lib/i18n/portal";
 
 export default async function Receipts({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const query = await searchParams;
@@ -21,15 +23,14 @@ export default async function Receipts({ searchParams }: { searchParams: Promise
   if (context.role !== "parent") redirect("/login");
   if (!context.consent) redirect("/consent");
   const selected = typeof query.student === "string" ? query.student : undefined;
-  const rows = await getReceipts(selected);
-  return <PageShell className="flex flex-col gap-8">
-    <header className="flex items-center justify-between gap-3"><h1 className="text-title-1-medium">{t(language, "receipts.title")}</h1><LanguageSwitcher language={language} /></header>
+  const [family, rows] = await Promise.all([getFamily(selected), getReceipts(selected)]);
+  return <ParentShell language={language} active="fees" {...family} title={t(language, "receipts.title")} description={pt(language, "receipts.description")}><StaffFrame><section className={parentSectionClass}>
     {rows.length ? <ul className="divide-y divide-separator-border">{rows.map((receipt) => <li key={receipt.id}>
       <LinkButton href={`/receipts/${receipt.id}`} variant="secondary" className="flex w-full flex-col items-stretch gap-2 whitespace-normal py-4 text-start">
         <span className="flex justify-between gap-4 text-headline-medium"><span>{dateLabel(receipt.issuedOn, language, today)}</span><span className="tabular-nums text-text-primary">{inr(receipt.amount)}</span></span>
         <bdi className="text-body-regular">{receipt.number}</bdi>
       </LinkButton>
     </li>)}</ul> : <EmptyState title={t(language, "receipts.empty")} />}
-    <footer className="flex flex-wrap items-center gap-6"><LinkButton href={selected ? `/dues?student=${encodeURIComponent(selected)}` : "/dues"} variant="secondary">{t(language, "pay.backToDues")}</LinkButton><LogoutButton language={language} /></footer>
-  </PageShell>;
+    <div><LinkButton href={selected ? `/dues?student=${encodeURIComponent(selected)}` : "/dues"} variant="secondary">{t(language, "pay.backToDues")}</LinkButton></div>
+  </section></StaffFrame></ParentShell>;
 }

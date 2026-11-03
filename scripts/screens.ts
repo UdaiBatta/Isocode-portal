@@ -41,7 +41,7 @@ async function main() {
             await context.clearCookies({ name: "proto" });
             if (route.path.startsWith("/counsellor/")) await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "counsellor" })), url: origin }]);
             if (route.path.startsWith("/staff/") && route.path !== "/staff/login") await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "accounts" })), url: origin }]);
-            if (["/consent", "/receipts", "/progress"].includes(route.path) || route.name === "receipt" || route.name === "payment-result") {
+            if (["/consent", "/receipts", "/progress", "/course", "/student", "/settings"].includes(route.path) || route.name === "receipt" || route.name === "payment-result") {
               const state = {
                 role: "parent", phone: "+919000000587", consent: route.path !== "/consent", otp: { attempts: 0, sends: 1, verified: true },
                 ...(route.name === "payment-result" ? {
