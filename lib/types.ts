@@ -6,6 +6,11 @@ export interface ReceiptVM extends ReceiptSummaryVM {
   method: string; taxable: number; cgst: number; sgst: number;
 }
 
+export interface ProgressVM {
+  attendance: { weekStart: string; attended: number; held: number }[];
+  tests: { testDate: string; testName: string; score: number; maxScore: number }[];
+}
+
 export interface InstalmentVM {
   id: string; seq: number; dueDate: string; amount: number; paid: number; balance: number;
   status: "paid" | "overdue" | "due_today" | "upcoming";

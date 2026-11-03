@@ -14,6 +14,7 @@ import { getDues } from "@/lib/data/dues";
 import { getParentPageContext } from "@/lib/data/auth";
 import { previewState, type SearchParams } from "@/lib/preview";
 import { t } from "@/lib/i18n";
+import { pt } from "@/lib/i18n/progress";
 import { dateLabel, inr } from "@/lib/format";
 
 export default async function Dues({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -43,6 +44,6 @@ export default async function Dues({ searchParams }: { searchParams: Promise<Sea
     : view.mode === "review" ? <section><h2 className="text-title-2-medium">{t(language, "dues.review")}</h2></section>
     : view.refund ? <section className="flex flex-col gap-4"><h2 className="text-title-1-medium">{t(language, "refund.title")}</h2><Money paise={view.refund.amount} prominent /><div><StatusChip status={view.refund.status} language={language} /></div><p className="text-headline-regular">{t(language, "refund.payBy", { date: dateLabel(view.refund.deadline, language, today) })}</p>{view.refund.stillPayable > 0 ? <p className="text-body-regular">{t(language, "refund.stillPayable", { amount: inr(view.refund.stillPayable) })}</p> : null}</section> : null}
     {view.mode !== "withdrawn" ? <InstalmentDisclosure instalments={view.instalments} language={language} today={today} /> : null}
-    <footer className="flex flex-wrap items-center gap-6"><LinkButton href={`/receipts?student=${view.selectedStudentId}`} variant="secondary">{t(language, "dues.receipts")}</LinkButton><LogoutButton language={language} /></footer>
+    <footer className="flex flex-wrap items-center gap-6"><LinkButton href={`/receipts?student=${view.selectedStudentId}`} variant="secondary">{t(language, "dues.receipts")}</LinkButton><LinkButton href={`/progress?student=${view.selectedStudentId}`} variant="secondary">{pt(language, "progress.link")}</LinkButton><LogoutButton language={language} /></footer>
   </PageShell>;
 }

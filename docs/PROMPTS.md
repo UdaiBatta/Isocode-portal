@@ -304,7 +304,7 @@ DONE WHEN:
 PHASE 6: EXTRAS (only those in OPTIONAL EXTRAS TO BUILD, in this order)
 READ: only the Phase 6 table, then whichever sections each task names.
 BUILD:
-- T6.1: Attendance and scores in the parent portal, /progress, as one quiet link beside Receipts: attendance per recent week and recent test scores, with no comparison with other students and no risk data. Accept: a parent sees only their child, in both languages and all states.
+- T6.1 (screen already built by Claude on sample data; build only the Django view behind lib/data/progress.ts): Attendance and scores in the parent portal, /progress, as one quiet link beside Receipts: attendance per recent week and recent test scores, with no comparison with other students and no risk data. Accept: a parent sees only their child, in both languages and all states.
 - T6.2: Bulk CSV upload per batch at /staff/uploads, with columns student_code,week_start,attended,held and student_code,test_date,test_name,score,max_score. Uses File Upload (npx boardui@latest add file-upload --yes). Preview with row-level errors before anything saves. All or nothing. Rejects codes outside the chosen batch. Sample files go in public/samples/. Accept: bad rows are listed with line numbers, a good file saves, and a re-upload updates rather than duplicates.
 - T6.3: Tally XML export of receipts, added to the export Button Group: an ENVELOPE import with one Receipt voucher per receipt. Label it "not tested on a real Tally install" in the TDD. Accept: the XML is well-formed, and totals match the CSV.
 - T6.4: A Withdraw consent link for parents. It sets withdrawn_at, hides data, stops reminders and adds the student to Needs a call. Accept: a test covers each effect.

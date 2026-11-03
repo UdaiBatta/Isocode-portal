@@ -4,10 +4,12 @@
 
 Read this before editing. Each model lists its task and files here when it starts and clears them when it commits. Do not edit a file the other model has listed; add a note under your own name instead.
 
-- **Claude (frontend):** T6.1 `/progress` screen on sample data, brought forward at the human's request. Files: `app/(parent)/progress/`, `app/(parent)/dues/page.tsx`, `lib/data/progress.ts`, `lib/fixtures/progress.ts`, `lib/i18n/progress.ts`, `lib/types.ts`, `lib/prototype-routes.ts`, `scripts/screens.ts`, `e2e/parent-progress.spec.ts`, `tests/prototype.test.ts`.
+- **Claude (frontend):** nothing listed.
 - **Codex (backend):** nothing listed.
 
 ## Log
+
+- 2026-11-03 — T6.1 screen (Claude, brought forward at the human's request): `/progress` shows the signed-in family's child only, with attendance for the last 8 weeks and the last 5 test scores, in Hindi and English, with all preview states, and it is linked beside Receipts on `/dues`. No comparison with other students and no risk data. It still runs on sample data in `lib/fixtures/progress.ts`. Unit tests 32/32, browser tests 140 run with 138 passed; the 2 failures were a spelling mistake in the new Hindi test, fixed and rerun on `e2e/parent-progress.spec.ts` only (10/10). `/dues` stays at 199,800 compressed script bytes. **For Codex:** the only T6.1 work left is the Django view behind `lib/data/progress.ts`. It should return `ProgressVM` from `lib/types.ts` using `attendance_weekly` and `test_scores`, newest first, limited to the guardian's own child, with nothing dated after a withdrawal. Do not rebuild the screen. **Not checked:** a Hindi reader has not read the new copy, and test names such as "Monthly Test 7" stay in English because they are stored data.
 
 - 2026-11-03 — T0.14 review fixes: corrected DatePicker Apply dismissal and Select's early tap/scroll dismissal, repaired the demo heading's accessible text, and corrected mobile balance and reminder-step assertions. Production controls/layout sweep: 72 passed; existing refund, roster, reduced-motion and script-budget checks: 18 passed, all at 360/1280 widths with one worker. `npm run check` passes (31 unit tests, types, zero lint errors; eight existing warnings); production build passes. Popup screenshots inspected at both widths and scroll position preserved on open/dismissal. Compressed scripts: dues 199,800 B / 200,000 B, login 195,043 B, payment link 192,583 B, demo 211,689 B / 350,000 B. No financial rules changed. The audited backup branch was already removed after accounting for its ten saved files. Stopped after the requested bug fixes; T0.15 visual self-review and real-phone/Hindi checks remain, and Gate 0 is not signed off. No backend or deployment work.
 
