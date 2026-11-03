@@ -4,7 +4,7 @@
 
 Read this before editing. Each model lists its task and files here when it starts and clears them when it commits. Do not edit a file the other model has listed; add a note under your own name instead.
 
-- **Claude (frontend):** nothing listed.
+- **Claude (frontend):** parent dashboard with tabs (Fee details, Academic info, Course info, Student info, Settings), at the human's request. Files: `app/(parent)/` (all pages except `login` and `consent`), `components/app/ParentShell.tsx`, `components/app/ChildSwitcher.tsx` (removed), `lib/data/student.ts`, `lib/data/progress.ts`, `lib/i18n/progress.ts` (renamed `portal.ts`), `lib/types.ts`, `lib/prototype-routes.ts`, `scripts/screens.ts`, `e2e/parent-*.spec.ts`, `e2e/layout.spec.ts`, `docs/screens/`.
 - **Codex (backend):** nothing listed.
 
 ## Log
