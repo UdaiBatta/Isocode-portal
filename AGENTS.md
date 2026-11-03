@@ -6,8 +6,9 @@ Current job: docs/PROMPTS.md. In a new session or after a context summary, re-re
 
 ## Project model routing
 
-- User override: send frontend fixes, changes and improvements to the existing Claude chat for `D:\My projects\isocodelabs`. Keep its work inside this folder and use the `coaching-fees` checkout; do not route it to another project or worktree.
-- Use GPT-6.1 Sol with high reasoning for backend and other implementation work. This overrides the earlier default Luna/Jev routing for this project.
+- Frontend (screens, components, styling, copy, frontend tests and the fixtures screens use): Claude Opus 5.5 on high effort, through the existing Claude chat for `D:\My projects\isocodelabs`. Keep its work in the `coaching-fees` checkout. Codex does not write frontend code.
+- Backend (Django, PostgreSQL, services, jobs and APIs): Codex on GPT-6.1 Sol with high reasoning. Claude does not write backend code. This overrides the earlier default Luna/Jev routing for this project.
+- Code review: Codex on GPT-6.1 Sol with high reasoning reviews every commit, including Claude's.
 - This routing authorizes the required model handoffs; do not start unrelated agents or parallel implementation. Preserve existing changes and verify the actual diff and test results after each handoff.
 
 ## Active stack decision
