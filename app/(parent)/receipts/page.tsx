@@ -24,7 +24,7 @@ export default async function Receipts({ searchParams }: { searchParams: Promise
   if (!context.consent) redirect("/consent");
   const selected = typeof query.student === "string" ? query.student : undefined;
   const [family, rows] = await Promise.all([getFamily(selected), getReceipts(selected)]);
-  return <ParentShell language={language} active="fees" {...family} title={t(language, "receipts.title")} description={pt(language, "receipts.description")}><StaffFrame><section className={parentSectionClass}>
+  return <ParentShell language={language} active="fees" path="/receipts" {...family} title={t(language, "receipts.title")} description={pt(language, "receipts.description")}><StaffFrame><section className={parentSectionClass}>
     {rows.length ? <ul className="divide-y divide-separator-border">{rows.map((receipt) => <li key={receipt.id}>
       <LinkButton href={`/receipts/${receipt.id}`} variant="secondary" className="flex w-full flex-col items-stretch gap-2 whitespace-normal py-4 text-start">
         <span className="flex justify-between gap-4 text-headline-medium"><span>{dateLabel(receipt.issuedOn, language, today)}</span><span className="tabular-nums text-text-primary">{inr(receipt.amount)}</span></span>

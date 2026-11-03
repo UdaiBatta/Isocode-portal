@@ -69,6 +69,24 @@ test("settings changes the language and logs out", async ({ page, context }) => 
   await expect(page).toHaveURL(/\/login$/);
 });
 
+test("switching child on receipts stays on receipts", async ({ page, context }) => {
+  await signIn(context, "+919000000777");
+  await page.goto("/receipts");
+  await page.getByRole("link", { name: "Dev Joshi", exact: true }).click();
+  await expect(page).toHaveURL(/\/receipts\?student=STU-0772$/);
+});
+
+test("student info shows the reminder language chosen in settings", async ({ page, context }) => {
+  await signIn(context, "+919000000587");
+  await page.goto("/student");
+  await expect(page.getByRole("definition").filter({ hasText: "English" })).toBeVisible();
+  await page.goto("/settings");
+  await page.getByRole("radio", { name: "हिंदी", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "सेटिंग्स", exact: true })).toBeVisible();
+  await page.goto("/student");
+  await expect(page.getByRole("definition").filter({ hasText: "हिंदी" })).toBeVisible();
+});
+
 for (const path of ["/course", "/student", "/settings"]) test(`signed-out visitors to ${path} are sent to sign-in`, async ({ page }) => {
   await page.goto(path);
   await expect(page).toHaveURL(/\/login$/);

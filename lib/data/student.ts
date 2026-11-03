@@ -18,7 +18,7 @@ export async function getStudentInfo(studentId?: string): Promise<StudentInfoVM>
   const [exam, examYear, timing] = student.batch.split(" ");
   return {
     code: student.code, name: student.name, batch: student.batch, centre: ledger.student.centre, status: ledger.student.status,
-    enrolledOn: student.enrolledOn, guardianPhone: student.phone, preferredLanguage: student.language,
+    enrolledOn: student.enrolledOn, guardianPhone: student.phone, preferredLanguage: state.languages?.[student.phone] ?? student.language,
     course: { exam: exam as "JEE" | "NEET", examYear, timing: timing as "Morning" | "Evening", sessionStart: SESSION.start, sessionEnd: SESSION.end, instalments: ledger.instalments.length },
   };
 }

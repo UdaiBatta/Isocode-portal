@@ -19,12 +19,12 @@ const tabs = [
 export const parentSectionClass = "flex flex-col gap-4 rounded-3xl border border-border-button-default p-4 md:p-5";
 
 // The staff frame's look, drawn on the server: StaffShell's sidebar, drawer and icons would put /dues over its 200 KB script budget.
-export function ParentShell({ language, active, family, selected, title, description, showLanguage = true, children }: {
-  language: Language; active: (typeof tabs)[number]["key"]; family: { studentId: string; fullName: string }[]; selected: string;
+export function ParentShell({ language, active, path, family, selected, title, description, showLanguage = true, children }: {
+  language: Language; active: (typeof tabs)[number]["key"]; path?: string; family: { studentId: string; fullName: string }[]; selected: string;
   title: string; description: string; showLanguage?: boolean; children: ReactNode;
 }) {
   const withStudent = (path: string, student = selected) => family.length > 1 ? `${path}?student=${encodeURIComponent(student)}` : path;
-  const activePath = tabs.find((tab) => tab.key === active)!.path;
+  const childPath = path ?? tabs.find((tab) => tab.key === active)!.path;
   return <div className="parent-surface min-h-dvh text-text-primary md:flex md:gap-6 md:p-6">
     <div className="hidden w-60 shrink-0 md:block"><aside className="sticky top-6 flex h-[calc(100dvh-48px)] flex-col gap-10 rounded-3xl bg-background-secondary-default p-5">
       <div><p className="text-headline-medium">{ORG.name}</p><p className="text-body-regular text-text-secondary">{ORG.city} · {pt(language, "portal.area")}</p></div>
@@ -35,7 +35,7 @@ export function ParentShell({ language, active, family, selected, title, descrip
     </aside></div>
     <main className="mx-auto flex w-full min-w-0 max-w-[880px] flex-col gap-6 px-4 pb-28 pt-5 md:px-0 md:py-3">
       <div className="flex items-center justify-between gap-3">
-        {family.length > 1 ? <nav aria-label={pt(language, "portal.children")} className="flex min-w-0 flex-wrap gap-2">{family.map((child) => <a key={child.studentId} href={withStudent(activePath, child.studentId)} aria-current={child.studentId === selected ? "page" : undefined} className={cx("flex items-center rounded-full px-4 text-body-medium", child.studentId === selected ? "bg-background-secondary-default text-text-primary" : "text-text-secondary hover:bg-background-secondary-hover")}>{child.fullName}</a>)}</nav> : <p className="min-w-0 text-headline-medium">{family[0]?.fullName}</p>}
+        {family.length > 1 ? <nav aria-label={pt(language, "portal.children")} className="flex min-w-0 flex-wrap gap-2">{family.map((child) => <a key={child.studentId} href={withStudent(childPath, child.studentId)} aria-current={child.studentId === selected ? "page" : undefined} className={cx("flex items-center rounded-full px-4 text-body-medium", child.studentId === selected ? "bg-background-secondary-default text-text-primary" : "text-text-secondary hover:bg-background-secondary-hover")}>{child.fullName}</a>)}</nav> : <p className="min-w-0 text-headline-medium">{family[0]?.fullName}</p>}
         {showLanguage ? <LanguageSwitcher language={language} /> : null}
       </div>
       <StaffPageHeader title={title} description={description} />
