@@ -8,7 +8,7 @@ from django.db import connection
 from django.http import JsonResponse
 from django.utils.crypto import constant_time_compare
 
-from fees.models import Guardian, StaffUser
+from fees.models import Consent, Guardian, GuardianStudent, StaffUser
 
 
 def error(code, message, status=400):
@@ -22,7 +22,13 @@ def lock_subject(kind, value):
         cursor.execute("SELECT pg_advisory_xact_lock(%s)", [key])
 
 
-def api(*, role, form=None, methods=("POST",)):
+def has_parent_consent(guardian):
+    children = GuardianStudent.objects.filter(guardian=guardian, student__archived_at__isnull=True)
+    consented = Consent.objects.filter(guardian=guardian, withdrawn_at__isnull=True).values("student_id")
+    return children.exists() and not children.exclude(student_id__in=consented).exists()
+
+
+def api(*, role, form=None, methods=("POST",), consent=True):
     def decorate(view):
         @wraps(view)
         def guarded(request, *args, **kwargs):
@@ -50,6 +56,8 @@ def api(*, role, form=None, methods=("POST",)):
                     return error("unauthenticated", "Sign in to continue.", 401)
                 if role != "any" and request.role != role:
                     return error("forbidden", "This account cannot access this operation.", 403)
+                if role == "parent" and consent and (request.session.get("consent_declined", False) or not has_parent_consent(request.subject)):
+                    return error("consent_required", "Parental consent is required.", 403)
             if form is not None:
                 try:
                     data = json.loads(request.body)

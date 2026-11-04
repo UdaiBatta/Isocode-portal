@@ -9,9 +9,9 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare, salted_hmac
 
-from fees.auth import api, error, lock_subject
+from fees.auth import api, error, has_parent_consent, lock_subject
 from fees.forms import LanguageForm, PhoneForm, StaffLoginForm, VerifyOtpForm
-from fees.models import Consent, Guardian, GuardianStudent, LoginAttempt, OtpChallenge, StaffUser
+from fees.models import Guardian, GuardianStudent, LoginAttempt, OtpChallenge, StaffUser
 
 DUMMY_PASSWORD_HASH = make_password("dummy-staff-password")
 
@@ -30,13 +30,11 @@ def sign_in(request, subject_type, subject_id, expiry, otp_id=None):
     request.session.set_expiry(expiry)
 
 
-def parent_state(guardian):
+def parent_state(guardian, declined=False):
     children = list(GuardianStudent.objects.filter(guardian=guardian, student__archived_at__isnull=True)
                     .values("student_id", "student__code", "student__full_name"))
-    consented = set(Consent.objects.filter(guardian=guardian, withdrawn_at__isnull=True)
-                    .values_list("student_id", flat=True))
-    return {"phone": guardian.phone, "consent": bool(children) and all(child["student_id"] in consented for child in children),
-            "declined": False, "children": [{"id": child["student__code"], "name": child["student__full_name"]} for child in children]}
+    return {"phone": guardian.phone, "consent": not declined and has_parent_consent(guardian),
+            "declined": declined, "children": [{"id": child["student__code"], "name": child["student__full_name"]} for child in children]}
 
 
 @api(role="public", form=PhoneForm)
@@ -123,7 +121,8 @@ def set_language(request):
 @api(role="any", methods=("GET",))
 def me(request):
     if request.role == "parent":
-        return JsonResponse({"ok": True, "role": "parent", "centreId": None, **parent_state(request.subject)})
+        return JsonResponse({"ok": True, "role": "parent", "centreId": None,
+                             **parent_state(request.subject, request.session.get("consent_declined", False))})
     staff = request.subject
     return JsonResponse({"ok": True, "role": staff.role,
                          "centreId": staff.centre.code if staff.centre_id else None,

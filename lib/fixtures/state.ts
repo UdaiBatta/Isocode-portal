@@ -53,6 +53,7 @@ export async function readProto(): Promise<ProtoState> {
     return state;
   }
   if (me.role === "admin") redirect("/staff/login");
+  if (me.role === "parent" && !me.consent) redirect("/consent");
   return stateSchema.parse({ ...state, role: me.role, phone: me.phone ?? undefined,
     centreId: me.centreId ?? undefined, consent: me.consent, declined: me.declined });
 }

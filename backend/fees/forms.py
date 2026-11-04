@@ -27,3 +27,17 @@ class StaffLoginForm(forms.Form):
 
 class LanguageForm(forms.Form):
     language = forms.ChoiceField(choices=[("hi", "Hindi"), ("en", "English")])
+
+
+class GrantConsentForm(LanguageForm):
+    studentIds = forms.JSONField()
+    wordingVersion = forms.ChoiceField(choices=[("v1", "v1")])
+
+    def clean(self):
+        data = super().clean()
+        values = data.get("studentIds")
+        if not isinstance(values, list) or not values or any(not isinstance(value, str) for value in values):
+            self.add_error("studentIds", "Select linked children.")
+        elif len(set(values)) != len(values):
+            self.add_error("studentIds", "Each child can be selected once.")
+        return data

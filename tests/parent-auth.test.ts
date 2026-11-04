@@ -11,6 +11,8 @@ import { backend } from "@/lib/backend";
 import { submitMockPayment, recordCounterPayment } from "@/lib/actions/payments";
 import { getPayDetails, getPaymentResult } from "@/lib/data/payments";
 import { getReceipt } from "@/lib/data/receipts";
+import { getDues } from "@/lib/data/dues";
+import { getProgress } from "@/lib/data/progress";
 
 beforeEach(() => { jar.clear(); vi.clearAllMocks(); vi.stubGlobal("fetch", fetcher); vi.stubEnv("NEXT_PUBLIC_PROTO", "1"); vi.stubEnv("DEMO_MODE", "true"); vi.stubEnv("BACKEND_URL", "http://localhost:8000"); vi.stubEnv("INTERNAL_API_SECRET", "test-internal-key"); vi.stubEnv("APP_URL", "http://localhost:3000"); });
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
@@ -61,7 +63,9 @@ it("uses Django identity and children over a forged prototype cookie whenever si
   const me = { ok: true, role: "parent", phone: "+919876543210", centreId: null, consent: false, declined: false, children: [{ id: "STU-2222", name: "Demo child" }] };
   fetcher.mockImplementation(async () => response(me));
   expect(await getAuthState()).toMatchObject(me);
-  expect(await readProto()).toMatchObject({ role: "parent", phone: me.phone, consent: false });
+  await expect(readProto()).rejects.toThrow("redirect:/consent");
+  me.consent = true;
+  expect(await readProto()).toMatchObject({ role: "parent", phone: me.phone, consent: true });
   expect((await readProto()).centreId).toBeUndefined();
   expect(writeCookie).not.toHaveBeenCalled();
 });
@@ -84,7 +88,39 @@ it("keeps no-sid fixture previews and consent simulation isolated from real sess
   expect(JSON.parse(jar.get("proto")!).consent).toBe(true);
   expect(fetcher).not.toHaveBeenCalled();
   jar.set("sid", "real-session");
-  expect(await grantConsent({ studentIds: ["STU-0587"], wordingVersion: "v1" })).toMatchObject({ ok: false, code: "unavailable" });
+  jar.set("lang", "en");
+  const preview = jar.get("proto");
+  fetcher.mockResolvedValueOnce(response({ ok: true, next: "/dashboard" }, 200, "sid=real-session; Max-Age=2592000"));
+  expect(await grantConsent({ studentIds: ["STU-0587"], wordingVersion: "v1", language: "hi" })).toMatchObject({ ok: true, next: "/dashboard" });
+  expect(fetcher.mock.calls[0][0]).toBe("http://localhost:8000/api/grant_consent");
+  expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ studentIds: ["STU-0587"], wordingVersion: "v1", language: "en" });
+  expect(jar.get("proto")).toBe(preview);
+  fetcher.mockResolvedValueOnce(response({ ok: true }));
+  expect(await declineConsent()).toEqual({ ok: true });
+  expect(fetcher.mock.calls[1][0]).toBe("http://localhost:8000/api/decline_consent");
+  expect(jar.get("proto")).toBe(preview);
+});
+
+it("gates real-session fee and progress reads until saved consent while payment links stay public", async () => {
+  jar.set("sid", "parent-session");
+  let consented = false;
+  let declined = false;
+  fetcher.mockImplementation(async (url: string) => {
+    if (url.endsWith("/grant_consent")) { consented = true; return response({ ok: true, next: "/dashboard" }); }
+    if (url.endsWith("/decline_consent")) { consented = false; declined = true; return response({ ok: true }); }
+    return response({ ok: true, role: "parent", phone, centreId: null, consent: consented, declined, children: [{ id: "STU-0587", name: "Ishita Sharma" }] });
+  });
+  expect(await getParentPageContext()).toMatchObject({ role: "parent", consent: false });
+  await expect(getDues()).rejects.toThrow("redirect:/consent");
+  await expect(getProgress()).rejects.toThrow("redirect:/consent");
+  expect(await getPayDetails("STU-0587-3")).toMatchObject({ firstName: "Ishita", amount: 1500000 });
+  expect(await grantConsent({ studentIds: ["STU-0587"], wordingVersion: "v1" })).toMatchObject({ ok: true });
+  expect((await getDues()).current?.balance).toBe(1500000);
+  expect((await getProgress()).tests.length).toBeGreaterThan(0);
+  await declineConsent();
+  expect(await getParentPageContext()).toMatchObject({ consent: false, declined: true });
+  await expect(getDues()).rejects.toThrow("redirect:/consent");
+  expect(await getPayDetails("STU-0587-3")).not.toBeNull();
 });
 
 it("completes a public payment action and recorded result with stale sid without private access", async () => {

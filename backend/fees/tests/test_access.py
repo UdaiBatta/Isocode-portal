@@ -44,7 +44,7 @@ class AccessTests(TestCase):
         walk(get_resolver().url_patterns)
 
     def test_missing_wrong_or_unconfigured_internal_key_is_refused(self):
-        for name in ["request_otp", "verify_otp", "staff_login", "logout", "set_language", "me"]:
+        for name in ["request_otp", "verify_otp", "staff_login", "logout", "set_language", "grant_consent", "decline_consent", "me"]:
             with self.subTest(name=name):
                 method = self.client.get if name == "me" else self.client.post
                 self.assertEqual(method(f"/api/{name}").status_code, 403)

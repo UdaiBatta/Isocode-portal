@@ -6,6 +6,7 @@ import { mutateProto, fail, codeSchema } from "@/lib/fixtures/state";
 import { students } from "@/lib/fixtures/catalog";
 import { revalidatePath } from "next/cache";
 import { backendResponse, backendResult, type BackendResult } from "@/lib/backend";
+import { getLanguage } from "@/lib/i18n/server";
 
 async function authAction<T extends object>(name: string, input: unknown): Promise<BackendResult<T>> {
   const response = await backendResponse(name, input);
@@ -30,7 +31,10 @@ export async function verifyOtp(input: unknown) {
 }
 
 export async function grantConsent(input: unknown) {
-  if ((await cookies()).get("sid")?.value) return { ok: false as const, code: "unavailable", message: "Consent could not be saved. Please try again." };
+  if ((await cookies()).get("sid")?.value) {
+    const data = typeof input === "object" && input !== null && !Array.isArray(input) ? input : {};
+    return authAction<{ next: string }>("grant_consent", { ...data, language: await getLanguage() });
+  }
   return mutateProto("parent", (state) => {
     const value = z.object({ studentIds: z.array(codeSchema).min(1), wordingVersion: z.literal("v1") }).parse(input);
     const linked = students.filter((student) => student.phone === state.phone);
@@ -43,7 +47,7 @@ export async function grantConsent(input: unknown) {
 }
 
 export async function declineConsent() {
-  if ((await cookies()).get("sid")?.value) return { ok: false as const, code: "unavailable", message: "Consent could not be saved. Please try again." };
+  if ((await cookies()).get("sid")?.value) return authAction("decline_consent", {});
   return mutateProto("parent", (state) => {
     state.consent = false;
     state.declined = true;
