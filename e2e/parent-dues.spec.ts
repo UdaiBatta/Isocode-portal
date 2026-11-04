@@ -11,7 +11,7 @@ for (const language of ["hi", "en"]) test(`dues amount, date and pay are visible
   await expect(page.locator("main section").first().getByText(language === "en" ? "23 days overdue" : "23 दिन की देरी", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect((await new AxeBuilder({ page }).analyze()).violations.filter((item) => item.impact === "serious" || item.impact === "critical")).toEqual([]);
-  await page.getByRole("button", { name: language === "en" ? "See all instalments" : "सभी किस्तें देखें" }).click();
+  await page.getByText(language === "en" ? "See all instalments" : "सभी किस्तें देखें", { exact: true }).click();
   await expect(page.getByText(language === "en" ? "Instalment 4" : "किस्त 4", { exact: true })).toBeVisible();
 });
 

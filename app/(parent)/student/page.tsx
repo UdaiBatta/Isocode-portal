@@ -1,28 +1,17 @@
-import { redirect } from "next/navigation";
-import { PageShell } from "@/components/app/PageShell";
-import { PageSkeleton } from "@/components/app/PageSkeleton";
-import { EmptyState } from "@/components/app/EmptyState";
 import { ParentDetails, ParentShell, parentSectionClass } from "@/components/app/ParentShell";
-import { StaffFrame } from "@/components/app/StaffPage";
-import { getFamily, getStudentInfo } from "@/lib/data/student";
-import { getParentPageContext } from "@/lib/data/auth";
-import { previewState, type SearchParams } from "@/lib/preview";
+import { parentPage } from "@/lib/data/parent-page";
+import { getStudentInfo } from "@/lib/data/student";
 import { dateLabel, phoneLabel } from "@/lib/format";
 import { pt } from "@/lib/i18n/portal";
+import type { SearchParams } from "@/lib/preview";
 
 export default async function Student({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const query = await searchParams;
-  const context = await getParentPageContext();
-  const { language, today } = context;
-  const state = previewState(query);
-  if (state === "loading") return <PageSkeleton language={language} />;
-  if (state === "empty") return <PageShell><EmptyState title={pt(language, "student.empty")} /></PageShell>;
-  if (context.role !== "parent") redirect("/login");
-  if (!context.consent) redirect("/consent");
-  const selected = typeof query.student === "string" ? query.student : undefined;
-  const [family, info] = await Promise.all([getFamily(selected), getStudentInfo(selected)]);
-  return <ParentShell language={language} active="student" {...family} title={pt(language, "portal.student")} description={pt(language, "student.description")}>
-    <StaffFrame><section className={parentSectionClass}>
+  const { language, today, student, state, shell } = await parentPage(await searchParams);
+  const header = { active: "student", showName: false, title: pt(language, "portal.student"), description: pt(language, "student.description"), emptyTitle: pt(language, "student.empty") } as const;
+  if (state) return <ParentShell {...shell} {...header} />;
+  const info = await getStudentInfo(student);
+  return <ParentShell {...shell} {...header}>
+    <section className={parentSectionClass}>
       <ParentDetails rows={[
         [pt(language, "student.name"), <bdi key="name">{info.name}</bdi>],
         [pt(language, "student.code"), <bdi key="code">{info.code}</bdi>],
@@ -32,6 +21,6 @@ export default async function Student({ searchParams }: { searchParams: Promise<
         [pt(language, "student.language"), info.preferredLanguage === "hi" ? "हिंदी" : "English"],
       ]} />
       <p className="text-body-regular text-text-secondary">{pt(language, "student.correction")}</p>
-    </section></StaffFrame>
+    </section>
   </ParentShell>;
 }

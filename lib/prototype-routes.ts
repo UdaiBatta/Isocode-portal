@@ -1,6 +1,7 @@
 export const prototypeRoutes = [
   { key: "login", title: "Parent sign-in", path: "/login", role: "parent" },
   { key: "consent", title: "Parental consent", path: "/consent", role: "parent" },
+  { key: "home", title: "Parent home", path: "/dashboard", role: "parent" },
   { key: "dues", title: "Parent dues", path: "/dues", role: "parent" },
   { key: "pay", title: "Public payment link", path: "/pay/STU-0587-3", role: "public" },
   { key: "gateway", title: "Mock gateway", path: "/mock-gateway/STU-0587-3", role: "public" },

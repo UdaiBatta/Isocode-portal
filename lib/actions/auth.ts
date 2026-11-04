@@ -39,7 +39,7 @@ export async function verifyOtp(input: unknown) {
     state.otp.verified = true;
     state.role = "parent";
     delete state.centreId;
-    return { verified: true, next: state.consent ? "/dues" : "/consent" };
+    return { verified: true, next: state.consent ? "/dashboard" : "/consent" };
   });
   return result.ok && !result.verified ? { ok: false as const, code: "code_wrong", message: "The prototype code is incorrect." } : result;
 }
@@ -52,7 +52,7 @@ export async function grantConsent(input: unknown) {
     state.consent = true;
     if (state.phone && !state.consentedPhones?.includes(state.phone)) (state.consentedPhones ??= []).push(state.phone);
     state.declined = false;
-    return { next: "/dues" };
+    return { next: "/dashboard" };
   });
 }
 

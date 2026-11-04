@@ -9,5 +9,5 @@ export function StaffPageHeader({ title, description, children }: { title: strin
 }
 
 export function StaffFrame({ children }: { children: ReactNode }) {
-  return <div className="staff-wash staff-reveal flex flex-col gap-4 rounded-3xl p-2.5 outline outline-border-button-default md:p-5 max-sm:[&_section]:p-3 [&_section]:bg-background-primary-default">{children}</div>;
+  return <div className="staff-reveal flex flex-col gap-4 [&>section]:flex [&>section]:flex-col [&>section]:gap-4 [&>section]:rounded-3xl [&>section]:border [&>section]:border-border-button-default [&>section]:bg-background-primary-default [&>section]:p-4 md:[&>section]:p-5">{children}</div>;
 }

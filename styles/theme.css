@@ -420,7 +420,7 @@
   --gradient-button-danger-disabled:  linear-gradient(180deg, var(--color-red-100) 0%, var(--color-red-200) 100%);
 }
 
-.dark {
+.dark, html:has(.staff-surface) {
   /* Foreground */
   --color-foreground-full:            var(--color-neutral-700);
   --color-foreground-icon-primary:    var(--color-neutral-50);

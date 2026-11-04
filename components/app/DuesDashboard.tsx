@@ -11,7 +11,7 @@ import { Select, SelectItem } from "@/components/base/select/select";
 import { SearchField } from "@/components/base/search-field/search-field";
 import { ButtonLink } from "@/components/base/buttons/button";
 import { LinkButton } from "@/components/base/buttons/link-button";
-import { AgeingBar } from "./AgeingBar";
+import { AgeingBar, AgeingDistribution } from "./AgeingBar";
 import { EmptyState } from "./EmptyState";
 import CountUp from "@/components/vendor/reactbits/CountUp/CountUp";
 import { ExportButtons } from "./ExportButtons";
@@ -52,6 +52,7 @@ export function DuesDashboard({ view, directory, filters, attention }: { view: D
       { icon: RiRefund2Line, label: "Refunds due", value: <CountUp to={view.totals.refundsDue} format="integer" storageKey={`${counterKey}:refunds`} />, delta: `${view.totals.refundsLate} past 10 days`, deltaColor: view.totals.refundsLate ? "rose" : "neutral" },
     ]} />
     {attention.length ? <nav aria-label="Needs attention" className="grid gap-3 md:grid-cols-3">{attention.map((item) => <a key={item.label} href={item.href} className="flex items-center justify-between gap-3 rounded-2xl border border-border-button-default bg-background-primary-default p-4 hover:bg-background-secondary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring focus-visible:outline-none"><span className="flex items-center gap-3"><span className="text-headline-medium tabular-nums">{item.count}</span><span className="text-body-regular text-text-secondary">{item.label}</span></span><RiArrowRightSLine size={20} aria-hidden="true" className="shrink-0 text-foreground-icon-secondary" /></a>)}</nav> : null}
+    {view.rows.length ? <AgeingDistribution rows={view.rows} /> : null}
     <section className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-4 md:p-5">
     <div className="flex flex-wrap items-end gap-4">
       <SegmentedControl aria-label="Group dues" selectedKeys={[filters.group]} onSelectionChange={(keys) => navigate({ group: String(Array.from(keys)[0]), batch: undefined })}><SegmentedControlItem id="centre">By centre</SegmentedControlItem><SegmentedControlItem id="batch">By batch</SegmentedControlItem></SegmentedControl>

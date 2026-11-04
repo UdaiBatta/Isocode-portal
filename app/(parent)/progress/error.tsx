@@ -1,2 +1,2 @@
 "use client";
-export { default } from "@/app/error";
+export { ParentRouteError as default } from "@/components/app/ParentRouteError";

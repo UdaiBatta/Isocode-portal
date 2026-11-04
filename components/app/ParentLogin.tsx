@@ -65,7 +65,7 @@ export function ParentLogin({ language, next, demo, tagline }: { language: Langu
   }
 
   return (
-    <AuthCard title={t(language, step === "phone" ? "login.title" : "login.codeTitle")} description={step === "phone" ? tagline : null} className="max-w-none gap-8 rounded-none border-0 p-0 shadow-none sm:p-0 [&_h1]:text-title-1-medium">
+    <AuthCard title={t(language, step === "phone" ? "login.title" : "login.codeTitle")} description={step === "phone" ? tagline : null} className="max-w-none gap-8 rounded-none border-0 bg-transparent p-0 shadow-none sm:p-0 [&_h1]:text-title-1-medium">
       <form noValidate onSubmit={(event) => { event.preventDefault(); if (step === "phone") send(); else verify(code); }} className="flex flex-col gap-6" aria-busy={pending}>
         {step === "phone" ? <label htmlFor="parent-phone" className="flex flex-col gap-2 text-headline-medium">{t(language, "login.phone")}<span className={cx("flex min-h-12 items-center gap-3 rounded-2lg border bg-background-primary-default px-3 shadow-xs focus-within:ring-2 focus-within:ring-border-focus-ring", error ? "border-border-error-default" : "border-border-button-default")}><span className="text-body-regular text-text-primary">+91</span><input id="parent-phone" type="tel" name="phone" inputMode="tel" autoComplete="tel-national" placeholder="90000 00587" value={phone} onChange={(event) => setPhone(event.target.value)} aria-invalid={!!error} aria-describedby={error ? "parent-login-error" : undefined} disabled={pending} className="min-w-0 flex-1 bg-transparent text-headline-regular text-text-primary outline-none placeholder:text-text-secondary" /></span></label> : <>
           <p className="text-body-regular text-text-secondary">{t(language, "login.codeSentTo", { phone })}</p>

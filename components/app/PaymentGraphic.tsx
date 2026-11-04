@@ -9,6 +9,15 @@ const marks = { paid: "M122 100l8.5 8.5L146 92", failed: "M125 91l18 18M143 91l-
 const rows = [["M82 70h36", 260], ["M82 81h36", 320], ["M82 92h22", 380]] as const;
 const sparks = [0, 45, 90, 135, 180, 225];
 
+// A pulse moves from payer to institute while the result is confirmed. It never implies success.
+export function PaymentTransfer() {
+  return <svg className="pay-transfer" viewBox="0 0 120 24" width="120" height="24" fill="none" aria-hidden="true">
+    <path className="stroke-border-button-default" strokeWidth="2" strokeLinecap="round" d="M12 12h96" />
+    <circle className="fill-accent-700" cx="12" cy="12" r="5" /><circle className="fill-accent-700" cx="108" cy="12" r="5" />
+    <circle className="pt-pulse fill-accent-500" cx="12" cy="12" r="3.5" />
+  </svg>;
+}
+
 // A receipt prints, then its badge lands. Plain SVG and CSS, so parent routes ship no animation library.
 export function PaymentGraphic({ kind }: { kind: keyof typeof tones }) {
   const tone = tones[kind];

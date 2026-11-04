@@ -17,6 +17,7 @@ import { dateLabel, inr } from "@/lib/format";
 import type { LedgerVM, RefundVM } from "@/lib/types";
 import { StatusChip } from "./StatusChip";
 import { EmptyState } from "./EmptyState";
+import { StaffFrame, StaffPageHeader } from "./StaffPage";
 
 export function RefundCalculator({ view, plan, today }: { view: RefundVM; plan: LedgerVM["plan"]; today: string }) {
   const router = useRouter();
@@ -48,12 +49,12 @@ export function RefundCalculator({ view, plan, today }: { view: RefundVM; plan: 
   ] : [];
   return <>
     <Breadcrumb><BreadcrumbItem href="/staff/dashboard">Dashboard</BreadcrumbItem><BreadcrumbItem href={`/staff/students/${view.student.code}`}>{view.student.name}</BreadcrumbItem><BreadcrumbItem current>Refund</BreadcrumbItem></Breadcrumb>
-    <header className="flex flex-wrap items-center gap-4"><h1 className="text-title-1-medium">Refund · {view.student.name}</h1>{view.status !== "new" ? <StatusChip status={view.status} /> : null}</header>
+    <StaffPageHeader title={`Refund · ${view.student.name}`} description={`Worked out from written policy ${view.policy.version}. Change the date to recalculate.`}>{view.status !== "new" ? <StatusChip status={view.status} /> : null}</StaffPageHeader>
     {!view.calc ? <EmptyState title="No fee plan available for refund" /> : <>
       {view.blockedBy ? <Notification title="Resolve the payment before approval" description={<span>{inr(view.blockedBy.amount)} is being checked. <LinkButton variant="secondary" href={`/staff/automation?tab=unmatched&item=${view.blockedBy.unmatchedId}`}>Open queue item</LinkButton></span>} status="information" dismissible={false} /> : null}
       {view.overdueDeadline ? <Notification title="Refund deadline has passed" description="Contact accounts to arrange payment." status="error" dismissible={false} /> : null}
-      <div className="grid gap-10 lg:grid-cols-[minmax(220px,1fr)_minmax(300px,1.4fr)]">
-        <section className="flex flex-col items-start gap-6"><div><p className="mb-2 text-body-medium">Withdrawal date</p><DatePicker aria-label="Withdrawal date" value={date} onChange={(value) => { setDate(value); setDateChanged(true); }} isDisabled={frozen} /></div>
+      <StaffFrame><div className="grid items-start gap-4 lg:grid-cols-[minmax(220px,1fr)_minmax(300px,1.4fr)]">
+        <section className="flex flex-col items-start gap-6 rounded-3xl border border-border-button-default bg-background-primary-default p-4 md:p-5"><div><p className="mb-2 text-body-medium">Withdrawal date</p><DatePicker aria-label="Withdrawal date" value={date} onChange={(value) => { setDate(value); setDateChanged(true); }} isDisabled={frozen} /></div>
           <Select label="Reason" selectedKey={reason || null} onSelectionChange={(key) => setReason(String(key))} isDisabled={frozen} placeholder="Choose a reason">{["Personal", "Moved city", "Changed course", "Health", "Other"].map((item) => <SelectItem id={item} key={item}>{item}</SelectItem>)}</Select>
           {!supported ? <p role="status" className="text-body-regular text-text-secondary">This prototype uses the supplied {view.input.withdrawalDate} calculation. Restore that date to continue.</p> : null}
           {frozen ? <p className="text-body-regular text-text-secondary">The approved calculation is frozen.</p> : <Button variant={view.status === "draft" ? "secondary" : "primary"} disabled={pending || !supported} onClick={() => startTransition(async () => { await perform("save"); })}>Save draft</Button>}
@@ -61,8 +62,8 @@ export function RefundCalculator({ view, plan, today }: { view: RefundVM; plan: 
           {error ? <p role="alert" className="text-body-regular text-text-error-primary">{error}</p> : null}
           <LinkButton href="/refund-policy" variant="secondary">Refund policy</LinkButton>
         </section>
-        <section className="flex flex-col gap-5"><h2 className="text-headline-medium">Refund Policy {view.policy.version}</h2>{calc ? <Table key={date?.toString()} aria-label="Refund calculation" size="md" className={dateChanged ? "refund-lines" : undefined}><TableHeader><TableColumn id="step" isRowHeader><span className="text-text-primary">Calculation</span></TableColumn><TableColumn id="value"><span className="text-text-primary">Value</span></TableColumn></TableHeader><TableBody>{calculation.map(([label, value]) => <TableRow id={label} key={label}><TableCell><span className="text-body-regular">{label}</span></TableCell><TableCell><span className="block text-end text-body-medium tabular-nums">{value}</span></TableCell></TableRow>)}</TableBody></Table> : <EmptyState title="Choose the supplied prototype date to see the calculation" />}</section>
-      </div>
+        <section className="flex min-w-0 flex-col gap-5 rounded-3xl border border-border-button-default bg-background-primary-default p-4 md:p-5"><h2 className="text-headline-medium">Refund Policy {view.policy.version}</h2>{calc ? <Table key={date?.toString()} aria-label="Refund calculation" size="md" className={dateChanged ? "refund-lines" : undefined}><TableHeader><TableColumn id="step" isRowHeader><span className="text-text-primary">Calculation</span></TableColumn><TableColumn id="value"><span className="text-text-primary">Value</span></TableColumn></TableHeader><TableBody>{calculation.map(([label, value]) => <TableRow id={label} key={label}><TableCell><span className="text-body-regular">{label}</span></TableCell><TableCell><span className="block text-end text-body-medium tabular-nums">{value}</span></TableCell></TableRow>)}</TableBody></Table> : <EmptyState title="Choose the supplied prototype date to see the calculation" />}</section>
+      </div></StaffFrame>
     </>}
     <AlertDialog isOpen={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)} title={confirm === "approve" ? "Approve this refund?" : "Mark this refund as paid?"} description={confirm === "approve" ? "This freezes the calculation, withdraws the student and stops reminders." : "This records a mock refund payment."} confirmLabel={confirm === "approve" ? "Approve refund" : "Mark as paid"} variant="default" onConfirm={async () => { if (!await perform(confirm === "approve" ? "approve" : "paid")) throw new Error("Refund action failed"); setConfirm(null); }} />
   </>;

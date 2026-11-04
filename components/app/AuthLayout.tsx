@@ -52,8 +52,8 @@ function AuthPanel({ variant, language }: { variant: keyof typeof panels; langua
 }
 
 export function AuthLayout({ variant, language, action, children }: { variant: keyof typeof panels; language: Language; action?: ReactNode; children: ReactNode }) {
-  return <div className="grid min-h-dvh bg-background-primary-default lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)]">
-    <main className={cx("flex min-h-dvh min-w-0 flex-col", variant === "parent" && "parent-surface")}>
+  return <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)]">
+    <main className={cx("flex min-h-dvh min-w-0 flex-col", variant === "parent" ? "parent-surface" : "staff-surface")}>
       <header className="flex items-center justify-between gap-4 px-5 pt-5 md:px-8 md:pt-7">
         <span className="flex items-center gap-2.5 text-headline-medium"><BrandMark />{ORG.name}</span>
         {action}

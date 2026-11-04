@@ -6,7 +6,7 @@ import { RiBankCardLine, RiBankLine, RiSmartphoneLine } from "@remixicon/react";
 import { Button } from "@/components/base/buttons/button";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/buttons/button-group";
 import { Radio, RadioGroup } from "@/components/base/radio/radio";
-import { Spinner } from "@/components/base/spinner/spinner";
+import { PaymentTransfer } from "./PaymentGraphic";
 import { submitMockPayment } from "@/lib/actions/payments";
 import { inr } from "@/lib/format";
 import { t } from "@/lib/i18n";
@@ -50,7 +50,7 @@ export function MockGateway({ token, language, amount }: { token: string; langua
   if (pending) {
     const steps = [methods.find((item) => item.id === method)!.step, "checkout.step.confirm", "checkout.step.record"] as const;
     return <div role="status" className="flex flex-col gap-5 rounded-3xl border border-border-button-default p-5">
-      <div className="flex items-center gap-3"><Spinner size="sm" aria-hidden /><p className="text-headline-medium">{t(language, "pay.confirming")}</p></div>
+      <div className="flex flex-col gap-3"><PaymentTransfer /><p className="text-headline-medium">{t(language, "pay.confirming")}</p></div>
       <ol className="flex flex-col gap-3">{steps.map((step, index) => <li key={step} className="pay-step flex items-center gap-3 text-body-regular" style={{ animationDelay: `${index * STEP_MS}ms` }}>
         <svg className="shrink-0 text-accent-600" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
         {ct(language, step)}

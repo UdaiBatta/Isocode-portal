@@ -17,7 +17,7 @@ export function StaffSignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
   const router = useRouter();
-  return <AuthCard title="Staff sign-in" description="Dues, reminders and refunds across all four centres." className="max-w-none gap-8 rounded-none border-0 p-0 shadow-none sm:p-0 [&_h1]:text-title-1-medium">
+  return <AuthCard title="Staff sign-in" description="Dues, reminders and refunds across all four centres." className="max-w-none gap-8 rounded-none border-0 bg-transparent p-0 shadow-none sm:p-0 [&_h1]:text-title-1-medium">
     <form className="flex flex-col gap-5" onSubmit={(event) => {
       event.preventDefault(); const data = new FormData(event.currentTarget);
       startTransition(async () => { try { const result = await staffLogin({ email: data.get("email"), password: data.get("password") }); setFailed(!result.ok); if (result.ok) { router.push(result.next); router.refresh(); } } catch { setFailed(true); } });

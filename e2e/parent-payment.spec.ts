@@ -15,7 +15,7 @@ for (const language of ["hi", "en"] as Language[]) test(`parent signs in, pays a
   await page.getByText(t(language, "consent.check", { student: "Ishita Sharma" }), { exact: true }).click();
   await expect(page.getByRole("checkbox")).toBeChecked();
   await page.getByRole("button", { name: t(language, "consent.agree"), exact: true }).click();
-  await expect(page).toHaveURL(/\/dues$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
   await page.getByRole("link", { name: t(language, "dues.pay", { amount: "₹15,000" }), exact: true }).click();
   await expect(page.getByRole("note")).toHaveText(t(language, "pay.testMode"));
   await page.getByRole("button", { name: t(language, "pay.button", { amount: "₹15,000" }), exact: true }).click();
@@ -39,7 +39,7 @@ for (const language of ["hi", "en"] as Language[]) test(`parent signs in, pays a
   await page.emulateMedia({ media: "screen" });
   await page.getByRole("link", { name: t(language, "pay.backToDues"), exact: true }).click();
   await expect(page.getByText(t(language, "dues.clear"), { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: t(language, "dues.receipts"), exact: true }).click();
+  await page.locator("main").getByRole("link", { name: t(language, "dues.receipts"), exact: true }).click();
   await expect(page.getByRole("link", { name: /100001/ })).toBeVisible();
   expect(errors).toEqual([]);
 });

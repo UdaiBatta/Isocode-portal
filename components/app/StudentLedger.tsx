@@ -22,6 +22,7 @@ import { methodLabel } from "@/lib/i18n/checkout";
 import type { InstalmentVM, LedgerVM } from "@/lib/types";
 import { StatusChip } from "./StatusChip";
 import { EmptyState } from "./EmptyState";
+import { StaffFrame, StaffPageHeader } from "./StaffPage";
 
 export function StudentLedger({ view, today }: { view: LedgerVM; today: string }) {
   const router = useRouter();
@@ -46,17 +47,19 @@ export function StudentLedger({ view, today }: { view: LedgerVM; today: string }
   ];
   return <>
     <Breadcrumb><BreadcrumbItem href="/staff/dashboard">Dashboard</BreadcrumbItem><BreadcrumbItem current>{view.student.code}</BreadcrumbItem></Breadcrumb>
-    <header className="flex flex-col gap-2"><h1 className="text-title-1-medium">{view.student.name}</h1><p className="text-body-regular text-text-secondary">{view.student.code} · {view.student.batch} · {view.student.centre} · {view.student.status === "withdrawn" ? "Withdrawn" : "Active"}</p></header>
-    <dl className="grid grid-cols-2 gap-6 lg:grid-cols-4">{[["Net fee", inr(view.plan.net)], ["Paid", inr(view.plan.paid)], ["Balance", inr(view.plan.balance)], ["Days overdue", String(Math.max(0, ...view.instalments.map((item) => item.daysOverdue)))]].map(([label, value]) => <div key={label}><dt className="text-body-regular text-text-secondary">{label}</dt><dd className="mt-2 text-title-1-medium tabular-nums">{value}</dd></div>)}</dl>
+    <StaffPageHeader title={view.student.name} description={`${view.student.code} · ${view.student.batch} · ${view.student.centre} · ${view.student.status === "withdrawn" ? "Withdrawn" : "Active"}`} />
+    <StaffFrame><section><dl className="grid grid-cols-2 gap-6 lg:grid-cols-4">{[["Net fee", inr(view.plan.net)], ["Paid", inr(view.plan.paid)], ["Balance", inr(view.plan.balance)], ["Days overdue", String(Math.max(0, ...view.instalments.map((item) => item.daysOverdue)))]].map(([label, value]) => <div key={label}><dt className="text-body-regular text-text-secondary">{label}</dt><dd className="mt-2 text-title-1-medium tabular-nums">{value}</dd></div>)}</dl>
     <ButtonGroup aria-label="Ledger actions" className="flex-wrap">
       <ButtonGroupItem disabled={view.student.status === "withdrawn"} onClick={() => setOpen(true)}>Record payment</ButtonGroupItem>
       <TooltipTrigger><ButtonGroupItem disabled={!oldest || view.student.status === "withdrawn"} onClick={async () => { try { await navigator.clipboard.writeText(new URL(`/pay/${oldest!.id}`, window.location.origin).href); toast.success("Pay link copied"); } catch { toast.error("Could not copy the pay link. Please try again."); } }}>Copy pay link</ButtonGroupItem><Tooltip>{oldest ? "Copy the oldest unpaid instalment link" : "There is nothing due"}</Tooltip></TooltipTrigger>
       <ButtonGroupItem onClick={() => router.push(`/staff/students/${view.student.code}/refund`)}>{view.refund ? "View refund" : "Start refund"}</ButtonGroupItem>
     </ButtonGroup>
+    </section>
     <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Fee plan</h2><p className="text-body-regular">Gross {inr(view.plan.gross)} · Discount {inr(view.plan.discount)}{view.plan.discountReason ? ` (${view.plan.discountReason})` : ""} · Net {inr(view.plan.net)}</p></section>
     <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Instalments</h2><DataTable label="Student instalments" data={view.instalments} columns={columns} renderCard={(item) => <div className="flex flex-col gap-3"><div className="flex justify-between gap-3"><span>Instalment {item.seq} · {dateLabel(item.dueDate, "en", today)}</span><StatusChip status={item.partPaid ? "part_paid" : item.status} /></div><p className="text-body-regular">Amount {inr(item.amount)} · Paid {inr(item.paid)}</p><p className="text-headline-medium tabular-nums">Balance {inr(item.balance)}</p><p className="text-body-2-regular">{item.daysOverdue} days overdue</p></div>} /></section>
     <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Payments</h2>{view.payments.length ? <DataTable label="Student payments" data={view.payments} columns={payments} renderCard={(item) => <div className="flex flex-wrap justify-between gap-3"><span>{dateLabel(item.on, "en", today)} · {methodLabel("en", item.method)}</span><span className="tabular-nums">{inr(item.amount)}</span>{item.receiptId ? <LinkButton href={`/receipts/${item.receiptId}`} variant="secondary">View receipt</LinkButton> : null}</div>} /> : <EmptyState title="No payments recorded" />}</section>
     <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Reminder timeline</h2><ol className="flex flex-col gap-5 border-s border-separator-border ps-5">{view.timeline.map((line) => <li key={line.instalmentId} className="flex flex-col gap-2"><h3 className="text-body-medium">Instalment {line.instalmentId.split("-").at(-1)}</h3>{line.sent.map((sent) => <p key={`${sent.step}-${sent.on}`} className="text-body-2-regular text-text-secondary">Sent {sent.step > 0 ? "+" : ""}{sent.step} · {dateLabel(sent.on, "en", today)} · {sent.language === "hi" ? "Hindi" : "English"}</p>)}{line.stopped ? <p className="text-body-medium">Stopped: {line.stopped}</p> : line.next ? <p className="text-body-medium">Next {line.next.step > 0 ? "+" : ""}{line.next.step} · {dateLabel(line.next.on, "en", today)}</p> : <p className="text-body-2-regular">No more steps</p>}</li>)}</ol></section>
+    </StaffFrame>
     <Modal isOpen={open} onOpenChange={setOpen} aria-label="Record counter payment"><ModalHeader title="Record payment" description="The payment is allocated to the oldest unpaid instalment first." /><ModalBody><form className="flex flex-col gap-5" onSubmit={(event) => {
       event.preventDefault(); const form = new FormData(event.currentTarget); setError("");
       let amount: number; try { amount = rupeesToPaise(String(form.get("amount"))); } catch (problem) { setError((problem as Error).message); return; }

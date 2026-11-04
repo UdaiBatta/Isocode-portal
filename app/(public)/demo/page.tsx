@@ -19,7 +19,7 @@ export default async function Demo({ searchParams }: { searchParams: Promise<Sea
   if (process.env.DEMO_MODE !== "true") notFound();
   const state = previewState(await searchParams);
   if (state === "loading") return <PageSkeleton language="en" />;
-  return <main lang="en" className="mx-auto flex max-w-5xl flex-col gap-14 px-5 py-12 md:py-20">
+  return <main lang="en" className="paper-surface mx-auto flex max-w-5xl flex-col gap-14 px-5 py-12 md:py-20">
     <header className="flex max-w-3xl flex-col items-start gap-6"><p className="text-body-medium text-accent-700">Company A · Jaipur</p><h1 className="text-display-4-semibold md:text-display-3-semibold"><BlurText text="Clear dues. Timely follow-up." /></h1><p className="text-title-3-regular text-text-secondary">Parents see what they owe and when. Accounts teams see dues across centres, reminders that stop on payment, and refunds explained by policy.</p><ButtonLink href="/login">Start</ButtonLink><p className="text-body-2-regular text-text-secondary">Local prototype · fictional sample data · no real money or messages</p></header>
     {state === "empty" ? <EmptyState title="No demo scenarios available" /> : <>
       <section className="grid gap-5 md:grid-cols-3" aria-label="Demo roles">{[
