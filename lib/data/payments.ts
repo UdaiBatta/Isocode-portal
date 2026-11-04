@@ -1,11 +1,12 @@
-import { readProto } from "@/lib/fixtures/state";
+import { readPreviewState } from "@/lib/fixtures/state";
 import { ledgerFor, studentFor, receiptsFor } from "@/lib/fixtures/views";
 import { today } from "@/lib/clock";
+import { getAuthState } from "@/lib/data/auth";
 
 export async function getPayDetails(token: string) {
   if (!/^STU-\d{4}-[1-4]$/.test(token)) return null;
   try {
-    const state = await readProto();
+    const state = await readPreviewState();
     const code = token.slice(0, 8);
     const ledger = ledgerFor(state, code, await today());
     const instalment = ledger.instalments.find((item) => item.id === token);
@@ -15,14 +16,15 @@ export async function getPayDetails(token: string) {
 }
 
 export async function getPaymentResult(token: string, eventId: unknown) {
-  const state = await readProto();
+  const state = await readPreviewState();
   if (typeof eventId !== "string") return null;
   const event = state.paymentResults?.[eventId];
   if (!event || event.token !== token) return null;
   const student = studentFor(token.slice(0, 8));
   const receipt = event.receiptId ? receiptsFor(state, student.code).find((item) => item.id === event.receiptId) : null;
-  const parentCanAccess = state.role === "parent" && state.consent === true && state.phone === student.phone;
-  const staffCanAccess = state.role === "accounts" && (!state.centreId || state.centreId === (student.centreId ?? "MLV"));
+  const auth = await getAuthState();
+  const parentCanAccess = auth.role === "parent" && auth.consent === true && auth.phone === student.phone;
+  const staffCanAccess = auth.role === "accounts" && (!auth.centreId || auth.centreId === (student.centreId ?? "MLV"));
   const reference = event.on ? `TXN-${event.on.replaceAll("-", "")}-${eventId.split("-").at(-1)!.padStart(4, "0")}` : null;
   return { ...event, firstName: student.name.split(" ")[0], seq: Number(token.at(-1)), reference, receiptNumber: receipt?.number ?? null, parentCanAccess, canViewReceipt: parentCanAccess || staffCanAccess };
 }

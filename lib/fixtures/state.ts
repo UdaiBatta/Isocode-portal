@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { redirect } from "next/navigation";
+import { getMe } from "@/lib/backend";
 
 export const codeSchema = z.string().regex(/^STU-\d{4}$/);
 export const dateSchema = z.iso.date();
@@ -31,13 +33,28 @@ export type ProtoState = z.infer<typeof stateSchema>;
 export type ProtoPayment = z.infer<typeof paymentSchema>;
 export type ActionResult<T extends object = object> = ({ ok: true } & T) | { ok: false; code: string; message: string };
 
-export async function readProto(): Promise<ProtoState> {
+export async function readPreviewState(): Promise<ProtoState> {
   const value = (await cookies()).get("proto")?.value;
-  if (!value || value.length > 3800) return {};
-  try {
-    const parsed = stateSchema.safeParse(JSON.parse(value));
-    return parsed.success ? parsed.data : {};
-  } catch { return {}; }
+  let state: ProtoState = {};
+  if (process.env.NEXT_PUBLIC_PROTO === "1" && value && value.length <= 3800) {
+    try {
+      const parsed = stateSchema.safeParse(JSON.parse(value));
+      if (parsed.success) state = parsed.data;
+    } catch { /* Ignore malformed preview cookies. */ }
+  }
+  return state;
+}
+
+export async function readProto(): Promise<ProtoState> {
+  const state = await readPreviewState();
+  const me = await getMe();
+  if (!me) {
+    if ((await cookies()).get("sid")?.value) redirect("/login");
+    return state;
+  }
+  if (me.role === "admin") redirect("/staff/login");
+  return stateSchema.parse({ ...state, role: me.role, phone: me.phone ?? undefined,
+    centreId: me.centreId ?? undefined, consent: me.consent, declined: me.declined });
 }
 
 class PrototypeError extends Error {
@@ -52,10 +69,10 @@ export function requirePrototypeRole(state: ProtoState, role: "parent" | "accoun
   if (state.role && state.role !== role) fail("forbidden", "This prototype view belongs to another role.");
 }
 
-export async function mutateProto<T extends object>(role: "parent" | "accounts" | "counsellor" | null, change: (state: ProtoState) => T | Promise<T>): Promise<ActionResult<T>> {
+async function mutatePreview<T extends object>(role: "parent" | "accounts" | "counsellor" | null, change: (state: ProtoState) => T | Promise<T>, readState: () => Promise<ProtoState>): Promise<ActionResult<T>> {
   if (process.env.NEXT_PUBLIC_PROTO !== "1") return { ok: false, code: "disabled", message: "Prototype mode is disabled." };
   try {
-    const state = await readProto();
+    const state = await readState();
     if (role) requirePrototypeRole(state, role);
     const result = await change(state);
     const value = JSON.stringify(stateSchema.parse(state));
@@ -69,4 +86,12 @@ export async function mutateProto<T extends object>(role: "parent" | "accounts" 
     if (error instanceof z.ZodError) return { ok: false, code: "invalid", message: "Check the entered values." };
     throw error;
   }
+}
+
+export async function mutateProto<T extends object>(role: "parent" | "accounts" | "counsellor" | null, change: (state: ProtoState) => T | Promise<T>): Promise<ActionResult<T>> {
+  return mutatePreview(role, change, readProto);
+}
+
+export async function mutatePublicPreview<T extends object>(change: (state: ProtoState) => T | Promise<T>): Promise<ActionResult<T>> {
+  return mutatePreview(null, change, readPreviewState);
 }

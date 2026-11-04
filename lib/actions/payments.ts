@@ -1,13 +1,13 @@
 "use server";
 
 import { z } from "zod";
-import { codeSchema, dateSchema, moneySchema, mutateProto, fail } from "@/lib/fixtures/state";
+import { codeSchema, dateSchema, moneySchema, mutateProto, mutatePublicPreview, fail } from "@/lib/fixtures/state";
 import { ledgerFor, queueFor, receiptsFor } from "@/lib/fixtures/views";
 import { requireCentre } from "@/lib/data/scope";
 import { today } from "@/lib/clock";
 
 export async function submitMockPayment(input: unknown) {
-  return mutateProto(null, async (state) => {
+  return mutatePublicPreview(async (state) => {
     const { token, outcome, method } = z.object({ token: z.string().regex(/^STU-\d{4}-[1-4]$/), outcome: z.enum(["success", "failed", "wrong_amount"]), method: z.enum(["upi", "card", "netbanking"]).default("upi") }).parse(input);
     const code = token.slice(0, 8);
     requireCentre({}, code);

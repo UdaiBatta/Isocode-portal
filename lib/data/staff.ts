@@ -2,9 +2,14 @@ import { readProto, requirePrototypeRole } from "@/lib/fixtures/state";
 import { centres, batches, students } from "@/lib/fixtures/catalog";
 import { today } from "@/lib/clock";
 import { getLedger } from "@/lib/data/ledger";
+import { getMe } from "@/lib/backend";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export async function getStaffPageContext() {
-  const state = await readProto();
+  const me = await getMe();
+  if (!me && (await cookies()).get("sid")?.value) redirect("/staff/login");
+  const state = me ?? await readProto();
   return { role: state.role ?? null, today: await today(), demo: process.env.DEMO_MODE === "true" };
 }
 

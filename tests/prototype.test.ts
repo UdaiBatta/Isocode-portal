@@ -23,7 +23,7 @@ import { submitMockPayment, recordCounterPayment, resolveUnmatched } from "@/lib
 import { saveRefundDraft, approveRefund, markRefundPaid } from "@/lib/actions/refund";
 import { setDemoDate, runRemindersNow, resetDemo } from "@/lib/actions/demo";
 import { closeTask, ensureCallBrief } from "@/lib/actions/counsellor";
-import { requestOtp, verifyOtp, grantConsent, staffLogin, setLanguage, logout } from "@/lib/actions/auth";
+import { grantConsent, logout } from "@/lib/actions/auth";
 import { readProto } from "@/lib/fixtures/state";
 import { students, namedStudents, batches, centres } from "@/lib/fixtures/catalog";
 import { today } from "@/lib/clock";
@@ -177,7 +177,6 @@ describe("prototype fixtures and state changes", () => {
   it("validates actions, gates prototype writes and safely ignores malformed cookies", async () => {
     expect(await recordCounterPayment({ studentId: "STU-0587", amountPaise: 1.5, method: "cash", receivedOn: "2026-11-02" })).toMatchObject({ ok: false, code: "invalid" });
     expect(await setDemoDate({ date: "2026-02-30" })).toMatchObject({ ok: false, code: "invalid" });
-    expect(await setLanguage({ language: "xx" })).toMatchObject({ ok: false, code: "invalid" });
     expect(await getPayDetails("tampered")).toBeNull();
     jar.set("proto", "not-json");
     expect(await readProto()).toEqual({});
@@ -200,17 +199,12 @@ describe("prototype fixtures and state changes", () => {
     await expect(getLedger("STU-0587")).rejects.toThrow("another role");
   });
 
-  it("simulates OTP/consent, persists language and keeps earlier payments when changing role", async () => {
-    expect(await requestOtp({ phone: "90000 00777" })).toMatchObject({ ok: true, demoCode: "123456" });
-    expect(await verifyOtp({ phone: "+919000000777", code: "000000" })).toMatchObject({ ok: false, code: "code_wrong" });
-    expect((await readProto()).otp?.attempts).toBe(1);
-    expect(await verifyOtp({ phone: "+919000000777", code: "123456" })).toMatchObject({ ok: true, next: "/consent" });
+  it("keeps fixture consent and role preparation separate from real sign-in", async () => {
+    session({ role: "parent", phone: "+919000000777", otp: { attempts: 0, sends: 1, verified: true } });
     expect(await grantConsent({ studentIds: ["STU-0771", "STU-0772"], wordingVersion: "v1" })).toMatchObject({ ok: true });
     expect((await getDues()).children).toHaveLength(2);
-    expect(await setLanguage({ language: "hi" })).toMatchObject({ ok: true });
-    expect(jar.get("lang")).toBe("hi");
     await logout();
-    expect(await staffLogin({ email: "accounts@demo.test", password: "prototype" })).toMatchObject({ ok: true, next: "/staff/dashboard" });
+    expect(await openPrototypeRoute({ key: "dashboard", state: "normal" })).toMatchObject({ ok: true, next: "/staff/dashboard" });
     expect((await readProto()).role).toBe("accounts");
   });
 
@@ -224,11 +218,11 @@ describe("prototype fixtures and state changes", () => {
   it("supports the local HTTP phone preview and uses Secure cookies on HTTPS", async () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("APP_URL", "http://192.168.1.10:3000");
-    await setLanguage({ language: "hi" });
-    expect(cookieWrites.slice(-2)).toEqual([{ name: "proto", secure: false }, { name: "lang", secure: false }]);
+    await openPrototypeRoute({ key: "dues", state: "normal" });
+    expect(cookieWrites.at(-1)).toEqual({ name: "proto", secure: false });
     vi.stubEnv("APP_URL", "https://demo.example.test");
-    await setLanguage({ language: "en" });
-    expect(cookieWrites.slice(-2)).toEqual([{ name: "proto", secure: true }, { name: "lang", secure: true }]);
+    await openPrototypeRoute({ key: "dues", state: "normal" });
+    expect(cookieWrites.at(-1)).toEqual({ name: "proto", secure: true });
   });
 
   it("reads payment results from recorded attempts and gates the private receipt", async () => {
