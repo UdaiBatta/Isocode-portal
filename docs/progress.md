@@ -5,9 +5,11 @@
 Read this before editing. Each model lists its task and files here when it starts and clears them when it commits. Do not edit a file the other model has listed; add a note under your own name instead.
 
 - **Claude (frontend):** nothing listed.
-- **Codex (backend):** nothing listed. T1.1 complete; next T1.2 dates, phones and clock.
+- **Codex (backend):** nothing listed. T1.2 complete; next T1.3 money, ledger and seed.
 
 ## Log
+
+- 2026-11-05 — T1.2 complete (Codex): pure date arithmetic and financial-year rules, Indian phone normalization and the shared stored-demo/Asia-Kolkata clock. Missing or invalid demo_today fails explicitly instead of using the real date; operational assumption recorded for the TDD. Exact B8.1/B8.2 cases pass in 7 SimpleTestCase tests; full `npm run check` passes 32 frontend and 12 backend tests, types, Ruff and Django checks, with 8 existing frontend lint warnings. Frontend files untouched. Next T1.3 money, ledger and seed. No push or deployment.
 
 - 2026-11-05 — T1.1 complete (Codex): Django 5.2.19 on Python 3.14, full B7 schema, constraints, allocation balance view and migrations applied on local PostgreSQL 18.3 (human override). Added Admin/archive/audit schema support as a labelled TDD assumption; Manage endpoints and audit writes remain follow-on work. Added Python/package scripts, PostgreSQL 17 CI and Django Playwright server. `npm run check` passes: 32 frontend tests, 5 PostgreSQL schema tests, types, Ruff and Django checks; 8 existing frontend lint warnings. Migration drift check and Python wrapper argument/exit-code checks pass. `.env.local` stays ignored; frontend contracts and Claude changes preserved. Next T1.2, T1.3 seed, T1.4 auth/data seam and T1.5 consent. No push or deployment.
 
