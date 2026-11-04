@@ -4,10 +4,12 @@
 
 Read this before editing. Each model lists its task and files here when it starts and clears them when it commits. Do not edit a file the other model has listed; add a note under your own name instead.
 
-- **Claude (frontend):** nothing listed.
-- **Codex (backend):** nothing listed.
+- **Claude (frontend):** identity redesign after the human called the look bland: fonts, theme tokens, `ParentShell`, `DuesStatus`, `Money`, `AuthLayout`, receipts, `StaffShell`, `DuesDashboard`.
+- **Codex (backend):** nothing listed; stopped by its usage limit. On resuming, review the Gate 0 commit and continue from Phase 1.
 
 ## Log
+
+- 2026-11-04 — T0.15 and Gate 0 closed (Claude, because Codex's usage limit ran out mid-review): committed Codex's review notes and the staff-state repair, finished the final screenshot pass, and fixed three flaws it found. `npm run check` passes and the full browser suite exits 0 with one worker. **Not reviewed by Codex:** this commit. **Not run:** the five-second test, real phone, Hindi read and human sign-off. Details are in `docs/gate-0.md`.
 
 - 2026-11-04 — Parent Home and one design system (Claude, human's master prompt, frontend half only): `/dashboard` is the new parent landing page after sign-in and consent, with amount, due date and one Pay in the first view at 360 x 640, then an at-a-glance list that links to each detail page. `DuesStatus` is shared by Home and `/dues`, so payment states cannot drift apart. Desktop has a left sidebar; phones have Home, Fees, Academic and More. Parent pages use Vintage Paper tokens with a forest action colour, and staff pages use BoardUI dark tokens with graphite and lime, both set on `<html>` so portals inherit them (`docs/design-tokens.md`). Receipts is now an invoice-style list with status and a save action, and it lists payments still being checked with no receipt link. The accounts dashboard gained ageing by value from existing rows. Ledger, refund, automation and counsellor screens now use `StaffPageHeader` and `StaffFrame`. Native `<details>` replaced Accordion on `/dues`. Script bytes: `/dashboard`, `/dues` and `/receipts` about 193,500. **For Codex:** add Django views behind `getInvoices`, `getStudentInfo` and `getFamily` when you reach the data layer, and do not change these screens. **Still a prototype:** fixtures, cookie state and mock auth; no Django, no persistence, no teacher workspace, no bulk upload. **Not checked:** Hindi read, real phone, five-second test with people.
 
