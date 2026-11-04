@@ -1,5 +1,4 @@
-import { RiCheckboxCircleLine, RiDownload2Line, RiTimeLine } from "@remixicon/react";
-import { Chip } from "@/components/base/badges/chip";
+import { RiDownload2Line } from "@remixicon/react";
 import { LinkButton } from "@/components/base/buttons/link-button";
 import type { InvoiceRow } from "@/lib/data/receipts";
 
@@ -7,8 +6,7 @@ export type InvoiceLabels = Record<"date" | "description" | "amount" | "status" 
 type InvoiceView = Omit<InvoiceRow, "amount" | "issuedOn" | "method"> & { amount: string; date: string; description: string };
 
 function InvoiceStatus({ row, labels }: { row: InvoiceView; labels: InvoiceLabels }) {
-  const Icon = row.status === "paid" ? RiCheckboxCircleLine : RiTimeLine;
-  return <Chip color={row.status === "paid" ? "lime" : "yellow"}><span className="inline-flex items-center gap-1"><Icon aria-hidden className="size-3.5" />{labels[row.status]}</span></Chip>;
+  return <span className={row.status === "paid" ? "ledger-stamp ledger-stamp-small ledger-stamp-paid" : "ledger-stamp ledger-stamp-small"}>{labels[row.status]}</span>;
 }
 
 function InvoiceDownload({ row, labels }: { row: InvoiceView; labels: InvoiceLabels }) {
@@ -23,13 +21,13 @@ export function InvoiceTable({ rows, labels }: { rows: InvoiceView[]; labels: In
       <tbody>{rows.map((row) => <tr key={row.id}>
         <td><span className="flex flex-col"><span className="text-body-medium">{row.date}</span><bdi className="text-body-regular text-text-secondary">{row.number}</bdi></span></td>
         <td>{row.description}</td>
-        <td><span className="text-body-medium tabular-nums">{row.amount}</span></td>
+        <td><span className="ledger-figure">{row.amount}</span></td>
         <td><InvoiceStatus row={row} labels={labels} /></td>
         <td><InvoiceDownload row={row} labels={labels} /></td>
       </tr>)}</tbody>
     </table></div>
     <ul aria-label={labels.label} className="flex flex-col divide-y divide-separator-border md:hidden">{rows.map((row) => <li key={row.id} className="flex flex-col gap-2 py-4">
-      <span className="flex items-baseline justify-between gap-4"><span className="text-headline-medium">{row.date}</span><span className="text-headline-medium tabular-nums">{row.amount}</span></span>
+      <span className="flex items-baseline justify-between gap-4"><span className="text-headline-medium">{row.date}</span><span className="ledger-figure">{row.amount}</span></span>
       <span className="text-body-regular text-text-secondary">{row.description}</span>
       <bdi className="text-body-regular text-text-secondary">{row.number}</bdi>
       <span className="flex items-center justify-between gap-4"><InvoiceStatus row={row} labels={labels} /><InvoiceDownload row={row} labels={labels} /></span>

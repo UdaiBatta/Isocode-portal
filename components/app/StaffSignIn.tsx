@@ -23,11 +23,11 @@ export function StaffSignIn() {
       startTransition(async () => { try { const result = await staffLogin({ email: data.get("email"), password: data.get("password") }); setFailed(!result.ok); if (result.ok) { router.push(result.next); router.refresh(); } } catch { setFailed(true); } });
     }}>
       {failed ? <p role="alert" className="flex gap-2.5 rounded-xl bg-status-rose-background px-3.5 py-3 text-body-regular text-status-rose-text"><RiErrorWarningLine size={18} aria-hidden="true" className="mt-0.5 shrink-0" />The email or password is incorrect.</p> : null}
-      <Input label="Email" name="email" type="email" autoComplete="username" placeholder="accounts@demo.test" isRequired isDisabled={pending} />
+      <Input label="Email" name="email" type="email" autoComplete="username" placeholder="accounts@demo.test" isRequired isDisabled={pending} fieldClassName="min-h-11" />
       <div className="flex flex-col gap-2" onKeyUp={(event) => setCapsLock(event.getModifierState("CapsLock"))}>
         <div className="relative">
-          <Input label="Password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" isRequired isDisabled={pending} fieldClassName="pe-11" />
-          <IconButton icon={showPassword ? RiEyeOffLine : RiEyeLine} size="small" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword((shown) => !shown)} className="absolute end-2 bottom-2" />
+          <Input label="Password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" isRequired isDisabled={pending} fieldClassName="min-h-11 pe-11" />
+          <IconButton icon={showPassword ? RiEyeOffLine : RiEyeLine} size="small" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword((shown) => !shown)} className="absolute end-0 bottom-0 w-11 border-0 bg-transparent" />
         </div>
         {capsLock ? <p className="text-body-2-regular text-status-yellow-text">Caps Lock is on</p> : null}
         <p className="text-body-2-regular text-text-secondary">Prototype password: prototype</p>

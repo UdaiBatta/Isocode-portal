@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { RiArrowRightSLine, RiCoinsLine, RiTimeLine, RiPercentLine, RiRefund2Line } from "@remixicon/react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -40,12 +40,17 @@ export function DuesDashboard({ view, directory, filters, attention }: { view: D
   const columns: ColumnDef<AgeingRow>[] = [
     { accessorKey: "label", header: "Centre / Batch", cell: ({ row }) => <div className={cx("flex min-w-36 flex-col gap-2", row.original.kind === "batch" && filters.group === "centre" && "ps-4")}><LinkButton variant="secondary" className="self-start" onClick={() => activate(row.original)} aria-expanded={row.original.kind === "centre" ? expanded.includes(row.original.id) : undefined}>{row.original.label}</LinkButton><AgeingBar row={row.original} /></div> },
     { accessorKey: "studentsWithDues", header: "Students", cell: ({ row }) => <span className="block text-end tabular-nums">{row.original.studentsWithDues}</span> },
-    ...moneyColumns.map(([key, label]): ColumnDef<AgeingRow> => ({ accessorKey: key, header: label, cell: ({ row }) => <span className="block whitespace-nowrap text-end tabular-nums">{inr(row.original[key])}</span> })),
+    ...moneyColumns.map(([key, label]): ColumnDef<AgeingRow> => ({ accessorKey: key, header: label, cell: ({ row }) => {
+      const value = row.original[key];
+      const hot = key !== "outstanding" && key !== "notDue";
+      const largest = hot ? Math.max(...rows.map((item) => item[key])) : 0;
+      return <span className={cx("block whitespace-nowrap text-end tabular-nums", hot && "ledger-heat")} data-zero={hot && !value ? true : undefined} style={hot ? { "--heat": largest ? value / largest : 0 } as CSSProperties : undefined}>{inr(value)}</span>;
+    } })),
   ];
   return <>
     <StaffPageHeader title="Dues dashboard" description={`Every centre and batch in one clear view, with what needs action first · ${dateLabel(view.today, "en", view.today)}`}><ExportButtons filters={filters} /><ButtonLink href="/staff/students">Open students</ButtonLink></StaffPageHeader>
     <StaffFrame>
-    <StatCards stats={[
+    <StatCards className="stat-tape" stats={[
       { icon: RiCoinsLine, label: "Total outstanding", value: <CountUp to={view.totals.outstanding} storageKey={`${counterKey}:outstanding`} />, delta: "Includes not due", deltaColor: "neutral" },
       { icon: RiTimeLine, label: "Overdue", value: <CountUp to={view.totals.overdue} storageKey={`${counterKey}:overdue`} />, delta: "Past due dates", deltaColor: "neutral" },
       { icon: RiPercentLine, label: "Over 60 days late", value: <CountUp to={view.totals.over60Pct} format="percent" storageKey={`${counterKey}:late`} />, delta: "Target 6%", deltaColor: "neutral" },

@@ -33,7 +33,7 @@ for (const [language, amountDate, pay] of [["en", "Was due 10 Oct", "Pay ₹15,0
   const viewport = page.viewportSize()!;
   const bar = await page.locator("nav.fixed").boundingBox();
   const fold = bar ? bar.y : viewport.height;
-  await expect(page.getByText("₹15,000", { exact: true })).toHaveCSS("font-size", "40px");
+  await expect(page.getByText("₹15,000", { exact: true })).toHaveCSS("font-size", "56px");
   for (const locator of [page.getByText("₹15,000", { exact: true }), page.getByText(amountDate, { exact: true }), page.getByRole("link", { name: pay, exact: true })]) {
     const box = await locator.boundingBox();
     expect(box!.y + box!.height).toBeLessThanOrEqual(fold);
@@ -49,7 +49,7 @@ test("home summarises the family's facts and each row opens its detail page", as
   await expect(page.getByText("₹75,000 of ₹1,20,000 paid · ₹45,000 remaining", { exact: true })).toBeVisible();
   await expect(page.getByText("19 of 20 classes in the last 4 weeks", { exact: true })).toBeVisible();
   await expect(page.getByText("₹15,000 · 10 Oct", { exact: true })).toBeVisible();
-  await expect(page.getByText("86/100", { exact: false })).toBeVisible();
+  await expect(page.getByText("Monthly Test 7 · 86/100", { exact: true })).toBeVisible();
   await expect(page.locator("main")).not.toContainText(/risk|flag|counsellor|average|rank|topper/i);
   await page.locator('main a[href="/receipts"]').click();
   await expect(page).toHaveURL(/\/receipts$/);

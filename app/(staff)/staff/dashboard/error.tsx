@@ -1,2 +1,2 @@
 "use client";
-export { default } from "@/app/error";
+export { StaffRouteError as default } from "@/components/app/StaffRouteError";

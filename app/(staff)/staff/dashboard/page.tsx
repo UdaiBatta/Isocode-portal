@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { StaffShell } from "@/components/app/StaffShell";
 import { DuesDashboard } from "@/components/app/DuesDashboard";
-import { PageSkeleton } from "@/components/app/PageSkeleton";
+import { StaffRouteLoading } from "@/components/app/StaffRouteLoading";
 import { getDashboard } from "@/lib/data/dashboard";
 import { getStaffDirectory } from "@/lib/data/staff";
 import { getAutomation } from "@/lib/data/automation";
@@ -12,7 +12,7 @@ import { previewState, type SearchParams } from "@/lib/preview";
 export default async function Dashboard({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const query = await searchParams;
   const state = previewState(query);
-  if (state === "loading") return <StaffShell><PageSkeleton language="en" /></StaffShell>;
+  if (state === "loading") return <StaffRouteLoading />;
   const auth = await getAuthState();
   if (auth.role && auth.role !== "accounts") redirect("/staff/login");
   const filters = { group: query.group === "batch" ? "batch" as const : "centre" as const, centre: typeof query.centre === "string" ? query.centre : undefined, batch: typeof query.batch === "string" ? query.batch : undefined, };

@@ -1,0 +1,15 @@
+# Prototype notes
+
+The prototype answers the parent's first questions in order: what is owed, when it was due, and what to press. Home (`/dashboard`) is the new landing page after sign-in and consent. It shares `DuesStatus` with fee details (`/dues`), so paid, checking, clear and withdrawn states use the same presentation. Attendance, latest test and latest receipt link to their detail pages. Parents receive their own child's facts without risk labels, comparisons or counsellor data.
+
+The human's master prompt replaced the earlier single-screen parent layout with a desktop sidebar and a four-item phone bar. Parent pages use paper surfaces and forest actions; staff pages use graphite panels and lime actions. Both use the installed BoardUI components and shared semantic tokens, including portalled controls. The existing Inter and Noto Sans Devanagari fonts remain.
+
+Receipts now read as an invoice-style list. Paid entries open a receipt for saving or printing. Payments under review show a checking status and have no receipt action. Staff have a shared page header and panel frame; accounts also see ageing by value from the existing dashboard rows.
+
+The parent shell and receipt list render on the server to keep parent scripts within budget. The read-only receipt table uses BoardUI table styles, and fee instalments use native `details`, under the plan's explicit script-budget fallback. No interactive table or animation library was added to parent routes. The payment confirmation pulse uses CSS and stops under reduced motion.
+
+Review found that staff failures fell back to the parent paper screen and lost workspace navigation. Staff and counsellor errors now retain their own navigation and dark frame, with no student or fee data in the fallback. Staff sign-in keeps the same dark frame across normal, loading, empty and error states, without workspace navigation before sign-in. Shared skeleton blocks keep one main landmark, and retry removes only the forced error flag while preserving other query options.
+
+The 2026-11-04 review covers the merged changes since `97aa6c6` and that bounded state repair. `npm run check` passed with 32 unit tests and eight existing lint warnings. The baseline full browser suite passed 202 cases; the repaired source passed 58 selected new and affected cases, including state/accessibility, navigation, parent retry, staff sign-in and script budgets. The production build passed; an earlier stale generated Turbopack cache failure was resolved without touching the development preview. All 384 screenshots were refreshed, with changed images being reviewed again. Lighthouse mobile scored 94, with LCP 1.206 seconds; see `gate-0.md` for the evidence and remaining review status.
+
+No five-second test, real-phone test, Hindi-reader review or human sign-off has been run. No user-study findings have been inferred. This remains a fictional-data prototype; Django, durable transactions, real permissions and provider integrations come in later phases.

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { StaffShell } from "@/components/app/StaffShell";
 import { RefundCalculator } from "@/components/app/RefundCalculator";
 import { EmptyState } from "@/components/app/EmptyState";
-import { PageSkeleton } from "@/components/app/PageSkeleton";
+import { StaffRouteLoading } from "@/components/app/StaffRouteLoading";
 import { getRefund } from "@/lib/data/refund";
 import { getLedger } from "@/lib/data/ledger";
 import { getStaffPageContext } from "@/lib/data/staff";
@@ -12,7 +12,7 @@ export default async function Refund({ params, searchParams }: { params: Promise
   const state = previewState(await searchParams);
   const context = await getStaffPageContext();
   if (context.role && context.role !== "accounts") redirect("/staff/login");
-  if (state === "loading") return <StaffShell><PageSkeleton language="en" /></StaffShell>;
+  if (state === "loading") return <StaffRouteLoading />;
   if (state === "empty") return <StaffShell><EmptyState title="No fee plan available for refund" /></StaffShell>;
   const { code } = await params;
   const [view, ledger] = await Promise.all([getRefund(code), getLedger(code)]);

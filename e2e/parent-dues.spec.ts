@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 for (const language of ["hi", "en"]) test(`dues amount, date and pay are visible without scrolling in ${language}`, async ({ page, context }) => {
   await context.addCookies([{ name: "lang", value: language, url: "http://127.0.0.1:3001" }]);
   await page.goto("/dues");
-  await expect(page.getByText("₹15,000", { exact: true })).toHaveCSS("font-size", "40px");
+  await expect(page.getByText("₹15,000", { exact: true })).toHaveCSS("font-size", "56px");
   const pay = page.getByRole("link", { name: language === "en" ? "Pay ₹15,000" : "₹15,000 का भुगतान करें", exact: true });
   await expect(pay).toHaveAttribute("href", "/mock-gateway/STU-0587-3");
   expect((await pay.boundingBox())!.y + (await pay.boundingBox())!.height).toBeLessThanOrEqual(640);
