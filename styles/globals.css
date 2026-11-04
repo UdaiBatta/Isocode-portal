@@ -63,6 +63,8 @@ html:has(.staff-surface) {
   --color-border-button-default: #343936;
   --color-text-primary: #F5F5F0;
   --color-text-secondary: #A5ADA6;
+  --color-text-tertiary: #A5ADA6;
+  --color-text-placeholder: #A5ADA6;
   --color-text-white: #0C0D0D;
   --color-status-rose-text: #FF7A95;
   --color-tab-count-selected-background: #2A3A16;
