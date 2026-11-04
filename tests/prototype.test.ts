@@ -15,7 +15,10 @@ import { getAutomation } from "@/lib/data/automation";
 import { getRefund } from "@/lib/data/refund";
 import { getCounsellor } from "@/lib/data/counsellor";
 import { getReceipt, getReceipts } from "@/lib/data/receipts";
+import { getProgress } from "@/lib/data/progress";
 import { getPayDetails, getPaymentResult } from "@/lib/data/payments";
+import { openPrototypeRoute } from "@/lib/actions/prototype";
+import { getAuthState } from "@/lib/data/auth";
 import { submitMockPayment, recordCounterPayment, resolveUnmatched } from "@/lib/actions/payments";
 import { saveRefundDraft, approveRefund, markRefundPaid } from "@/lib/actions/refund";
 import { setDemoDate, runRemindersNow, resetDemo } from "@/lib/actions/demo";
@@ -31,6 +34,13 @@ beforeEach(() => { jar.clear(); cookieWrites.length = 0; vi.stubEnv("NEXT_PUBLIC
 afterEach(() => vi.unstubAllEnvs());
 
 describe("prototype fixtures and state changes", () => {
+  it("bounds reviewer role preparation to known prototype links", async () => {
+    expect(await openPrototypeRoute({ key: "../../admin", state: "normal" })).toMatchObject({ ok: false });
+    expect(await openPrototypeRoute({ key: "consent", state: "normal" })).toMatchObject({ ok: true, next: "/consent" });
+    expect(await getAuthState()).toMatchObject({ role: "parent", consent: false });
+    expect(await openPrototypeRoute({ key: "dashboard", state: "empty" })).toMatchObject({ ok: true, next: "/staff/dashboard?state=empty" });
+    expect(await getAuthState()).toMatchObject({ role: "accounts" });
+  });
   it("matches the three supplied sample rows and keeps every batch populated", async () => {
     expect(namedStudents).toHaveLength(12);
     expect(centres).toHaveLength(4);
@@ -59,6 +69,7 @@ describe("prototype fixtures and state changes", () => {
     expect(result).toMatchObject({ ok: true, result: "paid", receiptId: "demo-receipt-1" });
     expect((await getDues()).mode).toBe("clear");
     expect((await getLedger("STU-0587")).instalments[2].balance).toBe(0);
+    expect((await getLedger("STU-0587")).timeline[0].stopped).toBe("Paid 2026-04-10");
     const after = await getDashboard({ group: "batch" });
     expect(before.totals.outstanding - after.totals.outstanding).toBe(1500000);
     expect(before.rows.find((row) => row.id === "MLV-2")!.outstanding - after.rows.find((row) => row.id === "MLV-2")!.outstanding).toBe(1500000);
@@ -68,6 +79,22 @@ describe("prototype fixtures and state changes", () => {
     expect(receipt.taxable + receipt.cgst + receipt.sgst).toBe(receipt.amount);
     expect(await submitMockPayment({ token: "STU-0587-3", outcome: "success" })).toMatchObject({ ok: true, result: "already_paid" });
     expect(await getReceipts()).toHaveLength(4);
+  });
+
+  it("progress is scoped to the family, matches the risk reasons and stops when a student leaves", async () => {
+    const pct = (rows: { attended: number; held: number }[]) => rows.reduce((sum, row) => sum + row.attended, 0) * 100 / rows.reduce((sum, row) => sum + row.held, 0);
+    const mean = (rows: { score: number }[]) => rows.reduce((sum, row) => sum + row.score, 0) / rows.length;
+    session({ role: "parent", phone: "+919000000733", consent: true });
+    const riya = await getProgress();
+    expect(pct(riya.attendance.slice(0, 4))).toBe(60);
+    expect(pct(riya.attendance.slice(4, 8))).toBe(90);
+    expect(mean(riya.tests.slice(0, 2))).toBe(49);
+    expect(mean(riya.tests.slice(2, 5))).toBe(69);
+    await expect(getProgress("STU-0587")).rejects.toThrow();
+    session({ phone: "+919000000803" });
+    expect((await getProgress()).attendance[0].weekStart).toBe("2026-10-12");
+    session({ phone: "+919000000735", date: "2026-10-20" });
+    expect(await getProgress()).toMatchObject({ attendance: [{ weekStart: "2026-10-19" }], tests: [] });
   });
 
   it("wrong amounts enter review and do not mark anything paid", async () => {

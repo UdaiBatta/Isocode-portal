@@ -4,7 +4,7 @@ import { getLanguage } from "@/lib/i18n/server";
 import { today } from "@/lib/clock";
 
 export function safeParentNext(value: unknown) {
-  return typeof value === "string" && /^\/receipts\/[a-zA-Z0-9-]+$/.test(value) ? value : "/dues";
+  return typeof value === "string" && /^\/receipts\/[a-zA-Z0-9-]+$/.test(value) ? value : "/dashboard";
 }
 
 export async function getParentPageContext(next?: unknown) {

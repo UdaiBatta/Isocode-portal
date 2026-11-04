@@ -16,6 +16,8 @@ function routes(directory = "app", segments: string[] = []): string[] {
 async function main() {
   const only = process.argv.find((argument) => argument.startsWith("--only="))?.slice(7);
   const examples: Record<string, { name: string; path: string }> = {
+    "/staff/students/[code]": { name: "ledger", path: "/staff/students/STU-0587" },
+    "/staff/students/[code]/refund": { name: "refund", path: "/staff/students/STU-0587/refund" },
     "/pay/[token]": { name: "pay", path: "/pay/STU-0587-3" },
     "/mock-gateway/[token]": { name: "mock-gateway", path: "/mock-gateway/STU-0587-3" },
     "/pay/[token]/result": { name: "payment-result", path: "/pay/STU-0587-3/result?e=demo-event-1" },
@@ -37,7 +39,9 @@ async function main() {
           const page = await context.newPage();
           for (const route of selected) {
             await context.clearCookies({ name: "proto" });
-            if (["/consent", "/receipts"].includes(route.path) || route.name === "receipt" || route.name === "payment-result") {
+            if (route.path.startsWith("/counsellor/")) await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "counsellor" })), url: origin }]);
+            if (route.path.startsWith("/staff/") && route.path !== "/staff/login") await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "accounts" })), url: origin }]);
+            if (["/consent", "/dashboard", "/receipts", "/progress", "/course", "/student", "/settings"].includes(route.path) || route.name === "receipt" || route.name === "payment-result") {
               const state = {
                 role: "parent", phone: "+919000000587", consent: route.path !== "/consent", otp: { attempts: 0, sends: 1, verified: true },
                 ...(route.name === "payment-result" ? {
@@ -51,7 +55,9 @@ async function main() {
               const url = new URL(route.path, origin);
               if (state !== "normal") url.searchParams.set("state", state);
               await page.goto(url.toString());
+              await page.waitForLoadState("networkidle");
               await page.evaluate(() => document.fonts.ready);
+              await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
               assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Horizontal overflow: ${url} at ${width}px`);
               const name = route.name.replaceAll("/", "-");
               await page.screenshot({ path: `docs/screens/${name}-${language}-${state}-${width}.png`, fullPage: true });

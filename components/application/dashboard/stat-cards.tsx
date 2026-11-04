@@ -2,7 +2,7 @@
 
 import { useTemplateCopy } from "@/components/foundations/template-copy/template-copy";
 
-import { useState, type ComponentType } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import {
   RiArrowDownCircleFill,
   RiArrowUpCircleFill,
@@ -48,7 +48,7 @@ export type StatTone = "blue" | "orange" | "purple" | "pink" | "sky" | "emerald"
 export type Stat = {
   icon: IconComponent;
   label: string;
-  value: string;
+  value: ReactNode;
   delta: string;
   deltaColor: "lime" | "rose" | "neutral";
   /** Footer variant: icon tile tint (defaults to blue). */
@@ -182,7 +182,7 @@ function StatHint({ label, hint }: { label: string; hint: string }) {
 function PlainStatCard({ stat }: { stat: Stat }) {
   const localize = useTemplateCopy();
   return localize((
-    <section className="flex h-[132px] min-w-0 flex-col items-start justify-between rounded-2xl bg-background-secondary-default p-4">
+    <section className="flex min-h-[132px] min-w-0 flex-col items-start justify-between gap-3 rounded-2xl bg-background-secondary-default p-4">
       <span className="flex items-center rounded-md bg-stat-card-icon-background p-1.5">
         <stat.icon className="size-5 shrink-0 text-foreground-icon-primary" aria-hidden />
       </span>

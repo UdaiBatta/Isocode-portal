@@ -13,6 +13,7 @@ import { SocialButton } from "@/components/base/social-button/social-button";
 import { SOCIAL_PROVIDERS, type SocialProvider } from "@/components/base/social-button/social-providers";
 import { useTemplateCopy } from "@/components/foundations/template-copy/template-copy";
 import { cx } from "@/utils/cx";
+import { AuthCardFrame } from "./auth-card-frame";
 
 // Re-exported so `media` has a batteries-included option and the registry
 // installs it alongside the card. Nothing here imports it otherwise.
@@ -371,14 +372,7 @@ export function AuthCard({
       <div className="relative hidden bg-background-secondary-default md:block">{media}</div>
     </div>
   ) : (
-    <div
-      className={cx(
-        "flex w-full max-w-[400px] flex-col rounded-3xl border border-border-button-default bg-background-primary-default p-6 shadow-xs sm:p-8 dark:bg-background-secondary-default",
-        className,
-      )}
-    >
-      {body}
-    </div>
+    <AuthCardFrame className={className}>{body}</AuthCardFrame>
   );
 
   if (!footnote) return localize(card);

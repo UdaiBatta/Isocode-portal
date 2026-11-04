@@ -33,10 +33,10 @@ it("keeps consent on a returning parent's login and remembers a declined choice"
   expect(JSON.parse(jar.get("proto")!).declined).toBe(true);
   await grantConsent({ studentIds: ["STU-0587"], wordingVersion: "v1" });
   await logout(); await requestOtp({ phone });
-  expect(await verifyOtp({ phone, code: "123456" })).toMatchObject({ ok: true, next: "/dues" });
+  expect(await verifyOtp({ phone, code: "123456" })).toMatchObject({ ok: true, next: "/dashboard" });
 });
 
 it("permits only an internal receipt return target", () => {
   expect(safeParentNext("/receipts/demo-receipt-1")).toBe("/receipts/demo-receipt-1");
-  for (const target of ["https://example.com", "//example.com", "/staff/dashboard", "/receipts/../staff"]) expect(safeParentNext(target)).toBe("/dues");
+  for (const target of ["https://example.com", "//example.com", "/staff/dashboard", "/receipts/../staff"]) expect(safeParentNext(target)).toBe("/dashboard");
 });

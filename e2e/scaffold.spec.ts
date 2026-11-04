@@ -23,7 +23,7 @@ test("scaffold renders BoardUI, Hindi and safe headers at both widths", async ({
   ))).toBe(true);
 
   const projectLink = page.getByRole("link", { name: "View project" });
-  await expect(projectLink).toHaveCSS("background-image", /rgb\(24, 86, 99\)/);
+  await expect(projectLink).toHaveCSS("background-image", /rgb\(37, 80, 46\)/);
   await expect(projectLink).toHaveCSS("color", "rgb(255, 255, 255)");
   expect((await projectLink.boundingBox())?.height).toBeGreaterThanOrEqual(48);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

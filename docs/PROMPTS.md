@@ -118,7 +118,7 @@ DONE WHEN:
 - Each screen works at 360 px and 1280 px.
 - Every link on /proto opens the right thing.
 - Every row of the T0.3 table works through the UI:
-  - Pay successfully: Ishita's balance becomes clear, the reminder shows "Stopped: paid", and dashboard outstanding and that batch row drop by exactly ₹15,000.
+  - Pay ₹15,000: Ishita's balance becomes clear, the reminder shows "Stopped: paid", and dashboard outstanding and that batch row drop by exactly ₹15,000.
   - Wrong amount: P2 shows "checking it", and a new queue item appears.
   - Approve refund: the student shows Withdrawn, reminders stop, and P2 shows the refund.
   - Resolve queue item: the item closes, and the ledger updates.
@@ -199,7 +199,7 @@ BUILD:
 - T2.1: A Django view returning the DuesVM contract with all modes, and lib/data/dues.ts calling it.
 - T2.2: A Django view for the S2 view model, and lib/data/ledger.ts. The timeline can come in Phase 3.
 - T2.3: domain/matching.py (B8.8), and services/payments.py with process_payment_event plus the shared allocate-and-receipt function.
-- T2.4: POST /api/webhooks/payment on Django, the pay token, /pay/[token], /mock-gateway/[token], submitMockPayment and the result page.
+- T2.4: POST /api/webhooks/payment on Django, the pay token, /pay/[token], /mock-gateway/[token], submitMockPayment and the result page. Keep the checkout and PaymentGraphic from Phase 0. The webhook carries the payment method.
 - T2.5: Django views for the receipt list and receipt, lib/data/receipts.ts, /receipts and /receipts/[id].
 - T2.6: record_counter_payment, recordCounterPayment and its Modal.
 RULES:
@@ -253,7 +253,7 @@ READ, by heading only: the B8 introduction, B8.5, B8.6, B9, the refund policy in
 BUILD:
 - T4.1: domain/refund.py (B8.5).
 - T4.2: services/refunds.py, Django views for save_refund_draft, approve_refund and mark_refund_paid, lib/data/refund.ts, and /refund-policy from refund_policies.
-- T4.3: A Django view using ORM aggregates over instalment_balances, and lib/data/dashboard.ts.
+- T4.3: A Django view using ORM aggregates over instalment_balances, and lib/data/dashboard.ts. A second view returns StudentsVM (S1b in B5) for lib/data/students.ts, filtered, sorted and paged in the database.
 - T4.4: dues.csv and receipts.csv (B9), respecting centre scope.
 RULES:
 - The refund amount is never editable. e2e/controls.spec.ts must assert this.
@@ -304,7 +304,7 @@ DONE WHEN:
 PHASE 6: EXTRAS (only those in OPTIONAL EXTRAS TO BUILD, in this order)
 READ: only the Phase 6 table, then whichever sections each task names.
 BUILD:
-- T6.1: Attendance and scores in the parent portal, /progress, as one quiet link beside Receipts: attendance per recent week and recent test scores, with no comparison with other students and no risk data. Accept: a parent sees only their child, in both languages and all states.
+- T6.1 (screen already built by Claude on sample data; build only the Django view behind lib/data/progress.ts): Attendance and scores in the parent portal, /progress, the Academic info tab of the parent dashboard: attendance per recent week and recent test scores, with no comparison with other students and no risk data. Accept: a parent sees only their child, in both languages and all states.
 - T6.2: Bulk CSV upload per batch at /staff/uploads, with columns student_code,week_start,attended,held and student_code,test_date,test_name,score,max_score. Uses File Upload (npx boardui@latest add file-upload --yes). Preview with row-level errors before anything saves. All or nothing. Rejects codes outside the chosen batch. Sample files go in public/samples/. Accept: bad rows are listed with line numbers, a good file saves, and a re-upload updates rather than duplicates.
 - T6.3: Tally XML export of receipts, added to the export Button Group: an ENVELOPE import with one Receipt voucher per receipt. Label it "not tested on a real Tally install" in the TDD. Accept: the XML is well-formed, and totals match the CSV.
 - T6.4: A Withdraw consent link for parents. It sets withdrawn_at, hides data, stops reminders and adds the student to Needs a call. Accept: a test covers each effect.

@@ -176,7 +176,7 @@
 
   /* Text */
   --color-text-primary:         var(--color-neutral-950);
-  --color-text-secondary:       var(--color-neutral-500);
+  --color-text-secondary:       var(--color-neutral-600);
   --color-text-tertiary:        var(--color-neutral-400);
   --color-text-disabled:        var(--color-neutral-300);
   --color-text-disabled-danger: var(--color-red-300);
@@ -420,7 +420,7 @@
   --gradient-button-danger-disabled:  linear-gradient(180deg, var(--color-red-100) 0%, var(--color-red-200) 100%);
 }
 
-.dark {
+.dark, html:has(.staff-surface) {
   /* Foreground */
   --color-foreground-full:            var(--color-neutral-700);
   --color-foreground-icon-primary:    var(--color-neutral-50);

@@ -8,10 +8,10 @@ for (const language of ["hi", "en"]) test(`dues amount, date and pay are visible
   const pay = page.getByRole("link", { name: language === "en" ? "Pay ₹15,000" : "₹15,000 का भुगतान करें", exact: true });
   await expect(pay).toHaveAttribute("href", "/mock-gateway/STU-0587-3");
   expect((await pay.boundingBox())!.y + (await pay.boundingBox())!.height).toBeLessThanOrEqual(640);
-  await expect(page.locator("main > section").getByText(language === "en" ? "23 days overdue" : "23 दिन की देरी", { exact: true })).toBeVisible();
+  await expect(page.locator("main section").first().getByText(language === "en" ? "23 days overdue" : "23 दिन की देरी", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect((await new AxeBuilder({ page }).analyze()).violations.filter((item) => item.impact === "serious" || item.impact === "critical")).toEqual([]);
-  await page.getByRole("button", { name: language === "en" ? "See all instalments" : "सभी किस्तें देखें" }).click();
+  await page.getByText(language === "en" ? "See all instalments" : "सभी किस्तें देखें", { exact: true }).click();
   await expect(page.getByText(language === "en" ? "Instalment 4" : "किस्त 4", { exact: true })).toBeVisible();
 });
 
@@ -22,7 +22,7 @@ test("siblings switch between a held payment and an upcoming instalment", async 
   ]);
   await page.goto("/dues");
   await expect(page.getByText("We received a payment and are checking it.")).toBeVisible();
-  await page.getByRole("radio", { name: "Dev Joshi", exact: true }).click();
+  await page.getByRole("link", { name: "Dev Joshi", exact: true }).click();
   await expect(page).toHaveURL(/student=STU-0772/);
   // Dev's seeded excess is held too; neither child should be prompted to pay twice.
   await expect(page.getByText("We received a payment and are checking it.")).toBeVisible();

@@ -6,6 +6,17 @@ export interface ReceiptVM extends ReceiptSummaryVM {
   method: string; taxable: number; cgst: number; sgst: number;
 }
 
+export interface ProgressVM {
+  attendance: { weekStart: string; attended: number; held: number }[];
+  tests: { testDate: string; testName: string; score: number; maxScore: number }[];
+}
+
+export interface StudentInfoVM {
+  code: string; name: string; batch: string; centre: string; status: "active" | "withdrawn";
+  enrolledOn: string; guardianPhone: string; preferredLanguage: Language;
+  course: { exam: "JEE" | "NEET"; examYear: string; timing: "Morning" | "Evening"; sessionStart: string; sessionEnd: string; instalments: number };
+}
+
 export interface InstalmentVM {
   id: string; seq: number; dueDate: string; amount: number; paid: number; balance: number;
   status: "paid" | "overdue" | "due_today" | "upcoming";
@@ -29,6 +40,17 @@ export interface DashboardVM {
   totals: { outstanding: number; overdue: number; over60Pct: number; refundsDue: number; refundsLate: number };
   rows: AgeingRow[];
   students?: { code: string; name: string; balance: number; daysOverdue: number }[];
+}
+
+export type StudentStatus = "overdue" | "upcoming" | "clear" | "checking" | "withdrawn";
+export interface StudentFilters { status?: StudentStatus | "over60"; centre?: string; batch?: string; q?: string; page?: number }
+export interface StudentRowVM {
+  id: string; code: string; name: string; batch: string; centre: string; status: StudentStatus; balance: number; daysOverdue: number;
+  next: string | null; stopped: string | null; lastPayment: { on: string; method: string } | null;
+}
+export interface StudentsVM {
+  today: string; canPickCentre: boolean; rows: StudentRowVM[]; page: number; pages: number;
+  counts: Record<StudentStatus | "all" | "over60", number>;
 }
 
 export interface AgeingRow {

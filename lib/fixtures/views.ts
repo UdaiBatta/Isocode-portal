@@ -1,9 +1,9 @@
 import { batches, centres, namedStudents, students } from "./catalog";
 import { refundSnapshots, refundPolicy } from "./operations";
 import type { ProtoState } from "./state";
-import type { AgeingRow, AutomationVM, CounsellorVM, DashboardVM, DuesVM, InstalmentVM, LedgerVM, ReceiptVM, RefundVM, ReminderRow, TaskRow } from "@/lib/types";
+import type { AgeingRow, AutomationVM, CounsellorVM, DashboardVM, DuesVM, InstalmentVM, LedgerVM, ReceiptVM, RefundVM, ReminderRow, TaskRow, StudentFilters, StudentRowVM, StudentStatus, StudentsVM } from "@/lib/types";
 import { inr, dateLabel } from "@/lib/format";
-import { t } from "@/lib/i18n";
+import { renderReminder } from "@/lib/reminder-text";
 
 export { refundPolicy };
 const reminderSteps = [-7, -3, 0, 3, 7, 15, 30];
@@ -33,12 +33,14 @@ export function ledgerFor(state: ProtoState, code: string, today: string): Ledge
     id: `${code}-${index + 1}`, seq: index + 1, dueDate, amount: net / dates.length, paid: source.paid[index], balance: 0,
     status: "paid", partPaid: false, daysOverdue: 0, dueInDays: 0, payUrl: null,
   }));
+  const paidOn: Record<string, string> = {};
   for (const payment of state.payments?.filter((item) => item.studentCode === code) ?? []) {
     let left = payment.amount;
     for (const instalment of instalments) {
       if (payment.instalmentId && instalment.id < payment.instalmentId) continue;
       const amount = Math.min(left, instalment.amount - instalment.paid);
       instalment.paid += amount;
+      if (amount > 0) paidOn[instalment.id] = payment.on;
       left -= amount;
     }
   }
@@ -67,7 +69,7 @@ export function ledgerFor(state: ProtoState, code: string, today: string): Ledge
         ...(code === "STU-0733" && instalment.seq === 2 ? [{ step: 30, on: "2026-08-09", language: source.language }] : []),
         ...sent.filter((item) => item.instalmentId === instalment.id).map((item) => ({ step: item.step, on: item.on, language: state.languages?.[source.phone] ?? source.language })),
       ];
-      const stopped = !instalment.balance ? `Paid ${state.payments?.filter((item) => item.studentCode === code).at(-1)?.on ?? instalment.dueDate}` : withdrawn ? "Withdrawn" : held.some((item) => item.suggested?.instalmentId === instalment.id) ? "Payment being checked" : null;
+      const stopped = !instalment.balance ? `Paid ${paidOn[instalment.id] ?? instalment.dueDate}` : withdrawn ? "Withdrawn" : held.some((item) => item.suggested?.instalmentId === instalment.id) ? "Payment being checked" : null;
       const step = reminderSteps.find((value) => value > Math.max(-Infinity, ...history.map((item) => item.step)) && shifted(instalment.dueDate, value) >= today);
       return { instalmentId: instalment.id, sent: history, next: stopped || step === undefined ? null : { step, on: shifted(instalment.dueDate, step) }, stopped };
     }),
@@ -179,6 +181,32 @@ export function dashboardFor(state: ProtoState, today: string, filters: { group?
   };
 }
 
+const STUDENTS_PER_PAGE = 25;
+
+export function studentsFor(state: ProtoState, today: string, filters: StudentFilters = {}): StudentsVM {
+  const scoped = batches.filter((batch) => (!state.centreId || batch.centreId === state.centreId) && (!filters.centre || batch.centreId === filters.centre) && (!filters.batch || batch.id === filters.batch));
+  const query = filters.q?.trim().toLowerCase();
+  const held = queueFor(state).filter((item) => item.status === "open");
+  const all = students.filter((source) => scoped.some((batch) => batch.centreId === (source.centreId ?? "MLV") && batch.name === source.batch) && (!query || `${source.name} ${source.code}`.toLowerCase().includes(query))).map((source): StudentRowVM => {
+    const ledger = ledgerFor(state, source.code, today);
+    const open = ledger.instalments.find((item) => item.balance > 0);
+    const line = ledger.timeline.find((item) => item.instalmentId === open?.id);
+    const daysOverdue = Math.max(...ledger.instalments.map((item) => item.daysOverdue));
+    const latest = ledger.payments.toSorted((a, b) => b.on.localeCompare(a.on))[0];
+    const status: StudentStatus = ledger.student.status === "withdrawn" ? "withdrawn" : !ledger.plan.balance ? "clear" : held.some((item) => item.suggested?.studentCode === source.code) ? "checking" : daysOverdue ? "overdue" : "upcoming";
+    return { id: source.code, code: source.code, name: source.name, batch: source.batch, centre: ledger.student.centre, status, balance: ledger.plan.balance, daysOverdue, next: line?.next?.on ?? null, stopped: line?.stopped ?? null, lastPayment: latest ? { on: latest.on, method: latest.method } : null };
+  }).sort((a, b) => b.daysOverdue - a.daysOverdue || b.balance - a.balance || a.code.localeCompare(b.code));
+  const count = (status: StudentStatus) => all.filter((row) => row.status === status).length;
+  const matching = all.filter((row) => !filters.status || (filters.status === "over60" ? row.status === "overdue" && row.daysOverdue > 60 : row.status === filters.status));
+  const pages = Math.max(1, Math.ceil(matching.length / STUDENTS_PER_PAGE));
+  const page = Math.min(filters.page ?? 1, pages);
+  return {
+    today, canPickCentre: !state.centreId, page, pages,
+    rows: matching.slice((page - 1) * STUDENTS_PER_PAGE, page * STUDENTS_PER_PAGE),
+    counts: { all: all.length, overdue: count("overdue"), over60: all.filter((row) => row.status === "overdue" && row.daysOverdue > 60).length, upcoming: count("upcoming"), clear: count("clear"), checking: count("checking"), withdrawn: count("withdrawn") },
+  };
+}
+
 export function automationFor(state: ProtoState, today: string): AutomationVM {
   const result: AutomationVM = { today, demo: true, unmatchedOpen: queueFor(state).filter((item) => item.status === "open").length, sent: [], upcoming: [], stopped: [], needsCall: [], unmatched: queueFor(state) };
   for (const source of namedStudents) {
@@ -186,11 +214,11 @@ export function automationFor(state: ProtoState, today: string): AutomationVM {
     for (const instalment of ledger.instalments) {
       const timeline = ledger.timeline.find((item) => item.instalmentId === instalment.id)!;
       const language = state.languages?.[source.phone] ?? source.language;
-      const message = (step: number) => t(language, step < 0 ? "reminder.before" : step > 0 ? "reminder.after" : "reminder.today", { student: source.name, amount: inr(instalment.balance || instalment.amount), date: dateLabel(instalment.dueDate, language, today), link: `/pay/${instalment.id}` });
+      const message = (step: number) => renderReminder(language, step, { student: source.name, amount: inr(instalment.balance || instalment.amount), date: dateLabel(instalment.dueDate, language, today), link: `/pay/${instalment.id}` });
       const row: ReminderRow = { instalmentId: instalment.id, studentCode: source.code, studentName: source.name, step: timeline.next?.step ?? null, on: timeline.next?.on ?? null, language, amount: instalment.balance, body: timeline.next ? message(timeline.next.step) : null, stoppedReason: timeline.stopped };
       result.sent.push(...timeline.sent.map((entry) => {
         const amount = state.sent?.find((sent) => sent.instalmentId === instalment.id && sent.step === entry.step)?.amount ?? (source.code === "STU-0587" && entry.on >= instalment.dueDate ? 1500000 : instalment.amount);
-        return { ...row, amount, step: entry.step, on: entry.on, language: entry.language, body: t(entry.language, entry.step < 0 ? "reminder.before" : entry.step > 0 ? "reminder.after" : "reminder.today", { student: source.name, amount: inr(amount), date: dateLabel(instalment.dueDate, entry.language, today), link: `/pay/${instalment.id}` }), stoppedReason: null };
+        return { ...row, amount, step: entry.step, on: entry.on, language: entry.language, body: renderReminder(entry.language, entry.step, { student: source.name, amount: inr(amount), date: dateLabel(instalment.dueDate, entry.language, today), link: `/pay/${instalment.id}` }), stoppedReason: null };
       }));
       if (row.stoppedReason) result.stopped.push(row);
       else if (row.on && daysBetween(row.on, today) <= 7) result.upcoming.push(row);

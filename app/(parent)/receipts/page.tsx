@@ -1,35 +1,21 @@
-import { redirect } from "next/navigation";
-import { PageShell } from "@/components/app/PageShell";
-import { PageSkeleton } from "@/components/app/PageSkeleton";
 import { EmptyState } from "@/components/app/EmptyState";
-import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
-import { LogoutButton } from "@/components/app/LogoutButton";
-import { LinkButton } from "@/components/base/buttons/link-button";
-import { getReceipts } from "@/lib/data/receipts";
-import { getParentPageContext } from "@/lib/data/auth";
-import { previewState, type SearchParams } from "@/lib/preview";
+import { InvoiceTable } from "@/components/app/InvoiceTable";
+import { ParentShell, parentSectionClass } from "@/components/app/ParentShell";
+import { parentPage } from "@/lib/data/parent-page";
+import { getInvoices } from "@/lib/data/receipts";
 import { dateLabel, inr } from "@/lib/format";
 import { t } from "@/lib/i18n";
+import { methodLabel } from "@/lib/i18n/checkout";
+import { pt } from "@/lib/i18n/portal";
+import type { SearchParams } from "@/lib/preview";
 
 export default async function Receipts({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const query = await searchParams;
-  const context = await getParentPageContext();
-  const { language, today } = context;
-  const state = previewState(query);
-  if (state === "loading") return <PageSkeleton language={language} />;
-  if (state === "empty") return <PageShell><EmptyState title={t(language, "receipts.empty")} /></PageShell>;
-  if (context.role !== "parent") redirect("/login");
-  if (!context.consent) redirect("/consent");
-  const selected = typeof query.student === "string" ? query.student : undefined;
-  const rows = await getReceipts(selected);
-  return <PageShell className="flex flex-col gap-8">
-    <header className="flex items-center justify-between gap-3"><h1 className="text-title-1-medium">{t(language, "receipts.title")}</h1><LanguageSwitcher language={language} /></header>
-    {rows.length ? <ul className="divide-y divide-separator-border">{rows.map((receipt) => <li key={receipt.id}>
-      <LinkButton href={`/receipts/${receipt.id}`} variant="secondary" className="flex w-full flex-col items-stretch gap-2 whitespace-normal py-4 text-start">
-        <span className="flex justify-between gap-4 text-headline-medium"><span>{dateLabel(receipt.issuedOn, language, today)}</span><span className="tabular-nums text-text-primary">{inr(receipt.amount)}</span></span>
-        <bdi className="text-body-regular">{receipt.number}</bdi>
-      </LinkButton>
-    </li>)}</ul> : <EmptyState title={t(language, "receipts.empty")} />}
-    <footer className="flex flex-wrap items-center gap-6"><LinkButton href={selected ? `/dues?student=${encodeURIComponent(selected)}` : "/dues"} variant="secondary">{t(language, "pay.backToDues")}</LinkButton><LogoutButton language={language} /></footer>
-  </PageShell>;
+  const { language, today, student, state, shell } = await parentPage(await searchParams);
+  const header = { active: "receipts", title: t(language, "receipts.title"), description: pt(language, "receipts.description"), emptyTitle: t(language, "receipts.empty") } as const;
+  if (state) return <ParentShell {...shell} {...header} />;
+  const rows = (await getInvoices(student)).map(({ issuedOn, amount, method, ...row }) => ({ ...row, date: dateLabel(issuedOn, language, today), amount: inr(amount), description: method ? pt(language, "invoice.feePayment", { method: methodLabel(language, method) }) : pt(language, "invoice.checking") }));
+  const labels = { date: pt(language, "invoice.date"), description: pt(language, "invoice.description"), amount: pt(language, "invoice.amount"), status: pt(language, "invoice.status"), action: pt(language, "invoice.action"), paid: pt(language, "invoice.paid"), pending: pt(language, "invoice.pending"), download: pt(language, "invoice.download"), label: t(language, "receipts.title") };
+  return <ParentShell {...shell} {...header}>
+    <section className={parentSectionClass}>{rows.length ? <InvoiceTable rows={rows} labels={labels} /> : <EmptyState title={t(language, "receipts.empty")} />}</section>
+  </ParentShell>;
 }

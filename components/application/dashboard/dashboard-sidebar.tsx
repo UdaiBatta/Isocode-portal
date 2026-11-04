@@ -122,14 +122,14 @@ function NavItem({
     >
       <span className="flex min-w-0 items-center gap-2">
         <Icon
-          className={cx("size-5 shrink-0", isSelected ? "text-white" : "text-foreground-icon-secondary")}
+          className={cx("size-5 shrink-0", isSelected ? "text-text-white" : "text-foreground-icon-secondary")}
           aria-hidden
         />
         <Collapsible collapsed={collapsed}>
           <span
             className={cx(
               "text-body-medium whitespace-nowrap",
-              isSelected ? "text-white" : "text-text-secondary",
+              isSelected ? "text-text-white" : "text-text-secondary",
             )}
           >
             {label}
@@ -152,6 +152,15 @@ export interface DashboardNavItem {
 
 /** Kept as a name for callers that typed their `selected` prop; any key works. */
 export type DashboardNavKey = string;
+
+/** Product navigation without the example workspace menus. */
+export function WorkspaceSidebar({ items, selected, footer }: { items: DashboardNavItem[]; selected: string; footer: ReactNode }) {
+  return <aside className="flex h-full w-full flex-col gap-10 rounded-3xl bg-background-secondary-default p-5">
+    <div><p className="text-headline-medium">Company A</p><p className="text-body-regular text-text-secondary">Jaipur · Coaching</p></div>
+    <nav aria-label="Workspace" className="flex flex-col gap-2">{items.map(({ key, ...item }) => <NavItem key={key} {...item} isSelected={selected === key} />)}</nav>
+    <div className="mt-auto">{footer}</div>
+  </aside>;
+}
 
 /** The Pro dashboard's navigation, the default set. */
 export const DASHBOARD_NAV: DashboardNavItem[] = [

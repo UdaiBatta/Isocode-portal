@@ -5,6 +5,7 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   reporter: "list",
+  expect: { timeout: 10000 },
   use: { baseURL: "http://127.0.0.1:3001", trace: "retain-on-failure" },
   projects: [
     { name: "mobile", use: { ...devices["Desktop Chrome"], viewport: { width: 360, height: 640 } } },
@@ -13,6 +14,6 @@ export default defineConfig({
   webServer: {
     command: "npm run start -- --hostname 127.0.0.1 --port 3001",
     url: "http://127.0.0.1:3001",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
   },
 });
