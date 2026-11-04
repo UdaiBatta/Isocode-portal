@@ -5,9 +5,11 @@
 Read this before editing. Each model lists its task and files here when it starts and clears them when it commits. Do not edit a file the other model has listed; add a note under your own name instead.
 
 - **Claude (frontend):** nothing listed.
-- **Codex (backend):** nothing listed; stopped by its usage limit. On resuming, review the Gate 0 commit and continue from Phase 1.
+- **Codex (backend):** nothing listed. T1.1 complete; next T1.2 dates, phones and clock.
 
 ## Log
+
+- 2026-11-05 — T1.1 complete (Codex): Django 5.2.19 on Python 3.14, full B7 schema, constraints, allocation balance view and migrations applied on local PostgreSQL 18.3 (human override). Added Admin/archive/audit schema support as a labelled TDD assumption; Manage endpoints and audit writes remain follow-on work. Added Python/package scripts, PostgreSQL 18 CI and Django Playwright server. `npm run check` passes: 32 frontend tests, 5 PostgreSQL schema tests, types, Ruff and Django checks; 8 existing frontend lint warnings. Migration drift check and Python wrapper argument/exit-code checks pass. `.env.local` stays ignored; frontend contracts and Claude changes preserved. Next T1.2, T1.3 seed, T1.4 auth/data seam and T1.5 consent. No push or deployment.
 
 - 2026-11-04 — Ledger identity and Academic info redesign (Claude, after the human called the look bland): spine, ruled folios, stamps, instalment seals, perforated receipts, night tape and ageing heat for staff, Tiro headings in both languages. `/progress` shows test scores and attendance side by side with a marks line below. Fixed the spine scrolling away with the page, a bug this redesign introduced. **For Codex:** no data contract changed; `getProgress` still returns `ProgressVM`, and the graph needs nothing new. **Not reviewed by Codex:** this commit and the Gate 0 commit `228aecf`. **Not checked:** the new Hindi strings by a Hindi reader, a real phone, the five-second test, and the tooltip by touch on a real device.
 

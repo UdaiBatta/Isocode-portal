@@ -14,21 +14,36 @@ Current job: docs/PROMPTS.md. In a new session or after a context summary, re-re
 
 ## Active stack decision
 
-The human selected React + BoardUI with a Django + PostgreSQL backend. Next.js is the frontend scaffold only. Django owns production authentication, permissions, validation, ORM, migrations, money transactions, reminders and risk scoring. This overrides the Node backend, Drizzle, pg and PGlite instructions in PLAN.md. Preserve all B8 expected values when translating to Python. Read docs/decisions.md before implementing a phase.
+Django 5.2 LTS on Python 3.14 and PostgreSQL owns authentication, permissions, validation, ORM, migrations, money transactions, reminders and risk scoring. Next.js 16 and React 19 with BoardUI render the frontend. This matches docs/PLAN.md; the old Node-backend override no longer applies. The human selected installed PostgreSQL 18 for local development; CI also uses 18.
 
 ## Rules that always apply
-
-- Build Phase 0 first. No database, API or real sign-in implementation until the Gate 0 checks that Codex runs have passed.
-- Money is integer paise. Display through lib/format.ts. Balances are calculated from allocations, never stored.
-- Dates are YYYY-MM-DD strings. Today comes from one clock module. Domain rules are pure, without database, clock or network access.
-- Risk code cannot import messaging, payment, reminder or ledger write code. Parents and accounts never receive risk data; counsellors never receive fee amounts.
-- Every production query and action checks session role and student/centre scope on the Django server. Use Django sessions and CSRF protection; never trust client role values.
-- All parent-facing copy goes through lib/i18n in Hindi and English. Every screen has loading, empty and error states, accessible controls and touch targets; no hover-only behaviour.
-- Use real, free BoardUI components and semantic tokens. Never build lookalikes or run shadcn init. Keep the generated BoardUI rules below.
-- React Bits, 21st.dev and MotionSites are limited to PLAN.md B3a. Log imported material in docs/third-party.md. Parent routes use CSS only; respect reduced motion and never split Hindi letters.
-- Do tasks in order. Read only the current task's sections. No parallel agents or cloud tasks unless the human asks. After three failed attempts at the same problem, record it and ask.
-- Run npm run check before each task commit. Commit messages start with the task ID. Never squash or force-push. Add task progress and unresolved limitations to docs/progress.md.
-- Label client assumptions. Never put real personal data or secrets in the repo. .env.example holds names only. Submission files and private design inputs stay ignored.
+- Money is integer paise. Never use floats for money. Display only through lib/format.ts.
+- Balances are always calculated from allocations, never stored.
+- Dates are datetime.date in Django and 'YYYY-MM-DD' strings in JSON. "Today" comes only from backend/fees/clock.py.
+- In Python, never use round() for money or scores. B8 says what to use instead.
+- backend/fees/domain/* is pure: no database, no clock, no network.
+- backend/fees/domain/risk.py and backend/fees/services/risk.py must never import messaging, reminder, payment or ledger write code.
+- Parent routes never return risk data. The accounts role never sees risk data.
+- Counsellors never receive fee amounts.
+- The browser talks only to Next.js. Pages call lib/data and lib/actions, which call Django through lib/backend.ts.
+- Only Django decides access. Every Django view uses @api(role=...), except the webhook and cron views, which have their own secrets.
+- All parent-facing text goes through lib/i18n, in Hindi and English.
+- Every screen has loading, empty and error states. No dead controls. No hover-only behaviour.
+- Free BoardUI components first. Use the boardui skill and MCP. Do not build lookalikes.
+- React Bits, 21st.dev and MotionSites only as docs/PLAN.md section B3a allows. Log each in docs/third-party.md.
+- Motion must show that something changed or confirm that something happened. Parent routes use CSS only. `motion` is the only animation library. Never run `npx shadcn init`.
+- Respect prefers-reduced-motion everywhere. Never animate Hindi letter by letter.
+- Usage is limited (docs/PLAN.md section A5). Read only what the current task needs. Limit command output. Run the smallest check that proves the change. Do nothing the spec did not ask for. After 3 failed attempts at the same problem, stop and ask.
+- Use BoardUI semantic tokens, never raw colours, outside the accent ramp in styles/theme.css.
+- Run `npm run check` before each commit. Commit messages start with the task ID. Never squash or force-push.
+- Never commit secrets. .env.example holds names only.
+- Label client assumptions and never add real personal data. Submission files and private design inputs stay ignored.
+- Add task progress and unresolved limitations to docs/progress.md after each task.
+- Development is local. Do not deploy or touch Vercel until the human starts Phase 8.
+- Spec commands are for a Unix shell. In PowerShell, use the equivalents. If the sandbox blocks git, ask for approval.
+- Django uses only SecurityMiddleware, SessionMiddleware and CommonMiddleware. CSRF middleware is intentionally off: Next.js server actions check Origin/Host, the browser cookie is sameSite=lax, and Django APIs require X-Internal-Key. Explain this boundary in the TDD.
+- Domain rules are pure. Every production query and action checks role and student/centre scope in Django; never trust client role values.
+- Both models list their files under In progress now before editing, preserve the other model's changes, and stage only their own work. No unrelated agents or cloud tasks.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

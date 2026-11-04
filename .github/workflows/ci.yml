@@ -7,6 +7,32 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: demo
+          POSTGRES_PASSWORD: ci-only-not-a-live-secret
+          POSTGRES_DB: coaching_fees
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NEXT_PUBLIC_PROTO: "1"
+      DEMO_MODE: "true"
+      DATABASE_URL: postgresql://demo:ci-only-not-a-live-secret@localhost:5432/coaching_fees
+      DJANGO_SECRET_KEY: ci-only-not-a-live-secret
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DJANGO_DEBUG: "false"
+      INTERNAL_API_SECRET: ci-only-not-a-live-secret
+      PAYMENT_WEBHOOK_SECRET: ci-only-not-a-live-secret
+      CRON_SECRET: ci-only-not-a-live-secret
+      SEED_DEMO_PASSWORD: ci-only-not-a-live-secret
+      BACKEND_URL: http://localhost:8000
+      APP_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -14,13 +40,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r backend/requirements.txt -r backend/requirements-dev.txt
       - run: npm run check
       - run: npm run build
-        env:
-          NEXT_PUBLIC_PROTO: "1"
-          DEMO_MODE: "true"
-          DATABASE_URL: postgresql://demo:unused@localhost:5432/demo
-          DJANGO_SECRET_KEY: ci-only-not-a-live-secret
-          PAYMENT_WEBHOOK_SECRET: ci-only-not-a-live-secret
-          CRON_SECRET: ci-only-not-a-live-secret
-          APP_URL: http://localhost:3000
