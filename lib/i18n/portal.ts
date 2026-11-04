@@ -8,6 +8,7 @@ const en = {
   "portal.receipts": "Receipts",
   "home.empty": "Nothing to show yet",
   "home.glance": "At a glance",
+  "home.instalments": "Instalments",
   "home.fees": "{paid} of {total} paid · {remaining} remaining",
   "home.latestReceipt": "Latest payment",
   "home.attendance": "{attended} of {held} classes in the last {n} weeks",
@@ -78,6 +79,8 @@ const en = {
   "progress.empty": "No attendance or test scores yet",
   "progress.noAttendance": "No attendance recorded yet",
   "progress.noTests": "No test scores yet",
+  "progress.marks": "Marks over recent tests",
+  "progress.marksNote": "Each test as a percentage of its full marks. Tap a point for the test.",
 };
 
 const hi: typeof en = {
@@ -86,6 +89,7 @@ const hi: typeof en = {
   "portal.receipts": "रसीदें",
   "home.empty": "अभी दिखाने के लिए कुछ नहीं है",
   "home.glance": "एक नज़र में",
+  "home.instalments": "किस्तें",
   "home.fees": "{total} में से {paid} भरे गए · {remaining} बाकी",
   "home.latestReceipt": "पिछला भुगतान",
   "home.attendance": "पिछले {n} हफ़्तों में {held} में से {attended} कक्षाएँ",
@@ -156,6 +160,8 @@ const hi: typeof en = {
   "progress.empty": "अभी उपस्थिति या टेस्ट के अंक नहीं हैं",
   "progress.noAttendance": "अभी उपस्थिति दर्ज नहीं हुई है",
   "progress.noTests": "अभी टेस्ट के अंक नहीं हैं",
+  "progress.marks": "हाल के टेस्ट में अंक",
+  "progress.marksNote": "हर टेस्ट के अंक, पूरे अंकों के प्रतिशत में। टेस्ट देखने के लिए बिंदु पर टैप करें।",
 };
 
 export function pt(language: Language, key: keyof typeof en, values: Record<string, string | number> = {}): string {

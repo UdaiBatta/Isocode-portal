@@ -106,3 +106,17 @@ test("staff sign-in stays in its dark frame, without workspace navigation, in ev
   await expect(page).toHaveURL(/\/staff\/login$/);
   await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
 });
+
+// The binding must run the full height of the window however far the page scrolls, for parents and staff alike.
+test("the staff and parent spines stay in place while the page scrolls", async ({ page, context }, info) => {
+  test.skip(info.project.name === "mobile", "Phones have no spine");
+  await signInAs(context, "accounts");
+  await page.goto("/staff/students");
+  await page.evaluate(() => scrollTo(0, 600));
+  await expect.poll(() => page.locator(".staff-spine").boundingBox().then((box) => [box!.y, box!.height])).toEqual([0, 800]);
+  await context.clearCookies();
+  await context.addCookies([{ name: "lang", value: "en", url: "http://127.0.0.1:3001" }, { name: "proto", value: encodeURIComponent(JSON.stringify({ role: "parent", phone: "+919000000587", consent: true })), url: "http://127.0.0.1:3001" }]);
+  await page.goto("/dashboard");
+  await page.evaluate(() => scrollTo(0, 200));
+  await expect.poll(() => page.locator(".ledger-spine").boundingBox().then((box) => [box!.y, box!.height])).toEqual([0, 800]);
+});

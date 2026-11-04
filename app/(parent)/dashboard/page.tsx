@@ -21,12 +21,12 @@ export default async function ParentHome({ searchParams }: { searchParams: Promi
   return <ParentShell {...shell} active="home" showName={false} title={info.name} description={`${info.batch} · ${info.centre}`}>
     <DuesStatus view={view} language={language} today={today} />
     <section className={parentSectionClass}>
-      <h2 className="text-headline-medium">{pt(language, "home.glance")}</h2>
+      <h2 className="text-title-2-medium">{pt(language, "home.glance")}</h2>
       <ul className="divide-y divide-separator-border">
-        {view.mode !== "withdrawn" ? <GlanceRow href={link("/dues")} label={pt(language, "portal.fees")} value={pt(language, "home.fees", { paid: inr(paid), total: inr(total), remaining: inr(remaining) })} /> : null}
-        <GlanceRow href={link("/receipts")} label={pt(language, "home.latestReceipt")} value={latestReceipt ? <>{inr(latestReceipt.amount)} · {dateLabel(latestReceipt.issuedOn, language, today)}</> : pt(language, "invoice.none")} />
-        <GlanceRow href={link("/progress")} label={pt(language, "progress.attendance")} value={recent.length ? pt(language, "home.attendance", { attended: recent.reduce((sum, week) => sum + week.attended, 0), held: recent.reduce((sum, week) => sum + week.held, 0), n: recent.length }) : pt(language, "progress.noAttendance")} />
-        <GlanceRow href={link("/progress")} label={pt(language, "home.latestTest")} value={latestTest ? <><bdi>{latestTest.testName}</bdi> · {latestTest.score}/{latestTest.maxScore}</> : pt(language, "progress.noTests")} />
+        {view.mode !== "withdrawn" ? <GlanceRow href={link("/dues")} label={pt(language, "portal.fees")} figure={inr(remaining)} value={pt(language, "home.fees", { paid: inr(paid), total: inr(total), remaining: inr(remaining) })} /> : null}
+        <GlanceRow href={link("/receipts")} label={pt(language, "home.latestReceipt")} figure={latestReceipt ? dateLabel(latestReceipt.issuedOn, language, today) : undefined} value={latestReceipt ? <>{inr(latestReceipt.amount)} · {dateLabel(latestReceipt.issuedOn, language, today)}</> : pt(language, "invoice.none")} />
+        <GlanceRow href={link("/progress")} label={pt(language, "progress.attendance")} figure={recent.length ? `${recent.reduce((sum, week) => sum + week.attended, 0)}/${recent.reduce((sum, week) => sum + week.held, 0)}` : undefined} value={recent.length ? pt(language, "home.attendance", { attended: recent.reduce((sum, week) => sum + week.attended, 0), held: recent.reduce((sum, week) => sum + week.held, 0), n: recent.length }) : pt(language, "progress.noAttendance")} />
+        <GlanceRow href={link("/progress")} label={pt(language, "home.latestTest")} figure={latestTest ? `${latestTest.score}/${latestTest.maxScore}` : undefined} value={latestTest ? <><bdi>{latestTest.testName}</bdi> · {latestTest.score}/{latestTest.maxScore}</> : pt(language, "progress.noTests")} />
         <GlanceRow href={link("/course")} label={pt(language, "portal.course")} value={<bdi>{info.batch} · {info.centre}</bdi>} />
       </ul>
     </section>

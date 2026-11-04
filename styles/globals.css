@@ -1118,3 +1118,137 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 .staff-surface :is(button, a) { min-height: 44px; }
+
+/* ===== The ledger: the look of a bahi-khata, an Indian account book. See docs/design-tokens.md. =====
+   Cloth binding and foil on the spine, ruled pages with a red margin, rubber stamps for status. */
+html:has(.parent-surface, .paper-surface) {
+  --ledger-cloth: #1B3A26; --ledger-cloth-deep: #142C1C; --ledger-foil: #E3CF9A; --ledger-on-cloth: #EFE6CF;
+  --ledger-rule: oklch(0.9 0.018 230 / 0.28); --ledger-margin: #C9483B; --ledger-ink: #A32A1F; --ledger-ink-paid: #25502E;
+  --ledger-heat: #C9483B;
+}
+html:has(.staff-surface) {
+  --ledger-cloth: #131514; --ledger-cloth-deep: #0F1110; --ledger-foil: #B8F84B; --ledger-on-cloth: #C9CFC8;
+  --ledger-rule: #232624; --ledger-margin: #5C7D2E; --ledger-ink: #FF7A95; --ledger-ink-paid: #B8F84B;
+  --ledger-heat: #FF7A95;
+}
+
+.ledger-type { font-family: var(--font-ledger), var(--font-devanagari), Georgia, serif; font-weight: 400; }
+:is(.parent-surface, .paper-surface, .staff-surface) :is(h1, h2) { font-family: var(--font-ledger), var(--font-devanagari), Georgia, serif; font-weight: 400; }
+.parent-surface h1, .staff-surface h1 { font-size: 2rem; line-height: 2.5rem; }
+.staff-surface .tabular-nums { font-family: var(--font-figures), ui-monospace, monospace; }
+
+/* The amount a parent owes: still the largest thing on any screen. */
+.ledger-amount { font-size: 3.5rem; line-height: 4rem; font-variant-numeric: lining-nums tabular-nums; letter-spacing: -0.01em; color: var(--color-text-primary); }
+
+/* Block-print butti, drawn as a mask so each binding can tint it. */
+/* No position here: it would override the sticky spine. Every user of this class sets its own. */
+.ledger-butti { isolation: isolate; }
+.ledger-butti::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: var(--ledger-foil); opacity: 0.09;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cg fill='none' stroke='%23000' stroke-width='1.2'%3E%3Cpath d='M28 28c-4-5-4-11 0-15 4 4 4 10 0 15z'/%3E%3Cpath d='M28 28c-4 5-4 11 0 15 4-4 4-10 0-15z'/%3E%3Cpath d='M28 28c5-4 11-4 15 0-4 4-10 4-15 0z'/%3E%3Cpath d='M28 28c-5-4-11-4-15 0 4 4 10 4 15 0z'/%3E%3Ccircle cx='28' cy='28' r='2.2'/%3E%3Ccircle cx='0' cy='0' r='2'/%3E%3Ccircle cx='56' cy='0' r='2'/%3E%3Ccircle cx='0' cy='56' r='2'/%3E%3Ccircle cx='56' cy='56' r='2'/%3E%3C/g%3E%3C/svg%3E");
+  mask-size: 56px 56px;
+}
+
+/* Spine: the book's cloth binding, stitched along the fold. */
+.ledger-spine { background: var(--ledger-cloth); color: var(--ledger-on-cloth); border-inline-end: 1px solid var(--ledger-cloth-deep); }
+.ledger-spine::after { content: ""; position: absolute; inset-block: 0; inset-inline-end: 7px; border-inline-end: 1px dashed var(--ledger-foil); opacity: 0.35; pointer-events: none; }
+.ledger-spine-brand { color: var(--ledger-foil); }
+.ledger-spine a { color: var(--ledger-on-cloth); }
+.ledger-spine a:hover { background: var(--ledger-cloth-deep); }
+.ledger-spine a[aria-current="page"], .ledger-spine a[aria-current="page"]:hover { background: var(--color-background-full); color: var(--color-text-primary); }
+.ledger-spine button { color: var(--ledger-on-cloth); }
+.ledger-tabbar { background: var(--ledger-cloth); }
+.ledger-tabbar > a, .ledger-tabbar > details > summary { color: var(--ledger-on-cloth); }
+.ledger-tabbar > a[aria-current="page"], .ledger-tabbar > details[data-active] > summary { color: var(--ledger-foil); box-shadow: inset 0 3px 0 var(--ledger-foil); }
+
+/* Staff get the same book at night: a darker cloth and lime foil on the rail. */
+.staff-spine { background: var(--ledger-cloth); border-inline-end: 1px solid var(--color-separator-border); }
+.staff-spine > aside { background: transparent; border-radius: 0; }
+.staff-spine aside > div:first-child > p:first-child { color: var(--ledger-foil); font-family: var(--font-ledger), serif; font-size: 1.375rem; line-height: 1.75rem; font-weight: 400; }
+
+/* Folio: one ruled page with its red margin. */
+.ledger-folio {
+  position: relative; padding: 1.25rem 1.25rem 1.5rem 2rem; border: 1px solid var(--color-separator-border); border-radius: 0.25rem;
+  background-color: var(--color-background-primary-default);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 1.9375rem, var(--ledger-rule) 1.9375rem 2rem);
+  box-shadow: 0 1px 0 var(--color-separator-border), 0 3px 0 -1px var(--color-background-primary-default), 0 4px 0 -1px var(--color-separator-border);
+}
+.ledger-folio::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 1.25rem; width: 3px; border-inline: 1px solid var(--ledger-margin); opacity: 0.7; pointer-events: none; }
+@media (min-width: 768px) { .ledger-folio { padding: 1.75rem 2rem 2rem 3.5rem; } .ledger-folio::before { inset-inline-start: 2.5rem; } }
+
+/* Rubber stamp. The mask gives it uneven ink. */
+.ledger-stamp {
+  display: inline-flex; align-items: center; width: fit-content; padding: 0.125rem 0.625rem; border: 2px solid currentColor; border-radius: 0.25rem; outline: 1px solid currentColor; outline-offset: 2px;
+  color: var(--ledger-ink); font-family: var(--font-ledger), var(--font-devanagari), serif; font-size: 1rem; line-height: 1.5rem; white-space: nowrap; rotate: -4deg; animation: stamp-down 180ms cubic-bezier(0.3, 1.4, 0.6, 1) both;
+}
+.ledger-stamp-paid { color: var(--ledger-ink-paid); }
+.ledger-stamp-small { font-size: 0.875rem; line-height: 1.25rem; padding-inline: 0.5rem; animation: none; }
+.ledger-stamp-large { font-size: 1.75rem; line-height: 2.25rem; padding-inline: 1rem; rotate: -9deg; }
+@keyframes stamp-down { from { scale: 1.35; } }
+
+/* Instalments as seals on a thread. */
+.ledger-seals { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); list-style: none; }
+.ledger-seals li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; text-align: center; }
+.ledger-seals li:not(:last-child)::after { content: ""; position: absolute; top: 0.8125rem; inset-inline-start: calc(50% + 0.875rem); width: calc(100% - 1.75rem); border-top: 1px dashed var(--color-text-secondary); }
+.ledger-seal { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; border: 1.5px dashed var(--color-text-secondary); color: var(--color-text-secondary); }
+.ledger-seal[data-state="paid"] { background: var(--ledger-ink-paid); border: 0; color: var(--color-background-primary-default); }
+.ledger-seal[data-state="part"] { background: linear-gradient(to right, var(--ledger-ink) 50%, transparent 50%); border: 1.5px solid var(--ledger-ink); }
+.ledger-seal[data-state="due"] { border: 2px solid var(--ledger-ink); }
+
+/* Receipt slip, torn from a book along its perforations. */
+.ledger-slip {
+  position: relative; display: flex; flex-direction: column; gap: 2rem; padding: 2.5rem 1.25rem 2rem; background: var(--color-background-primary-default);
+  mask: radial-gradient(circle at 8px 0, transparent 5px, #000 5.5px) -8px 0 / 16px 100% repeat-x;
+}
+@media (min-width: 768px) { .ledger-slip { padding: 3rem 2.5rem 2.5rem; } }
+.ledger-slip-stamp { position: absolute; top: 3.5rem; inset-inline-end: 1.25rem; }
+@media (min-width: 768px) { .ledger-slip-stamp { inset-inline-end: 2.5rem; } }
+
+/* Ledger columns: description left, figure in its own column on the right. */
+.ledger-figure { font-family: var(--font-ledger), var(--font-devanagari), serif; font-size: 1.5rem; line-height: 2rem; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.ledger-rows dd { font-family: var(--font-ledger), var(--font-devanagari), serif; font-size: 1.125rem; font-weight: 400; }
+
+/* Book cover on the sign-in panels. */
+.ledger-cover { background: var(--ledger-cloth); color: var(--ledger-on-cloth); }
+.ledger-cover-frame { position: absolute; inset: 1rem; border: 1px solid var(--ledger-foil); outline: 1px solid var(--ledger-foil); outline-offset: -5px; border-radius: 0.5rem; opacity: 0.5; pointer-events: none; }
+.ledger-cover-title { color: var(--ledger-foil); font-family: var(--font-ledger), var(--font-devanagari), serif; font-size: 2.25rem; line-height: 2.875rem; }
+.ledger-cover-note { color: var(--ledger-on-cloth); }
+.ledger-cover-sheet { color: var(--color-text-primary); }
+@media (max-width: 1023px) { .ledger-top-band { border-top: 6px solid var(--ledger-cloth); } }
+
+/* Staff night tape: one strip of figures, not four template cards. */
+.stat-tape { gap: 0; overflow: hidden; border: 1px solid var(--color-separator-border); border-radius: 0.5rem; background: var(--color-background-primary-default); }
+.stat-tape > section { min-height: 0; border-radius: 0; background: transparent; box-shadow: inset -1px -1px 0 var(--color-separator-border); padding: 1.25rem; }
+.stat-tape > section > span:first-child { display: none; }
+.stat-tape > section p.text-title-1-medium { font-family: var(--font-figures), ui-monospace, monospace; font-size: 1.625rem; line-height: 2.25rem; }
+.stat-tape > section:first-child p.text-title-1-medium { color: var(--ledger-foil); }
+
+/* Ageing heat: a cell darkens with its share of the column's largest value. */
+.ledger-heat { display: block; margin: -0.375rem -0.5rem; padding: 0.375rem 0.5rem; border-radius: 0.25rem; background: color-mix(in srgb, var(--ledger-heat) calc(var(--heat) * 42%), transparent); }
+.ledger-heat[data-zero] { color: var(--color-text-secondary); }
+
+/* Attendance tally: one mark per class held. */
+.ledger-tally { display: inline-flex; gap: 0.25rem; }
+.ledger-tally > span { width: 0.625rem; height: 0.625rem; border-radius: 50%; border: 1px solid var(--color-text-secondary); }
+.ledger-tally > span[data-on] { background: var(--ledger-ink-paid); border-color: var(--ledger-ink-paid); }
+
+/* Marks line. The plot is drawn in percentages; ticks and dates hang off it in plain HTML, so text keeps its size on a phone. */
+.marks-chart { position: relative; height: 11rem; margin: 1.75rem 0.25rem 2rem 2.75rem; border-block: 1px solid var(--color-separator-border); background: linear-gradient(var(--color-separator-border), var(--color-separator-border)) 0 50% / 100% 1px no-repeat; }
+.marks-tick { position: absolute; inset-inline-end: 100%; translate: 0 -50%; padding-inline-end: 0.5rem; color: var(--color-text-secondary); font-size: 0.75rem; line-height: 1rem; }
+.marks-line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.marks-line polyline { fill: none; stroke: var(--ledger-ink-paid); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.marks-point { position: absolute; display: block; width: 2.75rem; height: 2.75rem; translate: -50% -50%; border-radius: 50%; outline: none; }
+.marks-point::before { content: ""; position: absolute; inset: 50% auto auto 50%; width: 0.75rem; height: 0.75rem; translate: -50% -50%; border-radius: 50%; background: var(--ledger-ink-paid); box-shadow: 0 0 0 2px var(--color-background-primary-default); }
+.marks-point:focus-visible { box-shadow: 0 0 0 2px var(--ledger-ink-paid); }
+.marks-value { position: absolute; bottom: calc(50% + 0.5rem); left: 50%; translate: -50% 0; color: var(--color-text-primary); font-family: var(--font-ledger), serif; font-size: 1.125rem; line-height: 1.5rem; }
+.marks-tip { position: absolute; z-index: 1; bottom: calc(100% + 0.25rem); left: 50%; translate: -50% 0; visibility: hidden; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background: var(--color-text-primary); color: var(--color-background-primary-default); font-size: 0.75rem; line-height: 1.125rem; white-space: nowrap; pointer-events: none; }
+.marks-point[data-edge="start"] .marks-tip { left: 0; translate: 0 0; }
+.marks-point[data-edge="end"] .marks-tip { left: auto; right: 0; translate: 0 0; }
+.marks-point:hover .marks-tip, .marks-point:focus .marks-tip { visibility: visible; }
+.marks-point:hover .marks-value, .marks-point:focus .marks-value { visibility: hidden; }
+.marks-date { position: absolute; top: calc(100% + 0.375rem); translate: -50% 0; color: var(--color-text-secondary); font-size: 0.75rem; line-height: 1rem; white-space: nowrap; }
+/* Five dates do not fit a phone, least of all in Hindi. The middle ones stay reachable by tapping a point. */
+@media (max-width: 639px) { .marks-date[data-middle] { display: none; } }
+
+@media (prefers-reduced-motion: reduce) { .ledger-stamp { animation: none; } }
+@media print { .ledger-folio, .ledger-slip { box-shadow: none; mask: none; background-image: none; } .ledger-spine, .ledger-tabbar { display: none; } }

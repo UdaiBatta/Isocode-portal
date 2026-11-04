@@ -28,14 +28,15 @@ export default async function Receipt({ params, searchParams }: { params: Promis
   const receipt = await getReceipt(id);
   const organisation = await getReceiptOrganisation();
   const fields: [TranslationKey, string][] = [["receipt.number", receipt.number], ["receipt.date", dateLabel(receipt.issuedOn, language, today)], ["receipt.student", `${receipt.student.name} · ${receipt.student.code}`], ["receipt.batch", receipt.student.batch], ["receipt.centre", receipt.student.centre], ["receipt.method", methodLabel(language, receipt.method)]];
-  const body = <>
-    <header className="flex flex-col gap-2"><p className="text-headline-medium">{organisation.name} · {organisation.city}</p><h1 className="text-title-1-medium">{t(language, "receipt.title")}</h1><p className="text-body-regular text-text-secondary">{t(language, "receipt.gstin")}: <bdi>{organisation.gstin.replace(" (sample)", "")}</bdi> {t(language, "receipt.sample")}</p></header>
+  const body = <div className="ledger-slip">
+    <span className="ledger-stamp ledger-stamp-paid ledger-stamp-large ledger-slip-stamp">{t(language, "status.paid")}</span>
+    <header className="flex flex-col gap-2 pe-28"><p className="text-headline-medium">{organisation.name} · {organisation.city}</p><h1 className="text-title-1-medium">{t(language, "receipt.title")}</h1><p className="text-body-regular text-text-secondary">{t(language, "receipt.gstin")}: <bdi>{organisation.gstin.replace(" (sample)", "")}</bdi> {t(language, "receipt.sample")}</p></header>
     <dl className="flex flex-col gap-4">{fields.map(([key, value]) => <div key={key} className="grid grid-cols-[100px_minmax(0,1fr)] gap-4"><dt className="text-body-regular text-text-secondary">{t(language, key)}</dt><dd className="break-words text-body-medium"><bdi>{value}</bdi></dd></div>)}</dl>
     <ReceiptTaxTable amounts={receipt} language={language} />
     <div className="flex items-baseline justify-between gap-4"><span className="text-headline-medium">{t(language, "receipt.total")}</span><Money paise={receipt.amount} prominent /></div>
     <PrintReceipt language={language} />
     <footer className="flex flex-col items-start gap-2 print:hidden"><LinkButton href={context.role === "parent" ? `/dues?student=${receipt.student.code}` : "/staff/login"} variant="secondary">{t(language, "pay.backToDues")}</LinkButton><LinkButton href="/refund-policy" variant="secondary">{t(language, "policy.title")}</LinkButton></footer>
-  </>;
+  </div>;
   if (context.role === "parent") return <ParentShell language={language} active="receipts" {...await getFamily(receipt.student.code)}>{body}</ParentShell>;
   return <PageShell className="flex flex-col gap-8"><div className="flex justify-end print:hidden"><LanguageSwitcher language={language} /></div>{body}</PageShell>;
 }

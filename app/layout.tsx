@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Inter, Noto_Sans_Devanagari } from "next/font/google";
+import { IBM_Plex_Mono, Inter, Noto_Sans_Devanagari, Tiro_Devanagari_Hindi } from "next/font/google";
 import { DirectionProvider } from "@/components/foundations/direction/direction";
 import { cx } from "@/utils/cx";
 import "@/styles/globals.css";
@@ -18,6 +18,10 @@ const devanagari = Noto_Sans_Devanagari({
   preload: false,
 });
 
+// Tiro is one book face drawn for both scripts, so Hindi and English headings match. Plex Mono sets staff figures.
+const ledger = Tiro_Devanagari_Hindi({ variable: "--font-ledger", subsets: ["latin", "devanagari"], weight: "400", preload: false });
+const figures = IBM_Plex_Mono({ variable: "--font-figures", subsets: ["latin"], weight: "400", preload: false });
+
 export const metadata: Metadata = {
   title: "Company A | Coaching fees",
   description: "Fee tracking and parent portal for Company A, Jaipur.",
@@ -30,7 +34,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang={lang}
       dir="ltr"
-      className={cx(inter.variable, devanagari.variable, "h-full antialiased")}
+      className={cx(inter.variable, devanagari.variable, ledger.variable, figures.variable, "h-full antialiased")}
     >
       <body className="min-h-full bg-background-primary-default font-sans text-text-primary">
         <DirectionProvider locale={lang}>{children}</DirectionProvider>

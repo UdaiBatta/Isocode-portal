@@ -47,3 +47,25 @@ Lime means selection, progress or success. Orange means pending attention. Neith
 - Same type scale, spacing scale, buttons, inputs, chips and status words in both.
 - Headers come from `StaffPageHeader`, staff panels from `StaffFrame`, and parent pages from `ParentShell`.
 - Parents get hairline-separated sections like a statement. Staff get panels, because they scan many blocks at once. Neither nests cards inside cards.
+
+## The ledger identity (2026-11-04)
+
+The human called the earlier look bland, so the product now takes its look from the bahi-khata, the account book Indian institutes keep. Parents see a cloth-bound book by day; staff see the same book at night. These tokens and classes are at the end of `styles/globals.css`.
+
+| Element | Parent | Staff |
+|---|---|---|
+| Cloth (`--ledger-cloth`) | `#1B3A26` | `#131514` |
+| Foil (`--ledger-foil`) | `#E3CF9A` | `#B8F84B` |
+| Ledger margin (`--ledger-margin`) | `#C9483B` | `#5C7D2E` |
+| Stamp ink (`--ledger-ink`) | `#A32A1F` | `#FF7A95` |
+| Paid ink (`--ledger-ink-paid`) | `#25502E` | `#B8F84B` |
+
+- **Type:** Tiro Devanagari Hindi for headings and figures, because one face drawn for both scripts keeps Hindi and English matched. Inter and Noto Sans Devanagari stay for reading text. IBM Plex Mono sets staff figures.
+- **Spine (`.ledger-spine`, `.staff-spine`):** the sidebar as a stitched cloth binding with a block-print flower (`.ledger-butti`). The flower is an original drawing, not copied from a named print.
+- **Folio (`.ledger-folio`):** a ruled page with a red margin, used for what matters most on a screen.
+- **Stamp (`.ledger-stamp`):** status as a rubber stamp. The stamp only ever shows a status the data already holds.
+- **Seals (`.ledger-seals`):** instalments on a thread: filled when paid, half when part paid, a red ring when due, dashed when upcoming.
+- **Slip (`.ledger-slip`):** a receipt with a perforated top edge.
+- **Night tape (`.stat-tape`) and heat (`.ledger-heat`):** staff figures in one strip, and ageing cells that darken with their share of the column's largest value.
+- **Marks line (`MarksChart`):** one series on a fixed 0 to 100% scale, server-rendered with no chart library.
+

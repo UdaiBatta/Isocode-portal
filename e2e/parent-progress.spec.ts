@@ -37,6 +37,21 @@ test("a new student shows what little there is", async ({ page, context }) => {
   await expect(page.getByText("64/100", { exact: true })).toBeVisible();
 });
 
+test("the marks graph runs oldest to newest, opens on tap, and needs at least two tests", async ({ page, context }) => {
+  await signIn(context, "+919000000587");
+  await page.goto("/progress");
+  const points = page.getByRole("group", { name: "Marks over recent tests" }).getByRole("img");
+  await expect(points).toHaveCount(5);
+  await expect(points.first()).toHaveAccessibleName("Monthly Test 3, 27 Jun, 78/100");
+  await expect(points.last()).toHaveAccessibleName("Monthly Test 7, 24 Oct, 86/100");
+  await points.last().focus();
+  await expect(points.last().locator(".marks-tip")).toBeVisible();
+  await context.clearCookies();
+  await signIn(context, "+919000000735");
+  await page.goto("/progress");
+  await expect(page.getByRole("group", { name: "Marks over recent tests" })).toHaveCount(0);
+});
+
 test("signed-out visitors are sent to sign-in", async ({ page }) => {
   await page.goto("/progress");
   await expect(page).toHaveURL(/\/login$/);

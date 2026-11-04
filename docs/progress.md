@@ -4,10 +4,12 @@
 
 Read this before editing. Each model lists its task and files here when it starts and clears them when it commits. Do not edit a file the other model has listed; add a note under your own name instead.
 
-- **Claude (frontend):** identity redesign after the human called the look bland: fonts, theme tokens, `ParentShell`, `DuesStatus`, `Money`, `AuthLayout`, receipts, `StaffShell`, `DuesDashboard`.
+- **Claude (frontend):** nothing listed.
 - **Codex (backend):** nothing listed; stopped by its usage limit. On resuming, review the Gate 0 commit and continue from Phase 1.
 
 ## Log
+
+- 2026-11-04 — Ledger identity and Academic info redesign (Claude, after the human called the look bland): spine, ruled folios, stamps, instalment seals, perforated receipts, night tape and ageing heat for staff, Tiro headings in both languages. `/progress` shows test scores and attendance side by side with a marks line below. Fixed the spine scrolling away with the page, a bug this redesign introduced. **For Codex:** no data contract changed; `getProgress` still returns `ProgressVM`, and the graph needs nothing new. **Not reviewed by Codex:** this commit and the Gate 0 commit `228aecf`. **Not checked:** the new Hindi strings by a Hindi reader, a real phone, the five-second test, and the tooltip by touch on a real device.
 
 - 2026-11-04 — T0.15 and Gate 0 closed (Claude, because Codex's usage limit ran out mid-review): committed Codex's review notes and the staff-state repair, finished the final screenshot pass, and fixed three flaws it found. `npm run check` passes and the full browser suite exits 0 with one worker. **Not reviewed by Codex:** this commit. **Not run:** the five-second test, real phone, Hindi read and human sign-off. Details are in `docs/gate-0.md`.
 

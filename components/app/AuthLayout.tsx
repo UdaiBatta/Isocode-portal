@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Chip } from "@/components/base/badges/chip";
 import { ORG } from "@/lib/config";
 import { t } from "@/lib/i18n";
 import { cx } from "@/utils/cx";
@@ -23,39 +22,34 @@ function BrandMark() {
   </span>;
 }
 
+// A closed ledger with one page slipped out of it: the sample figures sit on real ruled paper, stamped.
 function AuthPanel({ variant, language }: { variant: keyof typeof panels; language: Language }) {
   const copy = panels[variant][language] ?? panels[variant].en;
-  return <aside aria-label={ORG.name} className="hidden min-h-0 p-3 lg:flex">
-    <div className="auth-panel relative flex w-full flex-col justify-between gap-8 overflow-hidden rounded-3xl border border-border-button-default bg-background-secondary-default p-9 xl:p-11">
-      <p className="relative z-10 flex items-center gap-2 self-start rounded-full border border-border-button-default bg-background-primary-default py-1 pe-3 ps-2.5 text-body-2-regular text-text-secondary"><span className="size-1.5 rounded-full bg-accent-500" aria-hidden="true" />{copy.badge}</p>
-      <div className="relative z-10 flex flex-col items-start" aria-hidden="true">
-        <div className="w-[min(100%,360px)] rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
-          <p className="text-body-2-regular text-text-secondary">{copy.label}</p>
-          <p className="mt-1 flex flex-wrap items-center gap-2"><span className="text-title-1-medium tabular-nums">{copy.value}</span><Chip color={variant === "parent" ? "rose" : "neutral"}>{copy.note}</Chip></p>
-          <span className="mt-4 flex h-2 overflow-hidden rounded-full bg-background-tertiary-default"><span className="w-1/2 bg-status-cyan-background" /><span className="w-1/4 bg-status-yellow-background" /><span className="w-1/4 bg-status-rose-text" /></span>
-        </div>
-        <div className="-mt-3 ms-[14%] w-[min(86%,340px)] rounded-2xl border border-border-button-default bg-background-primary-default p-4 shadow-xs">
-          <p className="mb-2 text-body-medium">{copy.steps}</p>
-          <ol className="flex flex-col gap-2">{copy.timeline.map(([time, label], index) => <li key={time} className="flex items-center gap-2.5 text-body-2-regular">
-            <span className={cx("size-2 shrink-0 rounded-full", index === copy.timeline.length - 1 ? "bg-accent-600" : "bg-border-button-default")} />
-            {variant === "staff" ? <span className="w-12 shrink-0 tabular-nums text-text-secondary">{time}</span> : null}
-            <span className="text-text-secondary">{label}</span>
-          </li>)}</ol>
-        </div>
+  return <aside aria-label={ORG.name} className="hidden min-h-0 lg:flex">
+    <div className="ledger-cover ledger-butti relative flex w-full flex-col justify-between gap-8 overflow-hidden p-12 xl:p-14">
+      <span className="ledger-cover-frame" aria-hidden="true" />
+      <p className="ledger-cover-note text-body-2-regular">{copy.badge}</p>
+      <p className="ledger-cover-title max-w-md text-balance">{copy.headline}</p>
+      <div className="ledger-folio ledger-cover-sheet w-[min(100%,420px)] -rotate-1" aria-hidden="true">
+        <p className="text-body-2-regular text-text-secondary">{copy.label}</p>
+        <p className="ledger-type text-display-4-medium tabular-nums">{copy.value}</p>
+        <span className="ledger-stamp absolute end-5 top-6">{copy.note}</span>
+        <p className="mt-3 text-body-medium">{copy.steps}</p>
+        <ol className="flex flex-col">{copy.timeline.map(([time, label]) => <li key={time} className="flex h-8 items-center gap-2.5 text-body-2-regular">
+          {variant === "staff" ? <span className="w-12 shrink-0 tabular-nums text-text-secondary">{time}</span> : null}
+          <span className="text-text-secondary">{label}</span>
+        </li>)}</ol>
       </div>
-      <div className="relative z-10 flex max-w-md flex-col gap-3">
-        <p className="text-title-2-medium text-balance">{copy.headline}</p>
-        <p className="text-body-regular text-balance text-text-secondary">{copy.detail}</p>
-      </div>
+      <p className="ledger-cover-note max-w-md text-body-regular text-balance">{copy.detail}</p>
     </div>
   </aside>;
 }
 
 export function AuthLayout({ variant, language, action, children }: { variant: keyof typeof panels; language: Language; action?: ReactNode; children: ReactNode }) {
-  return <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)]">
+  return <div className="ledger-top-band grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)]">
     <main className={cx("flex min-h-dvh min-w-0 flex-col", variant === "parent" ? "parent-surface" : "staff-surface")}>
       <header className="flex items-center justify-between gap-4 px-5 pt-5 md:px-8 md:pt-7">
-        <span className="flex items-center gap-2.5 text-headline-medium"><BrandMark />{ORG.name}</span>
+        <span className="ledger-type flex items-center gap-2.5 text-title-2-medium"><BrandMark />{ORG.name}</span>
         {action}
       </header>
       <div className="flex flex-1 items-center justify-center px-5 py-8 md:px-8"><div className="w-full max-w-[384px]">{children}</div></div>
