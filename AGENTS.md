@@ -14,7 +14,7 @@ Current job: docs/PROMPTS.md. In a new session or after a context summary, re-re
 
 ## Active stack decision
 
-Django 5.2 LTS on Python 3.14 and PostgreSQL owns authentication, permissions, validation, ORM, migrations, money transactions, reminders and risk scoring. Next.js 16 and React 19 with BoardUI render the frontend. This matches docs/PLAN.md; the old Node-backend override no longer applies. The human selected installed PostgreSQL 18 for local development; CI also uses 18.
+Django 5.2 LTS on Python 3.14 and PostgreSQL owns authentication, permissions, validation, ORM, migrations, money transactions, reminders and risk scoring. Next.js 16 and React 19 with BoardUI render the frontend. This matches docs/PLAN.md; the old Node-backend override no longer applies. The human selected installed PostgreSQL 18 for local development only; CI uses PostgreSQL 17 per B13.
 
 ## Rules that always apply
 - Money is integer paise. Never use floats for money. Display only through lib/format.ts.

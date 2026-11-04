@@ -49,7 +49,7 @@
 
 ## 2026-11-05 — T1.1 Django schema
 
-The active stack now matches PLAN.md A4/B1: Django 5.2 LTS on Python 3.14, plain JSON views and PostgreSQL. The obsolete Node-backend override is removed. The human explicitly chose installed PostgreSQL 18 rather than B1's PostgreSQL 17; local verification uses 18.3 and CI uses postgres:18.
+The active stack now matches PLAN.md A4/B1: Django 5.2 LTS on Python 3.14, plain JSON views and PostgreSQL. The obsolete Node-backend override is removed. The human explicitly chose installed PostgreSQL 18 for local development only; local verification uses 18.3. CI stays on postgres:17 as B13 specifies.
 
 ASSUMPTION for the TDD, requested by the human: Admin is a third staff role, and centres, batches, students and staff accounts have archived_at so records and history survive archiving. Courses remain properties of batches. audit_log stores before/after JSON and actor/entity identifiers without a cascading FK, so deleting an eligible record cannot erase its history. Manage actions and their policy checks are follow-on backend work; T1.1 adds their schema only. Financial FKs use PROTECT. Money and Manage services must write audit_log in the same transaction, and payments/receipts must be corrected by recorded entries rather than edited.
 
