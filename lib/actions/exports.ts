@@ -5,8 +5,11 @@ import { ledgerFor } from "@/lib/fixtures/views";
 import { csv } from "@/lib/csv";
 import { getStaffDirectory } from "@/lib/data/staff";
 import { today } from "@/lib/clock";
+import { cookies } from "next/headers";
+import { getExport } from "@/lib/data/exports";
 
 export async function exportCsv(kind: "dues" | "receipts", filters: { centre?: string; batch?: string }) {
+  if ((await cookies()).get("sid")?.value) return getExport(kind, filters);
   const [directory, state, date] = await Promise.all([getStaffDirectory(), readProto(), today()]);
   const ledgers = directory.students.filter((student) => (!filters.centre || student.centreId === filters.centre) && (!filters.batch || student.batchId === filters.batch)).map((student) => ledgerFor(state, student.code, date));
   const rows = kind === "dues" ? [
