@@ -163,7 +163,9 @@ class SeedDatabaseTests(TestCase):
         m.Allocation.objects.filter(payment__student__code__in=codes).delete()
         m.Receipt.objects.filter(payment__student__code__in=codes).delete()
         m.Payment.objects.filter(student__code__in=codes).delete()
-        m.ReminderLog.objects.filter(instalment__plan__student__code__in=codes).delete()
+        # Empty test-table statistics can turn a joined DELETE into a quadratic semi-join on PostgreSQL 18.
+        reminder_ids = list(m.ReminderLog.objects.filter(instalment__plan__student__code__in=codes).values_list("pk", flat=True))
+        m.ReminderLog.objects.filter(pk__in=reminder_ids).delete()
         m.Consent.objects.filter(student__code__in=codes).delete()
         seed_named()
         self.assertEqual({model: set(model.objects.values_list("pk", flat=True)) for model in masters}, ids_before)

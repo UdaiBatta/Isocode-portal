@@ -6,7 +6,7 @@ import { progressAsOf } from "./progress";
 import { studentInfoFor } from "./student";
 import { requireCentre } from "./scope";
 import { today } from "@/lib/clock";
-import type { LedgerVM } from "@/lib/types";
+import type { LedgerVM, ProgressVM, StudentInfoVM } from "@/lib/types";
 
 export async function getLedger(code: string) {
   if ((await cookies()).get("sid")?.value) {
@@ -20,6 +20,9 @@ export async function getLedger(code: string) {
 
 // The rest of a staff student record. Marks and attendance only: risk scores stay with counsellors.
 export async function getStudentRecord(code: string) {
+  if ((await cookies()).get("sid")?.value) {
+    return backend<{ info: StudentInfoVM; progress: ProgressVM }>(`student_record?student=${encodeURIComponent(code)}`, "/staff/login");
+  }
   const state = await readProto();
   requirePrototypeRole(state, "accounts");
   requireCentre(state, code);
