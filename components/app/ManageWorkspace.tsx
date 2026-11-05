@@ -79,13 +79,14 @@ function configs(directory: AdminDirectoryVM, today: string): Record<ManageSecti
         { id: "state", header: "Status", cell: ({ row }) => stateChip(row.original) },
       ],
       fields: [
-        { name: "name", label: "Batch name", hint: "For example JEE 2028 Morning" },
         { name: "centreId", label: "Centre", kind: "select", options: centres },
         { name: "stream", label: "Exam", kind: "select", options: [["JEE", "JEE"], ["NEET", "NEET"]] },
+        { name: "examYear", label: "Exam year", hint: "For example 2028. The batch is named exam, year and timing." },
+        { name: "timing", label: "Timing", kind: "select", options: [["Morning", "Morning"], ["Evening", "Evening"]] },
         { name: "sessionStart", label: "Session starts", kind: "date" },
         { name: "sessionEnd", label: "Session ends", kind: "date" },
       ],
-      values: (row) => { const b = row as AdminBatchVM; return { name: b.name, centreId: b.centreId, stream: b.stream, sessionStart: b.sessionStart, sessionEnd: b.sessionEnd }; },
+      values: (row) => { const b = row as AdminBatchVM; const [, examYear, timing] = b.name.split(" "); return { examYear, timing, centreId: b.centreId, stream: b.stream, sessionStart: b.sessionStart, sessionEnd: b.sessionEnd }; },
       save: saveBatch,
     },
     centres: {
@@ -131,6 +132,8 @@ function toInput(section: ManageSection, data: FormData, row: AnyRow | null) {
   const value = Object.fromEntries([...data.entries()].map(([key, item]) => [key, String(item).trim()])) as Record<string, string>;
   const input: Record<string, unknown> = { ...value, id: row?.id };
   if (section === "students" && !row) Object.assign(input, { gross: paise(value.gross), discount: paise(value.discount ?? ""), discountReason: value.discountReason || undefined });
+  if (section === "batches" && !/^20d{2}$/.test(value.examYear)) throw new Error("Enter the exam year as 4 digits, for example 2028.");
+  if (section === "batches") { input.name = `${value.stream} ${value.examYear} ${value.timing}`; delete input.examYear; delete input.timing; }
   if (section === "centres" && row) input.code = (row as AdminCentreVM).code;
   if (section === "centres") input.code = String(input.code).toUpperCase();
   if (section === "staff") Object.assign(input, { centreId: value.centreId === "all" ? null : value.centreId, password: value.password || undefined });

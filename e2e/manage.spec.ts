@@ -57,11 +57,13 @@ test("a batch with students cannot be archived, and an empty one can be archived
 
   await page.getByRole("button", { name: "Add batch" }).click();
   const form = page.getByRole("dialog", { name: /Add batch/ });
-  await form.getByLabel("Batch name").fill("JEE 2028 Morning");
   await form.getByRole("button", { name: /Centre/ }).click();
   await page.getByRole("option", { name: "Malviya Nagar" }).click();
   await form.getByRole("button", { name: /Exam/ }).click();
   await page.getByRole("option", { name: "JEE" }).click();
+  await form.getByLabel("Exam year").fill("2028");
+  await form.getByRole("button", { name: /Timing/ }).click();
+  await page.getByRole("option", { name: "Morning" }).click();
   await form.getByRole("button", { name: "Add batch" }).click();
   await expect(form.getByRole("alert")).toHaveText("Session starts: choose a date.");
   await pickDay(page, "Session starts", "10");

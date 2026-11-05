@@ -39,11 +39,13 @@ export async function saveCentre(input: unknown) {
 
 export async function saveBatch(input: unknown) {
   return mutateProto("admin", async (state) => {
-    const value = save({ name, centreId: id, stream: z.enum(["JEE", "NEET"]), sessionStart: dateSchema, sessionEnd: dateSchema }).parse(input);
+    const value = save({ name: z.string().regex(/^(JEE|NEET) 20d{2} (Morning|Evening)$/), centreId: id, stream: z.enum(["JEE", "NEET"]), sessionStart: dateSchema, sessionEnd: dateSchema }).parse(input);
     const { centres, batches, world } = await rows(state);
     const current = batches.find((row) => row.id === value.id);
     if (value.id && !current?.actions.canEdit) fail("not_found", "Batch not found or archived.");
     if (!centres.some((row) => row.id === value.centreId && row.state === "active")) fail("invalid_centre", "Choose an active centre.");
+    if (!value.name.startsWith(`${value.stream} `)) fail("invalid_name", "The batch name must start with its exam.");
+    if (batches.some((row) => row.id !== current?.id && row.centreId === value.centreId && row.name === value.name && row.state === "active")) fail("duplicate", "This centre already has an active batch with this exam, year and timing.");
     if (value.sessionEnd <= value.sessionStart) fail("invalid_dates", "The session must end after it starts.");
     if (current && current.students && current.centreId !== value.centreId) fail("has_students", "Move the students out before changing the centre.");
     const patch = { name: value.name, centreId: value.centreId, stream: value.stream, sessionStart: value.sessionStart, sessionEnd: value.sessionEnd };
