@@ -7,6 +7,12 @@ from fees.auth import cron as cron_auth, error
 from fees.clock import today
 from fees.services.reminders import send_due_reminders
 from fees.services.demo import reset_demo
+from fees.services.risk import run_risk_job
+
+
+@cron_auth
+def risk(request):
+    return JsonResponse({"ok": True, **run_risk_job(today())})
 
 
 @cron_auth

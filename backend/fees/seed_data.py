@@ -114,7 +114,7 @@ def build_named() -> tuple[StudentSeed, ...]:
         (771, "Kavya Joshi", 0, "hi", 2, 0, None, None),
         (772, "Dev Joshi", 2, "hi", 2, 0, None, None),
         (733, "Riya Verma", 1, "hi", 1, 0, None, None),
-        (734, "Arjun Yadav", 3, "en", 1, 0, None, None),
+        (734, "Arjun Yadav", 3, "en", 0, 0, None, None),
         (735, "Neha Kumawat", 0, "hi", 3, 0, None, None),
         (801, "Sameer Rathore", 2, "en", 2, 0, "draft", date(2026, 11, 2)),
         (802, "Ananya Saini", 0, "en", 3, 0, "approved", date(2026, 10, 28)),

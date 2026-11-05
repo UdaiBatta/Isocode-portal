@@ -45,6 +45,7 @@ urlpatterns = [
     path("counter_payment", payment.counter_payment),
     path("webhooks/payment", payment.webhook),
     path("cron/reminders", cron.reminders),
+    path("cron/risk", cron.risk),
     path("cron/demo-reset", cron.demo_reset),
     path("set_demo_date", demo.set_demo_date),
     path("run_reminders_now", demo.run_reminders_now),
