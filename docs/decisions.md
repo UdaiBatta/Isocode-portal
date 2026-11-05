@@ -124,3 +124,12 @@ Operational assumption for the TDD: the demo date and named-example reset affect
 Reset uses a transaction and non-waiting row locks, clears only named-example financial/reminder/consent/risk history and associated gateway/queue records, preserves unrelated records and existing audit history, and never rewinds receipt counters. Tests prove rollback, preservation, replay idempotency and role/mode/cron boundaries. CSRF middleware remains intentionally off: Next.js server actions check Origin/Host, browser sid is sameSite=lax, and Django APIs require X-Internal-Key. The webhook and cron routes use their separate secrets. State this boundary in the TDD.
 
 The Phase 3 browser exit remains open. The real reset confirmation must explain that it restores shared database records; the current browser-only wording is a frontend finding. No reset of the application database has been executed; the human requires approval before that action.
+
+
+## 2026-11-06 — T4.2 refund integration
+
+The existing RefundVM identifies the student and has no separate refund ID. Keep the existing student code in the refundId action input, resolving the one-per-student refund in Django after role and centre checks. The optional date preview and previewRefund action do not save a draft. Draft reads recalculate allocation-backed paid amounts; approval locks the student and instalments, rechecks open reviews, recomputes, freezes the snapshot and withdraws the student. Approved/paid reads use the saved policy and values; mark-paid changes only status and backend paid date. Audits retain the full calculation and paid date.
+
+Public policy reads select the latest effective refund_policies row; each calculation uses the policy linked to its fee plan, and approved refunds retain that policy snapshot. Synthetic seed reasons use Other because the brief supplies no actual withdrawal reason. Existing application records are not rewritten. The reminder balance requery now also checks current active/non-archived status after acquiring instalment locks, covering a joined student snapshot made stale by withdrawal.
+
+Verification: all eleven B8.5 examples plus input/GST edges, seven refund API/service regressions, four adapter tests and the full check pass (60 frontend, 116 Django tests). The frontend still needs the live date-preview and no-plan integration recorded on the shared board; this backend commit does not claim complete browser acceptance.

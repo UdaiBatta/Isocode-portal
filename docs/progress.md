@@ -2,9 +2,7 @@
 
 ## In progress now
 
-- TEST LOCK: Codex 2026-11-06 03:27 IST (T4.1 focused and full checks; then T4.2 integration checks).
 
-- **Codex T4.2 preparation (2026-11-06):** backend/fees/services/refunds.py, backend/fees/services/reminders.py, backend/fees/seed.py (synthetic refund reason must use an allowed choice), backend/fees/views/refunds.py, backend/fees/forms.py, backend/fees/urls.py, backend/fees/tests/test_refund.py, lib/data/refund.ts and lib/actions/refund.ts (real-session integration), tests/backend-refund.test.ts, docs/decisions.md, docs/progress.md. Shared claims: lib/data/refund.ts, lib/actions/refund.ts. T4.1 is tested and committed; Codex now holds the test lock for T4.2. No frontend files or fixtures will be edited by Codex.
 
 
 
@@ -34,7 +32,11 @@ Read this before editing. Each model lists its task and files here when it start
 
 - **Codex preliminary Admin review findings for Claude (2026-11-06, ADMIN.1):** (1) lib/fixtures/admin.ts batchVMs permits archive when active student count is zero even if archived students still link to the batch, and the same count lets saveBatch move that batch to another centre. The human and posted contract require zero students before either operation; count all linked students for these guards. (2) staffVMs and studentVMs return canRestore without checking active parents. Repro: create staff in an empty centre, archive staff, archive centre, then restore staff; lifecycle currently permits an active account under an archived centre. Require an active centre for centred staff, and an active batch/centre for student restoration. Add focused fixture regressions. Codex will enforce these same rules in Django. Other branch review remains pending the final head and tests.
 
+- **Codex T4.2 backend ready / files released (2026-11-06):** GET refund with optional withdrawalDate, save_refund_draft, approve_refund, mark_refund_paid and public refund_policy are implemented. previewRefund({studentId, withdrawalDate}) in lib/actions/refund.ts returns {ok:true, ...RefundVM} or the normal action error; it is read-only. Existing refundId remains student.code. Please wire the real date control to this action, keep dirty drafts unapprovable, and handle no-plan before getLedger. Policy getters now read Django in both languages. New synthetic refund seeds use Other; existing old free-text reasons are retained until the next authorized scoped reset, so display stored reasons correctly in read-only states. TEST LOCK RELEASED; lib/data/refund.ts and lib/actions/refund.ts claims released.
+
 ## Log
+
+- 2026-11-06 — T4.2 backend complete (Codex): account/centre-scoped refund reads and date previews, transactional draft/approval/mock-paid actions and linked-policy snapshots are connected to real sid adapters. Payment during draft refreshes the calculation; approval rechecks the queue and allocations, freezes the result, withdraws the student and records an audit snapshot. The reminder job rechecks active/non-archived status after locking; regression covers a stale joined student. Parent dues shows the saved refund. Public policy text comes from Django. New synthetic reasons use Other; seed history lookups reuse twelve IDs to avoid a bad nested-subquery test plan. Seventeen focused refund/seed checks and npm run check pass: 60 frontend, 116 Django tests, types, Ruff and Django checks; eight existing lint warnings. One full run was interrupted for the diagnosed seed query and the fresh full run passed. No application refund action, new reset, migration, deployment or push. UI date-preview/no-plan changes and Phase 3 browser acceptance remain with Claude. Next: T4.3 live dashboard and roster, then T4.4 exports.
 
 - 2026-11-06 — T4.1 complete (Codex): pure calculate_refund and immutable RefundResult use inclusive/clamped days, integer floor for earned fee and the existing GST split. All eleven B8.5 examples, the worked GST split, linked-policy inputs, one-day session and invalid money/date ranges pass in three SimpleTestCase tests. npm run check passes: 56 frontend and 109 Django tests, types, Ruff and Django checks; eight existing lint warnings. No frontend changes, migration, push or deployment. Next: T4.2 refund services/API integration, with Phase 3 frontend browser proof still open.
 

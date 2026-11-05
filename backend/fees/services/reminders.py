@@ -26,7 +26,9 @@ def send_due_reminders(today: date) -> dict[str, int]:
                 pk__in=chunk,
             ).select_related("plan__student").order_by("pk"))
             ids = [row.pk for row in instalments]
-            balances = dict(InstalmentBalance.objects.filter(pk__in=ids).values_list("pk", "balance_paise"))
+            balances = dict(InstalmentBalance.objects.filter(
+                pk__in=ids, student__status="active", student__archived_at__isnull=True,
+            ).values_list("pk", "balance_paise"))
             review_ids = set(UnmatchedPayment.objects.filter(
                 status="open", suggested_instalment_id__in=ids,
             ).values_list("suggested_instalment_id", flat=True))

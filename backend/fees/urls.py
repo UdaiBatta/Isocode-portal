@@ -1,6 +1,6 @@
 from django.urls import path
 
-from fees.views import auth, automation, consent, cron, demo, dues, ledger, payment, receipts, students
+from fees.views import auth, automation, consent, cron, demo, dues, ledger, payment, receipts, refunds, students
 
 urlpatterns = [
     path("request_otp", auth.request_otp),
@@ -14,6 +14,11 @@ urlpatterns = [
     path("dues", dues.dues),
     path("ledger", ledger.ledger),
     path("student_record", students.student_record),
+    path("refund", refunds.refund),
+    path("save_refund_draft", refunds.save_draft),
+    path("approve_refund", refunds.approve),
+    path("mark_refund_paid", refunds.mark_paid),
+    path("refund_policy", refunds.policy),
     path("receipts", receipts.receipts),
     path("receipt", receipts.receipt),
     path("pay_details", payment.pay_details),

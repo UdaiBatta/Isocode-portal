@@ -61,6 +61,20 @@ class DemoDateForm(forms.Form):
     date = forms.DateField(input_formats=["%Y-%m-%d"])
 
 
+class RefundQueryForm(LedgerQueryForm):
+    withdrawalDate = forms.DateField(required=False, input_formats=["%Y-%m-%d"])
+
+
+class RefundDraftForm(forms.Form):
+    studentId = forms.RegexField(r"^STU-[0-9]{4}$", max_length=32)
+    withdrawalDate = forms.DateField(input_formats=["%Y-%m-%d"])
+    reason = forms.ChoiceField(choices=[(value, value) for value in ["Personal", "Moved city", "Changed course", "Health", "Other"]])
+
+
+class RefundActionForm(forms.Form):
+    refundId = forms.RegexField(r"^STU-[0-9]{4}$", max_length=32)
+
+
 class ReceiptListQueryForm(forms.Form):
     student = forms.RegexField(r"^STU-[0-9]{4}$", required=False, max_length=32)
 
