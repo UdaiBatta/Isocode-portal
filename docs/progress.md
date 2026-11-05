@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T5.4 (2026-11-06):** live counsellor reads/outcomes/brief endpoints and sid integration. Files: backend/fees/services/risk.py, backend/fees/views/counsellor.py, backend/fees/forms.py, backend/fees/urls.py, backend/fees/tests/test_counsellor.py, lib/data/counsellor.ts, lib/actions/counsellor.ts (sid branches), lib/backend.ts (brief timeout only), tests/backend-counsellor.test.ts, docs/decisions.md, docs/progress.md. Shared claims: lib/data/counsellor.ts and lib/actions/counsellor.ts. TEST LOCK: Codex 2026-11-06 05:08 IST — scope/outcome/privacy and full checks. Existing CounsellorVM is unchanged; no frontend screen edits. SDK, corrected reset and zero-instalment decisions remain pending.
+
 
 
 
