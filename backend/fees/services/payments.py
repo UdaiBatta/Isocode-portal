@@ -97,15 +97,17 @@ def process_payment_event(*, event_id, reference, amount_paise, status, paid_on,
         except (ValueError, TypeError, AttributeError):
             reference_id = None
         if reference_id:
-            instalment = Instalment.objects.select_for_update(of=("self",)).select_related(
-                "plan__student__batch__centre", "plan",
-            ).filter(pk=reference_id).first()
-            if instalment:
-                balance = InstalmentBalance.objects.filter(pk=instalment.pk).first()
+            student_id = Instalment.objects.filter(pk=reference_id).values_list("plan__student_id", flat=True).first()
+            # Match the counter/refund lock order; a waited-on joined row can otherwise retain an old centre/status.
+            student = Student.objects.select_for_update().filter(pk=student_id).first() if student_id else None
+            if student:
+                instalment = Instalment.objects.select_for_update().filter(pk=reference_id).first()
+                if instalment:
+                    balance = InstalmentBalance.objects.select_related("student__batch__centre").filter(pk=instalment.pk).first()
 
     found = instalment is not None and balance is not None
     decision = decide_payment(
-        status, found, bool(found and instalment.plan.student.status == "active"),
+        status, found, bool(found and balance.student.status == "active" and not balance.student.archived_at),
         balance.balance_paise if found else 0, amount_paise,
     )
     if decision["action"] == "queue":
@@ -118,7 +120,7 @@ def process_payment_event(*, event_id, reference, amount_paise, status, paid_on,
         event.unmatched = unmatched
     else:
         payment, _ = allocate_and_issue_receipt(
-            student=instalment.plan.student, allocations=[(instalment, amount_paise)],
+            student=balance.student, allocations=[(instalment, amount_paise)],
             method=method, received_on=paid_on, event_id=event_id,
         )
         event.result = "allocated"
@@ -138,11 +140,14 @@ def record_counter_payment(*, student_code, amount_paise, method, received_on, n
     if len(note or "") > 300:
         raise ValueError("Payment note is too long.")
 
-    student = Student.objects.select_for_update(of=("self",)).select_related("batch__centre").filter(
+    student = Student.objects.select_for_update().filter(
         code=student_code, archived_at__isnull=True,
     ).first()
     if not student:
         raise CounterPaymentError("not_found", "Student not found.")
+    student = Student.objects.select_related("batch__centre").get(pk=student.pk)
+    if recorded_by.centre_id and student.batch.centre_id != recorded_by.centre_id:
+        raise CounterPaymentError("forbidden", "This student is outside your centre.")
     if student.status != "active":
         raise CounterPaymentError("withdrawn", "This student has withdrawn.")
     if received_on > today():
@@ -205,11 +210,12 @@ def resolve_unmatched_payment(*, unmatched_id, action, instalment_id=None, note=
         selected = Instalment.objects.select_related("plan__student").filter(pk=instalment_id).first()
         if not selected:
             raise UnmatchedPaymentError("instalment_not_found", "Choose an unpaid instalment.")
-        student = Student.objects.select_for_update(of=("self",)).select_related("batch__centre").filter(
+        student = Student.objects.select_for_update().filter(
             pk=selected.plan.student_id, archived_at__isnull=True,
         ).first()
         if not student:
             raise UnmatchedPaymentError("instalment_not_found", "Choose an unpaid instalment.")
+        student = Student.objects.select_related("batch__centre").get(pk=student.pk)
         if resolved_by.centre_id and student.batch.centre_id != resolved_by.centre_id:
             raise UnmatchedPaymentError("forbidden", "This student is outside your centre.")
         if student.status != "active":

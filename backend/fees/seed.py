@@ -46,6 +46,7 @@ def seed_organisation():
         ("accounts@demo.test", "Demo Accounts", "accounts", None),
         ("accounts.mlv@demo.test", "Demo MLV Accounts", "accounts", m.Centre.objects.get(code="MLV")),
         ("counsellor@demo.test", "Demo Counsellor", "counsellor", None),
+        ("admin@demo.test", "Demo Admin", "admin", None),
     ]:
         if not m.StaffUser.objects.filter(email=email).exists():
             m.StaffUser.objects.create(id=seed_id(email), email=email, full_name=name, role=role,

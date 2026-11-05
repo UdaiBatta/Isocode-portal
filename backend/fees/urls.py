@@ -1,8 +1,22 @@
 from django.urls import path
 
-from fees.views import auth, automation, consent, cron, dashboard, demo, dues, exports, ledger, payment, receipts, refunds, students
+from fees.views import admin, auth, automation, consent, cron, dashboard, demo, dues, exports, ledger, payment, receipts, refunds, students
 
 urlpatterns = [
+    path("admin_students", admin.students),
+    path("admin_batches", admin.batches),
+    path("admin_centres", admin.centres),
+    path("admin_staff", admin.staff),
+    path("admin_directory", admin.directory),
+    path("admin_history", admin.history),
+    path("admin_save_centre", admin.save_centre),
+    path("admin_save_batch", admin.save_batch),
+    path("admin_save_staff", admin.save_staff),
+    path("admin_save_student", admin.save_student),
+    path("admin_change_fee", admin.change_fee),
+    path("admin_archive", admin.archive),
+    path("admin_restore", admin.restore),
+    path("admin_delete", admin.delete),
     path("request_otp", auth.request_otp),
     path("verify_otp", auth.verify_otp),
     path("staff_login", auth.staff_login),

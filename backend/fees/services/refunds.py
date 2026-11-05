@@ -15,12 +15,16 @@ class RefundError(Exception):
 
 
 def _student(code, actor, *, lock=False):
-    query = Student.objects.select_related("batch__centre").filter(code=code, archived_at__isnull=True)
+    query = Student.objects.filter(code=code, archived_at__isnull=True)
     if lock:
-        query = query.select_for_update(of=("self",))
+        query = query.select_for_update()
+    else:
+        query = query.select_related("batch__centre")
     student = query.first()
     if not student:
         raise RefundError("not_found", "Student not found.", 404)
+    if lock:
+        student = Student.objects.select_related("batch__centre").get(pk=student.pk)
     if actor.centre_id and student.batch.centre_id != actor.centre_id:
         raise RefundError("forbidden", "Student is outside your centre.", 403)
     return student
