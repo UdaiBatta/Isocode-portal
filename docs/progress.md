@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T5.1 (2026-11-06):** pure B8.9 risk score and task-suppression rules. Files: backend/fees/domain/risk.py, backend/fees/tests/test_domain_risk.py, docs/progress.md. TEST LOCK: Codex 2026-11-06 04:43 IST — focused domain and full pre-commit checks. No messaging, payment, refund or other write imports. Admin integration remains blocked on the posted Claude fix/merge, so this independent pure work proceeds while waiting.
+
 
 
 
