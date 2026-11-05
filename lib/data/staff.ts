@@ -14,6 +14,10 @@ export async function getStaffPageContext() {
 }
 
 export async function getStaffDirectory() {
+  if ((await cookies()).get("sid")?.value) {
+    return backend<{ centres: { id: string; name: string }[]; batches: { id: string; name: string; centreId: string }[];
+      students: { code: string; name: string; centreId: string; batchId: string }[] }>("staff_directory", "/staff/login");
+  }
   const state = await readProto();
   requirePrototypeRole(state, "accounts");
   return {

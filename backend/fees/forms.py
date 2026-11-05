@@ -57,6 +57,20 @@ class LedgerQueryForm(forms.Form):
     student = forms.RegexField(r"^STU-[0-9]{4}$", max_length=32)
 
 
+class DashboardQueryForm(forms.Form):
+    group = forms.ChoiceField(required=False, choices=[("centre", "centre"), ("batch", "batch")])
+    centre = forms.CharField(required=False, max_length=32)
+    batch = forms.UUIDField(required=False)
+
+
+class StudentsQueryForm(DashboardQueryForm):
+    status = forms.ChoiceField(required=False, choices=[(value, value) for value in (
+        "overdue", "upcoming", "clear", "checking", "withdrawn", "over60",
+    )])
+    q = forms.CharField(required=False, max_length=200)
+    page = forms.IntegerField(required=False, min_value=1, max_value=100000)
+
+
 class DemoDateForm(forms.Form):
     date = forms.DateField(input_formats=["%Y-%m-%d"])
 

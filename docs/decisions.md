@@ -133,3 +133,10 @@ The existing RefundVM identifies the student and has no separate refund ID. Keep
 Public policy reads select the latest effective refund_policies row; each calculation uses the policy linked to its fee plan, and approved refunds retain that policy snapshot. Synthetic seed reasons use Other because the brief supplies no actual withdrawal reason. Existing application records are not rewritten. The reminder balance requery now also checks current active/non-archived status after acquiring instalment locks, covering a joined student snapshot made stale by withdrawal.
 
 Verification: all eleven B8.5 examples plus input/GST edges, seven refund API/service regressions, four adapter tests and the full check pass (60 frontend, 116 Django tests). The frontend still needs the live date-preview and no-plan integration recorded on the shared board; this backend commit does not claim complete browser acceptance.
+
+
+## 2026-11-06 — T4.3 reporting
+
+Dashboard outstanding/ageing follows the existing screen contract: active, non-archived students only. The historical B8.6 metric includes cleared instalments and withdrawn students in the same visible scope, so settling or withdrawing does not erase late-payment history; future-dated allocations are excluded from that metric. Refund counts use approved snapshots in scope. Centre IDs remain codes; real batch and student row IDs are UUIDs, with student code retained for links. Roster status precedence matches fixtures: withdrawn, clear, payment checking, overdue, upcoming. The unmanaged allocation view supplies every balance; SQL performs filtering, counts, sort and page selection. No cached/stored balance or new index/schema is introduced.
+
+Verification: 62 frontend and 122 Django tests pass. The full 2,600-student seed is unchanged. Local Django API latency meets the two-second requirement; complete Next production page timing is deferred to the combined frontend acceptance pass and is not claimed here.
