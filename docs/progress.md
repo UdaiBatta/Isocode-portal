@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T5.2 (2026-11-06):** isolated risk assessment job and bearer cron. Files: backend/fees/services/risk.py, backend/fees/views/cron.py, backend/fees/urls.py, backend/fees/tests/test_risk_job.py, backend/fees/tests/test_risk_isolation.py, docs/decisions.md, docs/progress.md. TEST LOCK: Codex 2026-11-06 04:49 IST — focused isolation/job and full checks. Uses bulk reads/writes, numeric features and task audit snapshots; no financial or reminder write imports/actions. SDK dependency approval is pending for T5.3.
+
 
 
 
