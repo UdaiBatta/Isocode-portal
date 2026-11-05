@@ -38,13 +38,13 @@ export function DuesDashboard({ view, directory, filters, attention }: { view: D
   const rows = view.rows.flatMap((row) => [row, ...(expanded.includes(row.id) ? row.children ?? [] : [])]);
   const moneyColumns = [["outstanding", "Outstanding"], ["notDue", "Not due"], ["d1_30", "1–30"], ["d31_60", "31–60"], ["d61_90", "61–90"], ["d90p", "90+"]] as const;
   const columns: ColumnDef<AgeingRow>[] = [
-    { accessorKey: "label", header: "Centre / Batch", cell: ({ row }) => <div className={cx("flex min-w-36 flex-col gap-2", row.original.kind === "batch" && filters.group === "centre" && "ps-4")}><LinkButton variant="secondary" className="self-start" onClick={() => activate(row.original)} aria-expanded={row.original.kind === "centre" ? expanded.includes(row.original.id) : undefined}>{row.original.label}</LinkButton><AgeingBar row={row.original} /></div> },
-    { accessorKey: "studentsWithDues", header: "Students", cell: ({ row }) => <span className="block text-end tabular-nums">{row.original.studentsWithDues}</span> },
-    ...moneyColumns.map(([key, label]): ColumnDef<AgeingRow> => ({ accessorKey: key, header: label, cell: ({ row }) => {
+    { accessorKey: "label", header: "Centre / Batch", cell: ({ row }) => <div className={cx("flex min-w-36 flex-col gap-2", row.original.kind === "batch" && filters.group === "centre" && "ps-4")}><LinkButton variant="secondary" className="row-link self-start text-text-primary" onClick={() => activate(row.original)} aria-expanded={row.original.kind === "centre" ? expanded.includes(row.original.id) : undefined}>{row.original.label}</LinkButton><AgeingBar row={row.original} /></div> },
+    { accessorKey: "studentsWithDues", header: "Students", meta: { numeric: true }, cell: ({ row }) => <span className="tabular-nums">{row.original.studentsWithDues}</span> },
+    ...moneyColumns.map(([key, label]): ColumnDef<AgeingRow> => ({ accessorKey: key, header: label, meta: { numeric: true }, cell: ({ row }) => {
       const value = row.original[key];
       const hot = key !== "outstanding" && key !== "notDue";
       const largest = hot ? Math.max(...rows.map((item) => item[key])) : 0;
-      return <span className={cx("block whitespace-nowrap text-end tabular-nums", hot && "ledger-heat")} data-zero={hot && !value ? true : undefined} style={hot ? { "--heat": largest ? value / largest : 0 } as CSSProperties : undefined}>{inr(value)}</span>;
+      return <span className={cx("whitespace-nowrap tabular-nums", hot && "ledger-heat")} data-zero={hot && !value ? true : undefined} style={hot ? { "--heat": largest ? value / largest : 0 } as CSSProperties : undefined}>{inr(value)}</span>;
     } })),
   ];
   return <>
@@ -67,7 +67,7 @@ export function DuesDashboard({ view, directory, filters, attention }: { view: D
         if (value.trim() && found.length === 1) router.push(`/staff/students/${found[0].code}`); else router.push(value.trim() ? `/staff/students?q=${encodeURIComponent(value.trim())}` : "/staff/students");
       }} /></div>
     </div>
-    {view.rows.length ? <DataTable data={rows} columns={columns} label="Dues ageing" renderCard={(row) => <div className="flex flex-col gap-4"><LinkButton variant="secondary" className="self-start" onClick={() => activate(row)}>{row.label}</LinkButton><div className="flex justify-between gap-4"><span>{row.studentsWithDues} students with dues</span><span className="text-headline-medium tabular-nums">{inr(row.outstanding)}</span></div><AgeingBar row={row} /><dl className="grid grid-cols-2 gap-3">{moneyColumns.slice(1).map(([key, label]) => <div key={key}><dt className="text-body-2-regular text-text-secondary">{label}</dt><dd className="text-body-regular tabular-nums">{inr(row[key])}</dd></div>)}</dl></div>} /> : <EmptyState title="No dues in this view" />}
+    {view.rows.length ? <DataTable data={rows} columns={columns} label="Dues ageing" renderCard={(row) => <div className="flex flex-col gap-4"><LinkButton variant="secondary" className="row-link self-start text-text-primary" onClick={() => activate(row)}>{row.label}</LinkButton><div className="flex justify-between gap-4"><span>{row.studentsWithDues} students with dues</span><span className="text-headline-medium tabular-nums">{inr(row.outstanding)}</span></div><AgeingBar row={row} /><dl className="grid grid-cols-2 gap-3">{moneyColumns.slice(1).map(([key, label]) => <div key={key}><dt className="text-body-2-regular text-text-secondary">{label}</dt><dd className="text-body-regular tabular-nums">{inr(row[key])}</dd></div>)}</dl></div>} /> : <EmptyState title="No dues in this view" />}
     </section>
     </StaffFrame>
   </>;

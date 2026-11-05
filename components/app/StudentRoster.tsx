@@ -39,15 +39,15 @@ export function StudentRoster({ view, directory, filters }: { view: StudentsVM; 
   const lastPayment = (row: StudentRowVM) => row.lastPayment ? <div className="flex flex-col"><span className="whitespace-nowrap">{dateLabel(row.lastPayment.on, "en", view.today)}</span><span className="text-body-2-regular whitespace-nowrap text-text-secondary">{methodLabel("en", row.lastPayment.method)}</span></div> : "None yet";
   const student = (row: StudentRowVM) => <div className="flex min-w-36 items-center gap-3">
     <Avatar size="md" initials={initials(row.name)} className="text-caption-1-semibold" aria-hidden="true" />
-    <div className="flex min-w-0 flex-col items-start"><LinkButton href={`/staff/students/${row.code}`} variant="secondary">{row.name}</LinkButton><span className="text-body-2-regular text-text-secondary">{row.code}</span></div>
+    <div className="flex min-w-0 flex-col items-start"><LinkButton href={`/staff/students/${row.code}`} variant="secondary" className="row-link text-text-primary">{row.name}</LinkButton><span className="text-body-2-regular text-text-secondary">{row.code}</span></div>
   </div>;
   const chip = (row: StudentRowVM) => <Chip color={chips[row.status][0]}>{chips[row.status][1]}</Chip>;
   const columns: ColumnDef<StudentRowVM>[] = [
     { accessorKey: "name", header: "Student", cell: ({ row }) => student(row.original) },
     { accessorKey: "batch", header: "Batch", cell: ({ row }) => <div className="flex flex-col"><span className="whitespace-nowrap">{row.original.batch}</span><span className="text-body-2-regular whitespace-nowrap text-text-secondary">{row.original.centre}</span></div> },
     { accessorKey: "status", header: "Status", cell: ({ row }) => chip(row.original) },
-    { accessorKey: "balance", header: "Outstanding", cell: ({ row }) => <span className="block whitespace-nowrap text-end tabular-nums">{inr(row.original.balance)}</span> },
-    { accessorKey: "daysOverdue", header: "Overdue by", cell: ({ row }) => <span className="block whitespace-nowrap text-end tabular-nums">{row.original.daysOverdue ? `${row.original.daysOverdue} days` : "None"}</span> },
+    { accessorKey: "balance", header: "Outstanding", meta: { numeric: true }, cell: ({ row }) => <span className="whitespace-nowrap tabular-nums">{inr(row.original.balance)}</span> },
+    { accessorKey: "daysOverdue", header: "Overdue by", meta: { numeric: true }, cell: ({ row }) => <span className="whitespace-nowrap tabular-nums">{row.original.daysOverdue ? `${row.original.daysOverdue} days` : "None"}</span> },
     { id: "next", header: "Next step", cell: ({ row }) => <span className="whitespace-nowrap">{nextStep(row.original)}</span> },
     { id: "last", header: "Last payment", cell: ({ row }) => lastPayment(row.original) },
   ];

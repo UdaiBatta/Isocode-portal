@@ -1,6 +1,7 @@
 import { parentContext } from "./scope";
 import { ledgerFor } from "@/lib/fixtures/views";
-import { students } from "@/lib/fixtures/catalog";
+import { students, type StudentFixture } from "@/lib/fixtures/catalog";
+import type { ProtoState } from "@/lib/fixtures/state";
 import { today } from "@/lib/clock";
 import type { StudentInfoVM } from "@/lib/types";
 
@@ -14,7 +15,11 @@ export async function getFamily(studentId?: string) {
 
 export async function getStudentInfo(studentId?: string): Promise<StudentInfoVM> {
   const { state, student } = await parentContext(studentId);
-  const ledger = ledgerFor(state, student.code, await today());
+  return studentInfoFor(state, student, await today());
+}
+
+export function studentInfoFor(state: ProtoState, student: StudentFixture, date: string): StudentInfoVM {
+  const ledger = ledgerFor(state, student.code, date);
   const [exam, examYear, timing] = student.batch.split(" ");
   return {
     code: student.code, name: student.name, batch: student.batch, centre: ledger.student.centre, status: ledger.student.status,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { parseDate } from "@internationalized/date";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -12,6 +12,7 @@ import { LinkButton } from "@/components/base/buttons/link-button";
 import { Modal, ModalHeader, ModalBody } from "@/components/base/modal/modal";
 import { NumberField } from "@/components/base/number-field/number-field";
 import { Select, SelectItem } from "@/components/base/select/select";
+import { Tab, TabList, TabPanel, Tabs } from "@/components/base/tabs/tabs";
 import { DatePicker } from "@/components/base/date-picker/date-picker";
 import { Textarea } from "@/components/base/textarea/textarea";
 import { Tooltip, TooltipTrigger } from "@/components/base/tooltip/tooltip";
@@ -19,12 +20,19 @@ import { toast } from "@/components/base/toast/toast";
 import { recordCounterPayment } from "@/lib/actions/payments";
 import { inr, dateLabel, rupeesToPaise } from "@/lib/format";
 import { methodLabel } from "@/lib/i18n/checkout";
-import type { InstalmentVM, LedgerVM } from "@/lib/types";
+import type { InstalmentVM, LedgerVM, ProgressVM, StudentInfoVM } from "@/lib/types";
+import { ProgressPanels } from "./ProgressPanels";
 import { StatusChip } from "./StatusChip";
 import { EmptyState } from "./EmptyState";
 import { StaffFrame, StaffPageHeader } from "./StaffPage";
 
-export function StudentLedger({ view, today }: { view: LedgerVM; today: string }) {
+function Facts({ items }: { items: [string, ReactNode][] }) {
+  return <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">{items.map(([label, value]) => <div key={label}><dt className="text-body-2-regular text-text-secondary">{label}</dt><dd className="mt-1 text-body-medium">{value}</dd></div>)}</dl>;
+}
+
+const refundStatus: Record<string, string> = { draft: "Draft, waiting for approval", approved: "Approved, not yet paid", paid: "Paid" };
+
+export function StudentLedger({ view, info, progress, today }: { view: LedgerVM; info: StudentInfoVM; progress: ProgressVM; today: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(parseDate(today));
@@ -35,18 +43,18 @@ export function StudentLedger({ view, today }: { view: LedgerVM; today: string }
   const columns: ColumnDef<InstalmentVM>[] = [
     { accessorKey: "seq", header: "Instalment" },
     { accessorKey: "dueDate", header: "Due", cell: ({ row }) => dateLabel(row.original.dueDate, "en", today) },
-    ...(["amount", "paid", "balance"] as const).map((key): ColumnDef<InstalmentVM> => ({ accessorKey: key, header: key[0].toUpperCase() + key.slice(1), cell: ({ row }) => <span className="block text-end tabular-nums">{inr(row.original[key])}</span> })),
+    ...(["amount", "paid", "balance"] as const).map((key): ColumnDef<InstalmentVM> => ({ accessorKey: key, header: key[0].toUpperCase() + key.slice(1), meta: { numeric: true }, cell: ({ row }) => <span className="tabular-nums">{inr(row.original[key])}</span> })),
     { accessorKey: "status", header: "Status", cell: ({ row }) => <StatusChip status={row.original.partPaid ? "part_paid" : row.original.status} /> },
-    { accessorKey: "daysOverdue", header: "Days overdue" },
+    { accessorKey: "daysOverdue", header: "Days overdue", meta: { numeric: true }, cell: ({ row }) => <span className="tabular-nums">{row.original.daysOverdue}</span> },
   ];
   const payments: ColumnDef<LedgerVM["payments"][number]>[] = [
     { accessorKey: "on", header: "Date", cell: ({ row }) => dateLabel(row.original.on, "en", today) },
     { accessorKey: "method", header: "Method", cell: ({ row }) => methodLabel("en", row.original.method) },
-    { accessorKey: "amount", header: "Amount", cell: ({ row }) => <span className="tabular-nums">{inr(row.original.amount)}</span> },
+    { accessorKey: "amount", header: "Amount", meta: { numeric: true }, cell: ({ row }) => <span className="tabular-nums">{inr(row.original.amount)}</span> },
     { accessorKey: "receiptId", header: "Receipt", cell: ({ row }) => row.original.receiptId ? <LinkButton variant="secondary" href={`/receipts/${row.original.receiptId}`}>View receipt</LinkButton> : "—" },
   ];
   return <>
-    <Breadcrumb><BreadcrumbItem href="/staff/dashboard">Dashboard</BreadcrumbItem><BreadcrumbItem current>{view.student.code}</BreadcrumbItem></Breadcrumb>
+    <Breadcrumb><BreadcrumbItem href="/staff/students">Students</BreadcrumbItem><BreadcrumbItem current>{view.student.code}</BreadcrumbItem></Breadcrumb>
     <StaffPageHeader title={view.student.name} description={`${view.student.code} · ${view.student.batch} · ${view.student.centre} · ${view.student.status === "withdrawn" ? "Withdrawn" : "Active"}`} />
     <StaffFrame><section><dl className="grid grid-cols-2 gap-6 lg:grid-cols-4">{[["Net fee", inr(view.plan.net)], ["Paid", inr(view.plan.paid)], ["Balance", inr(view.plan.balance)], ["Days overdue", String(Math.max(0, ...view.instalments.map((item) => item.daysOverdue)))]].map(([label, value]) => <div key={label}><dt className="text-body-regular text-text-secondary">{label}</dt><dd className="mt-2 text-title-1-medium tabular-nums">{value}</dd></div>)}</dl>
     <ButtonGroup aria-label="Ledger actions" className="flex-wrap">
@@ -55,10 +63,23 @@ export function StudentLedger({ view, today }: { view: LedgerVM; today: string }
       <ButtonGroupItem onClick={() => router.push(`/staff/students/${view.student.code}/refund`)}>{view.refund ? "View refund" : "Start refund"}</ButtonGroupItem>
     </ButtonGroup>
     </section>
-    <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Fee plan</h2><p className="text-body-regular">Gross {inr(view.plan.gross)} · Discount {inr(view.plan.discount)}{view.plan.discountReason ? ` (${view.plan.discountReason})` : ""} · Net {inr(view.plan.net)}</p></section>
+    <Tabs defaultSelectedKey="dues">
+    <div className="overflow-x-auto"><TabList aria-label="Student records" className="min-w-max"><Tab id="dues">Dues</Tab><Tab id="funds">Funds</Tab><Tab id="academic">Academic</Tab><Tab id="personal">Personal</Tab></TabList></div>
+    <TabPanel id="dues" className="pt-4"><StaffFrame>
     <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Instalments</h2><DataTable label="Student instalments" data={view.instalments} columns={columns} renderCard={(item) => <div className="flex flex-col gap-3"><div className="flex justify-between gap-3"><span>Instalment {item.seq} · {dateLabel(item.dueDate, "en", today)}</span><StatusChip status={item.partPaid ? "part_paid" : item.status} /></div><p className="text-body-regular">Amount {inr(item.amount)} · Paid {inr(item.paid)}</p><p className="text-headline-medium tabular-nums">Balance {inr(item.balance)}</p><p className="text-body-2-regular">{item.daysOverdue} days overdue</p></div>} /></section>
-    <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Payments</h2>{view.payments.length ? <DataTable label="Student payments" data={view.payments} columns={payments} renderCard={(item) => <div className="flex flex-wrap justify-between gap-3"><span>{dateLabel(item.on, "en", today)} · {methodLabel("en", item.method)}</span><span className="tabular-nums">{inr(item.amount)}</span>{item.receiptId ? <LinkButton href={`/receipts/${item.receiptId}`} variant="secondary">View receipt</LinkButton> : null}</div>} /> : <EmptyState title="No payments recorded" />}</section>
     <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Reminder timeline</h2><ol className="flex flex-col gap-5 border-s border-separator-border ps-5">{view.timeline.map((line) => <li key={line.instalmentId} className="flex flex-col gap-2"><h3 className="text-body-medium">Instalment {line.instalmentId.split("-").at(-1)}</h3>{line.sent.map((sent) => <p key={`${sent.step}-${sent.on}`} className="text-body-2-regular text-text-secondary">Sent {sent.step > 0 ? "+" : ""}{sent.step} · {dateLabel(sent.on, "en", today)} · {sent.language === "hi" ? "Hindi" : "English"}</p>)}{line.stopped ? <p className="text-body-medium">Stopped: {line.stopped}</p> : line.next ? <p className="text-body-medium">Next {line.next.step > 0 ? "+" : ""}{line.next.step} · {dateLabel(line.next.on, "en", today)}</p> : <p className="text-body-2-regular">No more steps</p>}</li>)}</ol></section>
+    </StaffFrame></TabPanel>
+    <TabPanel id="funds" className="pt-4"><StaffFrame>
+    <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Fee plan</h2><Facts items={[["Gross fee", inr(view.plan.gross)], ["Discount", `${inr(view.plan.discount)}${view.plan.discountReason ? ` (${view.plan.discountReason})` : ""}`], ["Net fee", inr(view.plan.net)], ["Paid so far", inr(view.plan.paid)], ["Balance", inr(view.plan.balance)], ["Refund", view.refund ? refundStatus[view.refund.status] ?? view.refund.status : "None started"]]} /></section>
+    <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Payments</h2>{view.payments.length ? <DataTable label="Student payments" data={view.payments} columns={payments} renderCard={(item) => <div className="flex flex-wrap justify-between gap-3"><span>{dateLabel(item.on, "en", today)} · {methodLabel("en", item.method)}</span><span className="tabular-nums">{inr(item.amount)}</span>{item.receiptId ? <LinkButton href={`/receipts/${item.receiptId}`} variant="secondary">View receipt</LinkButton> : null}</div>} /> : <EmptyState title="No payments recorded" />}</section>
+    </StaffFrame></TabPanel>
+    <TabPanel id="academic" className="pt-4"><StaffFrame><ProgressPanels progress={progress} language="en" today={today} /></StaffFrame></TabPanel>
+    <TabPanel id="personal" className="pt-4"><StaffFrame>
+    <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Student</h2><Facts items={[["Full name", info.name], ["Student code", info.code], ["Status", info.status === "withdrawn" ? "Withdrawn" : "Active"], ["Enrolled on", dateLabel(info.enrolledOn, "en", today)]]} /></section>
+    <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Guardian</h2><Facts items={[["Phone", <LinkButton key="phone" variant="secondary" className="text-text-primary underline" href={`tel:${info.guardianPhone}`}>{info.guardianPhone}</LinkButton>], ["Preferred language", info.preferredLanguage === "hi" ? "Hindi" : "English"]]} /></section>
+    <section className="flex flex-col gap-4"><h2 className="text-headline-medium">Course</h2><Facts items={[["Exam", `${info.course.exam} ${info.course.examYear}`], ["Batch", info.batch], ["Timing", info.course.timing], ["Centre", info.centre], ["Session", `${dateLabel(info.course.sessionStart, "en", today)} to ${dateLabel(info.course.sessionEnd, "en", today)}`], ["Instalments", String(info.course.instalments)]]} /></section>
+    </StaffFrame></TabPanel>
+    </Tabs>
     </StaffFrame>
     <Modal isOpen={open} onOpenChange={setOpen} aria-label="Record counter payment"><ModalHeader title="Record payment" description="The payment is allocated to the oldest unpaid instalment first." /><ModalBody><form className="flex flex-col gap-5" onSubmit={(event) => {
       event.preventDefault(); const form = new FormData(event.currentTarget); setError("");

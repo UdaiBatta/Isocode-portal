@@ -47,6 +47,11 @@
 - 2026-11-04 — At the human's request `/progress` now shows test scores first, attendance beside them, and a line graph of marks below. This changes the earlier call to leave a trend off Home: the graph shows only the family's own marks, with no trend wording, comparison or risk data, and Home still has no trend. A falling line will be visible to a parent, as Riya's is. Its scale is fixed at 0 to 100% so a small change never looks dramatic. It is hand-built because a chart library would cost script budget on a parent route, and a point opens on hover, focus or tap with the test list above as the table view. A single test shows no graph.
 - 2026-11-04 — Production builds can serve stale CSS from `.next` (seen twice, once by Codex). Before trusting a screenshot of a CSS change, delete everything in `.next` except `.next/dev` and rebuild. Unlayered CSS also beats Tailwind utilities, so a `position` set in `globals.css` silently overrode `sticky` on the spine; `e2e/staff-states.spec.ts` now guards that.
 
+## 2026-11-05 — Staff student record (human request)
+
+`/staff/students/[code]` is now the full record, with Dues, Funds, Academic and Personal tabs. Accounts staff can now see a student's marks and attendance, which only parents saw before, because the human asked for it. It carries no risk score or counsellor data. Personal shows only fields the plan holds: name, code, status, enrolment, guardian phone and language, and course. **Assumption:** "funds" means the fee plan, discount, payments received and refund status. Date of birth, address, photo and guardian name are left out because the fixtures do not hold them and inventing them would break the brief's rule against adding facts.
+
+
 ## 2026-11-05 — T1.1 Django schema
 
 The active stack now matches PLAN.md A4/B1: Django 5.2 LTS on Python 3.14, plain JSON views and PostgreSQL. The obsolete Node-backend override is removed. The human explicitly chose installed PostgreSQL 18 for local development only; local verification uses 18.3. CI stays on postgres:17 as B13 specifies.
@@ -55,9 +60,11 @@ ASSUMPTION for the TDD, requested by the human: Admin is a third staff role, and
 
 Django intentionally omits CSRF middleware under B11: browser cookies live on Next.js, whose server actions enforce Origin/Host and sameSite=lax; Django API views will require X-Internal-Key. The TDD must state this explicitly. Payment events and app settings use their B7 natural primary keys (event_id and key), while other domain tables keep UUID IDs.
 
+
 ## 2026-11-05 — T1.2 demo clock before seed
 
 ASSUMPTION for the TDD (operational): when DEMO_MODE=true and app_settings.demo_today is missing, today() raises ImproperlyConfigured with the seed command instead of silently using the real date. An invalid stored date is also a configuration error. This keeps pre-seed or broken demo data from changing fee/reminder dates. Normal mode uses the current Asia/Kolkata date. Domain date functions accept datetime.date values only; phone normalization returns ASCII +91 E.164 or None.
+
 
 ## 2026-11-05 — T1.3 fictional seed assumptions and verification
 
@@ -66,6 +73,7 @@ The B10 fleet is generated with random.Random(20261102), separate from bulk inse
 ASSUMPTIONS for the TDD: the unnamed refund examples are Sameer Rathore (draft on 2 Nov), Ananya Saini (approved withdrawal 28 Oct), Yash Jain (approved withdrawal 15 Oct) and Pooja Choudhary (withdrawal 20 Oct, refund paid 25 Oct). These names and unspecified dates are invented demo data. The specified policy wording and all three brief sample balances are preserved. Fleet profiles include 60 falling-academic histories, 100 fee-only histories and 30 new students; risk scoring and evaluation remain Phase 5 work. Historical score-80 flags and call outcomes are labelled synthetic seed state.
 
 Plain seed reruns preserve existing records and user mutations. After Reset demo clears all named history, seed_named restores baseline statuses and dependent records while retaining Student, Guardian, GuardianStudent, FeePlan, Instalment and academic-history IDs. Reset must clear linked PaymentEvent rows before their protected Payment and unmatched queue rows; B10 omits these dependent event links. Audit history is retained and receipt counters continue forwards. This restoration and a repeated no-op are covered by regression tests. No sending or payment processing occurs. The full local PostgreSQL 18.3 seed inserted 2,600 students in 8.94 seconds; a second run inserted zero in 0.20 seconds with every seeded-model fingerprint unchanged. Actual over60Pct is 11.1237%, within the required 11–13%.
+
 
 ## 2026-11-05 — T1.4 authentication boundary
 
@@ -76,6 +84,7 @@ Next forwards only sid and X-Internal-Key, never client roles. Server actions co
 Admin remains a distinct database role. Until the Manage workspace has an authorized destination, staff_login returns role_unavailable for Admin rather than granting an accounts landing page. Its UI displays that response. The earlier human-requested parent Home at /dashboard remains the post-consent destination; new parents first go to /consent. Consent persistence/decline and enforcement are T1.5: real sessions receive a clear save failure instead of a mock consent success in this T1.4 intermediate state. The old fixed OTP/prototype password text is removed from sign-in UI; no seed password is shown.
 
 Verification: focused Django OTP/access tests (16) and adapter tests (10) pass, then npm run check passes 38 frontend and 46 backend tests, types, Ruff and Django checks, with eight existing frontend lint warnings. Local production sign-in/consent browser acceptance remains for the Phase 1 exit after T1.5; the older browser specs still assume prototype OTP/password values and need their auth setup migrated then. No full seed, push or deployment was performed for T1.4.
+
 
 ## 2026-11-05 — T1.5 persisted consent and Not now
 

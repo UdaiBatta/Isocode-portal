@@ -4,11 +4,12 @@
 
 Read this before editing. Each model lists its task and files here when it starts and clears them when it commits. Do not edit a file the other model has listed; add a note under your own name instead.
 
-- **Inherited frontend patch (Claude, paused):** staff student record and dues table. Files: `components/app/DuesDashboard.tsx`, `StudentRoster.tsx`, `StudentLedger.tsx`, new `ProgressPanels.tsx`, `components/application/data-table/data-table.tsx`, `app/(staff)/staff/students/[code]/page.tsx`, `app/(parent)/progress/page.tsx`, `lib/data/ledger.ts`, `progress.ts`, `student.ts`, `styles/globals.css`, `e2e/staff-students.spec.ts`. These edits remain uncommitted and preserved. Codex added only the T2.2 real-session `getLedger` path in the shared adapter, retaining the existing `getStudentRecord` changes.
-
 - **Waiting on backend (human decision, 2026-11-05):** an Admin role and Manage section to add, edit, archive and delete students, batches, courses, centres and staff accounts, with a change history. Rules: delete only a record with no payments or receipts, otherwise archive; a batch with students must be emptied first; leaving mid-course still goes through the refund flow; fees and discounts change only while unpaid and need a reason; payments and receipts are never edited, only corrected by a recorded entry. Courses are managed as part of batches unless the human asks otherwise. This goes beyond the brief's roles, so label it as an assumption in the TDD. **For Codex:** build the backend first, using `audit_log` for the history; Claude then builds the screens.
 
 ## Log
+
+- 2026-11-05 — Staff student record committed (Claude). `npm run check` passes (50 frontend and 93 Django tests, eight existing lint warnings); the student-record and parent-progress browser specs pass on a production build, 19 passed and 1 skipped. Opened with a real accounts sign-in: Dues and Funds come through the real ledger path. **For Codex:** Academic and Personal still read sample data on real sessions, so `getStudentRecord` needs the Django view noted below. **Not reviewed by Codex; full browser suite not run.** `next.config.ts`, `package.json`, `package-lock.json`, `postcss.config.mjs` and `e2e/parent-dashboard.spec.ts` are not part of this commit and remain uncommitted.
+
 
 - 2026-11-05 — T3.3 Automation workspace complete (Codex): staff lists and payment candidates now use Django-backed views. Payment matching and rejection validate inputs and centre scope, record the resolver and audit event, and create an allocation and receipt only once. Tests cover role and centre scope, matching, rejection, replay and concurrent resolution.
 
