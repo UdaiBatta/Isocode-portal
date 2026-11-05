@@ -20,6 +20,11 @@ export const prototypeRoutes = [
   { key: "refund", title: "Refund calculator", path: "/staff/students/STU-0587/refund", role: "accounts" },
   { key: "automation", title: "Automation", path: "/staff/automation", role: "accounts" },
   { key: "counsellor", title: "Counsellor tasks", path: "/counsellor/tasks", role: "counsellor" },
+  { key: "manage-students", title: "Manage students", path: "/staff/manage/students", role: "admin" },
+  { key: "manage-batches", title: "Manage batches", path: "/staff/manage/batches", role: "admin" },
+  { key: "manage-centres", title: "Manage centres", path: "/staff/manage/centres", role: "admin" },
+  { key: "manage-staff", title: "Manage staff", path: "/staff/manage/staff", role: "admin" },
+  { key: "manage-history", title: "Change history", path: "/staff/manage/history", role: "admin" },
   { key: "demo", title: "Reviewer walkthrough", path: "/demo", role: "public" },
   { key: "proto", title: "Prototype index", path: "/proto", role: "public" },
 ] as const;

@@ -56,9 +56,16 @@ export function manageWorld(state: ProtoState): ManageWorld {
     const fields = change.action === "archive" || change.action === "restore" ? ["state"] : change.action === "delete" ? [] : Object.keys(change.patch);
     world.history.unshift({ id: change.id, at: change.at, actor: PROTO_ADMIN.name, action: change.action, entity: change.entity, entityId: change.entityId,
       label: labelOf((after ?? before)!), reason: change.reason ?? null,
-      changes: fields.filter((field) => (before?.[field] ?? null) !== (after?.[field] ?? null)).map((field) => ({ field, before: before?.[field] ?? null, after: after?.[field] ?? null })) });
+      changes: fields.filter((field) => (before?.[field] ?? null) !== (after?.[field] ?? null)).map((field) => ({ field, before: named(world, field, before?.[field] ?? null), after: named(world, field, after?.[field] ?? null) })) });
   }
   return world;
+}
+
+// History shows names, not ids, for the record a change points at.
+function named(world: ManageWorld, field: string, value: string | number | null) {
+  const list = field === "batchId" ? world.batches : field === "centreId" ? world.centres : null;
+  const row = list?.find((item) => item.id === value);
+  return row ? (field === "batchId" ? `${row.centreId} · ${row.name}` : String(row.name)) : value;
 }
 
 const allow = (actions: Partial<RecordActions>): RecordActions => ({ canEdit: false, canArchive: false, canRestore: false, canDelete: false, blockedReason: null, ...actions });

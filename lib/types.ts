@@ -148,7 +148,7 @@ export interface ChangeVM {
   id: string; at: string;           // ISO date-time
   actor: string; action: "create" | "update" | "fee" | "archive" | "restore" | "delete";
   entity: ManageEntity; entityId: string; label: string;
-  changes: { field: string; before: string | number | null; after: string | number | null }[];   // money fields in paise
+  changes: { field: string; before: string | number | null; after: string | number | null }[];   // money fields in paise; batchId and centreId values are display names
   reason: string | null;
 }
 export interface ChangeFilters { entity?: ManageEntity; id?: string; page?: number }

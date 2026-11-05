@@ -2,22 +2,30 @@
 
 import { useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { RiDashboardLine, RiGroupLine, RiNotification3Line, RiPhoneLine } from "@remixicon/react";
+import { RiBuilding2Line, RiCalendarScheduleLine, RiDashboardLine, RiGroupLine, RiHistoryLine, RiNotification3Line, RiPhoneLine, RiUserSettingsLine } from "@remixicon/react";
 import { WorkspaceSidebar } from "@/components/application/dashboard/dashboard-sidebar";
 import { Drawer, DrawerHeader, DrawerBody } from "@/components/base/drawer/drawer";
 import { Button } from "@/components/base/buttons/button";
 import { LogoutButton } from "./LogoutButton";
 import { Toaster } from "@/components/base/toast/toast";
 
-export function StaffShell({ children, counsellor = false }: { children: ReactNode; counsellor?: boolean }) {
+const manage = [
+  { key: "students", label: "Students", icon: RiGroupLine, href: "/staff/manage/students" },
+  { key: "batches", label: "Batches", icon: RiCalendarScheduleLine, href: "/staff/manage/batches" },
+  { key: "centres", label: "Centres", icon: RiBuilding2Line, href: "/staff/manage/centres" },
+  { key: "staff", label: "Staff", icon: RiUserSettingsLine, href: "/staff/manage/staff" },
+  { key: "history", label: "Change history", icon: RiHistoryLine, href: "/staff/manage/history" },
+];
+
+export function StaffShell({ children, counsellor = false, admin = false }: { children: ReactNode; counsellor?: boolean; admin?: boolean }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
-  const items = counsellor ? [{ key: "calls", label: "Call tasks", icon: RiPhoneLine, href: "/counsellor/tasks" }] : [
+  const items = admin ? manage : counsellor ? [{ key: "calls", label: "Call tasks", icon: RiPhoneLine, href: "/counsellor/tasks" }] : [
     { key: "dashboard", label: "Dashboard", icon: RiDashboardLine, href: "/staff/dashboard" },
     { key: "students", label: "Students", icon: RiGroupLine, href: "/staff/students" },
     { key: "automation", label: "Automation", icon: RiNotification3Line, href: "/staff/automation" },
   ];
-  const nav = <WorkspaceSidebar items={items} selected={counsellor ? "calls" : path.includes("automation") ? "automation" : path.includes("students") ? "students" : "dashboard"} footer={<LogoutButton language="en" />} />;
+  const nav = <WorkspaceSidebar items={items} selected={admin ? manage.find((item) => path.startsWith(item.href))?.key ?? "students" : counsellor ? "calls" : path.includes("automation") ? "automation" : path.includes("students") ? "students" : "dashboard"} footer={<LogoutButton language="en" />} />;
   return <div lang="en" className="staff-surface min-h-screen p-4 text-text-primary md:flex md:gap-8 md:p-0">
     <div className="hidden w-60 shrink-0 md:block"><div className="staff-spine ledger-butti sticky top-0 h-dvh">{nav}</div></div>
     <div className="mb-6 md:hidden"><Button variant="secondary" onClick={() => setOpen(true)}>Menu</Button></div>
