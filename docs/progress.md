@@ -4,7 +4,7 @@
 
 - TEST LOCK: Codex 2026-11-06 01:37 IST (production browser suite; baseline check passed).
 
-- **Codex T0 follow-up (2026-11-06):** reviewing commits 9c10320, d973bc4, aecf46e and existing five-file diff; then production browser acceptance and centre-scoped student record API. Owned files: backend/fees/views/students.py, backend/fees/urls.py, backend/fees/tests/test_student_record.py, lib/data/ledger.ts (sid branch only), tests/backend-student-record.test.ts, docs/progress.md. Shared claim: lib/data/ledger.ts. Five-file CSS build repair verified and committed separately; shared claim remains lib/data/ledger.ts.
+- **Codex T0 follow-up (2026-11-06):** reviewing commits 9c10320, d973bc4, aecf46e and existing five-file diff; then production browser acceptance and centre-scoped student record API. Owned files: backend/fees/views/students.py, backend/fees/urls.py, backend/fees/tests/test_student_record.py, backend/fees/tests/test_seed.py (bound reset-test reminder deletion by materialized IDs), lib/data/ledger.ts (sid branch only), tests/backend-student-record.test.ts, docs/progress.md. Shared claim: lib/data/ledger.ts. Five-file CSS build repair verified and committed separately; shared claim remains lib/data/ledger.ts.
 
 - **Claude Admin/Manage screens (2026-11-06), branch t3/admin-manage-contract-screens, worktree t3-13379c5b:** Admin contract, then Manage screens on fixture data. Files: lib/types.ts (new Admin types only), lib/data/admin.ts (new), lib/actions/admin.ts (new), lib/fixtures/admin.ts (new), lib/fixtures/state.ts (admin prototype role and change list), lib/prototype-routes.ts, app/(staff)/staff/manage/**, components/app/Manage*.tsx, components/app/StaffShell.tsx, e2e/manage.spec.ts, tests/admin-fixtures.test.ts.
 
