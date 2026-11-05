@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- TEST LOCK: Codex 2026-11-06 04:32 IST — Admin backend focused and full checks.
+
 - **Codex ADMIN.B1 (2026-11-06):** Admin/Manage Django backend against the posted contract, labelled an assumption beyond the brief. Files: backend/fees/services/admin.py, backend/fees/views/admin.py, backend/fees/forms.py, backend/fees/urls.py, backend/fees/tests/test_admin.py, backend/fees/seed.py, docs/decisions.md, docs/progress.md. No shared frontend adapter edits until the reviewed branch can merge. TEST LOCK will be claimed before checks. ADMIN.6 ID reuse fix remains with Claude. Board encoding repaired losslessly (50 lines matched history exactly); subsequent board reads use explicit UTF-8.
 
 
