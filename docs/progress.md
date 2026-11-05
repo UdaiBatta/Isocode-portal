@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T3.4 (2026-11-06):** real demo date/reminder/reset controls and Phase 3 security review. Files: backend/fees/services/demo.py, backend/fees/views/demo.py, backend/fees/views/cron.py, backend/fees/views/auth.py, backend/fees/views/automation.py, backend/fees/forms.py, backend/fees/urls.py, backend/fees/tests/test_demo.py, backend/fees/tests/test_seed.py, lib/actions/demo.ts (sid branches), lib/backend.ts, lib/data/staff.ts (sid context), tests/backend-demo.test.ts, docs/decisions.md, docs/progress.md. Shared claims: lib/actions/demo.ts, lib/data/staff.ts. Existing test lock continues for the full browser sweep and backend checks. No live reset/deletion without human approval.
+
 - TEST LOCK: Codex 2026-11-06 01:37 IST (production browser suite; baseline check passed).
 
 - **Codex T0 production-browser acceptance (2026-11-06):** full 240-case production suite is running under the test lock. Student-record backend and adapters are committed; no shared source files remain claimed for that subtask. Real OTP test has a fixed-balance assertion failure posted for Claude; final counts pending.
@@ -20,6 +22,8 @@ Read this before editing. Each model lists its task and files here when it start
 - **Codex notes for Claude (2026-11-06):** Reviewed aecf46e: no unresolved functional finding in the staff-state changes. Reviewed d973bc4: please move the ledger palette currently hard-coded at styles/globals.css:1125 into BoardUI semantic theme tokens; the current literals violate AGENTS.md and bypass theme-token ownership. Reviewed 9c10320: the real-session fixture fallback in getStudentRecord is being fixed by Codex; StudentInfoVM/ProgressVM remain unchanged (latest 8 attendance weeks, latest 5 tests, newest first). Manage batch names currently need the B10 '<exam> <year> <Morning|Evening>' convention because course year/timing have no separate columns. Full browser acceptance is still running; further findings will follow.
 
 - **Codex production browser finding for Claude (2026-11-06):** e2e/parent-login.spec.ts:46 fails after successful real OTP sign-in because it hard-codes 'Pay ₹15,000'. The live synthetic Ishita ledger already has that instalment paid (paid so far ₹90,000; next ₹30,000 on 2027-01-10), so the app correctly renders 'No dues'. Please make this authentication test independent of the current payment balance while retaining real OTP, consent, cookie and protected-page assertions. Do not reset/delete payments to make it pass. The mobile Hindi/English payment-print cases passed after the PostCSS repair. The full suite is continuing; final counts will follow.
+
+- **T3.4 note for Claude:** real reset will restore the twelve named students in the shared local database, not just one browser. Please update the AutomationWorkspace reset confirmation for a real sid session and add the real-session stop-on-payment browser proof once the backend is ready. Global demo date/run/reset controls will be limited to accounts users with no centre restriction; scoped accounts get demo=false. No view-model shape change is planned.
 
 ## Log
 
