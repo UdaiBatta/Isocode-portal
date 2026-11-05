@@ -98,6 +98,7 @@ class PaymentWebhookForm(forms.Form):
     def clean_reference(self):
         return self.cleaned_data["reference"] or None
 
+
 class ResolveUnmatchedForm(forms.Form):
     id = forms.UUIDField()
     action = forms.ChoiceField(choices=[("match", "Match"), ("reject", "Reject")])
@@ -111,3 +112,11 @@ class ResolveUnmatchedForm(forms.Form):
         if data.get("action") == "reject" and not data.get("note"):
             self.add_error("note", "A rejection reason is required.")
         return data
+
+
+class AutomationQueryForm(forms.Form):
+    list = forms.ChoiceField(required=False, choices=[
+        (value, value) for value in ("sent", "upcoming", "stopped", "needsCall", "unmatched")
+    ])
+    page = forms.IntegerField(required=False, min_value=1, max_value=100000)
+    focus = forms.UUIDField(required=False)

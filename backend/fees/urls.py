@@ -21,6 +21,7 @@ urlpatterns = [
     path("webhooks/payment", payment.webhook),
     path("cron/reminders", cron.reminders),
     path("automation", automation.automation),
+    path("automation_counts", automation.automation_counts),
     path("resolve_unmatched", automation.resolve_unmatched),
     path("payment_candidates", automation.payment_candidates),
 ]

@@ -87,6 +87,12 @@ export interface AutomationVM {
     status: "open" | "matched" | "rejected"; resolvedBy: string | null }[];
 }
 
+export interface AutomationCountsVM { unmatchedOpen: number; needsCall: number }
+export type AutomationList = "sent" | "upcoming" | "stopped" | "needsCall" | "unmatched";
+export interface AutomationPageVM extends AutomationVM {
+  list: AutomationList; page: number; pageSize: number; total: number; totalPages: number;
+}
+
 export interface ReminderRow {
   instalmentId: string; studentCode: string; studentName: string; step: number | null; on: string | null;
   language: "hi" | "en"; amount: number; body: string | null; stoppedReason: string | null;

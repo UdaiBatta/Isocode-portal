@@ -1,4 +1,5 @@
 import os
+from math import ceil
 
 from django.db.models import Max, Q
 from django.http import JsonResponse
@@ -8,9 +9,11 @@ from fees.clock import today
 from fees.domain.dates import add_days
 from fees.domain.reminders import next_scheduled_step
 from fees.domain.pay_token import sign_pay_token
-from fees.forms import ResolveUnmatchedForm
+from fees.forms import AutomationQueryForm, ResolveUnmatchedForm
 from fees.models import GuardianStudent, InstalmentBalance, ReminderLog, UnmatchedPayment
 from fees.services.payments import UnmatchedPaymentError, resolve_unmatched_payment
+
+PAGE_SIZE = 25
 
 
 def _row(instalment, *, step, on, language, amount, stopped_reason=None, student=None):
@@ -33,6 +36,27 @@ def _queue_rows(request):
             Q(suggested_instalment__plan__student__batch__centre_id=request.subject.centre_id)
         )
     return rows.order_by("-received_on", "-created_at", "-pk")
+
+
+def _counts(request, current_date):
+    unmatched = UnmatchedPayment.objects.filter(status="open")
+    instalments = InstalmentBalance.objects.filter(
+        student__archived_at__isnull=True, balance_paise__gt=0,
+        due_date__lt=add_days(current_date, -30),
+    )
+    if request.subject.centre_id:
+        unmatched = unmatched.filter(
+            Q(suggested_instalment__isnull=True) |
+            Q(suggested_instalment__plan__student__batch__centre_id=request.subject.centre_id)
+        )
+        instalments = instalments.filter(centre_id=request.subject.centre_id)
+    return {"unmatchedOpen": unmatched.count(), "needsCall": instalments.count()}
+
+
+def _page(total, requested_page):
+    total_pages = max(1, ceil(total / PAGE_SIZE))
+    page = min(requested_page, total_pages)
+    return page, total_pages, (page - 1) * PAGE_SIZE
 
 
 def _queue_row(item):
@@ -166,20 +190,47 @@ def _reminder_rows(request, list_name, current_date):
 
 
 @api(role="accounts", methods=("GET",))
+def automation_counts(request):
+    return JsonResponse({"ok": True, **_counts(request, today())})
+
+
+@api(role="accounts", form=AutomationQueryForm, methods=("GET",))
 def automation(request):
     current_date = today()
-    unmatched = _queue_rows(request)
+    list_name = request.data.get("list") or "upcoming"
+    requested_page = request.data.get("page") or 1
+    focus = request.data.get("focus")
+    if list_name == "unmatched":
+        rows = _queue_rows(request)
+        total = rows.count()
+        if focus:
+            item = rows.filter(pk=focus).first()
+            if item:
+                ahead = rows.filter(
+                    Q(received_on__gt=item.received_on) |
+                    Q(received_on=item.received_on, created_at__gt=item.created_at) |
+                    Q(received_on=item.received_on, created_at=item.created_at, pk__gt=item.pk)
+                ).count()
+                requested_page = ahead // PAGE_SIZE + 1
+        page, total_pages, offset = _page(total, requested_page)
+        page_rows = [_queue_row(item) for item in rows[offset:offset + PAGE_SIZE]]
+        total = rows.count()
+    else:
+        total, get_rows = _reminder_rows(request, list_name, current_date)
+        page, total_pages, offset = _page(total, requested_page)
+        page_rows = get_rows(offset, PAGE_SIZE)
+
     payload = {
         "ok": True, "today": current_date.isoformat(),
         "demo": os.getenv("DEMO_MODE", "false").lower() == "true",
-        "unmatchedOpen": unmatched.filter(status="open").count(),
-        "sent": [], "upcoming": [], "stopped": [], "needsCall": [],
-        "unmatched": [_queue_row(item) for item in unmatched],
+        "list": list_name, "page": page, "pageSize": PAGE_SIZE,
+        "total": total, "totalPages": total_pages,
+        **_counts(request, current_date),
+        "sent": [], "upcoming": [], "stopped": [], "needsCall": [], "unmatched": [],
     }
-    for list_name in ("sent", "upcoming", "stopped", "needsCall"):
-        total, get_rows = _reminder_rows(request, list_name, current_date)
-        payload[list_name] = get_rows(0, total)
+    payload[list_name] = page_rows
     return JsonResponse(payload)
+
 
 @api(role="accounts", form=ResolveUnmatchedForm)
 def resolve_unmatched(request):

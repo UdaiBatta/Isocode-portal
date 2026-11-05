@@ -12,7 +12,7 @@ from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 
 from fees.models import (Allocation, AuditLog, Instalment, InstalmentBalance, Payment, PaymentEvent,
-                         Receipt, StaffUser, UnmatchedPayment)
+                         Receipt, ReminderLog, StaffUser, UnmatchedPayment)
 from fees.seed_data import DEMO_TODAY
 from fees.services.payments import UnmatchedPaymentError, resolve_unmatched_payment
 
@@ -57,9 +57,16 @@ class AutomationViewTests(TestCase):
 
     def test_automation_and_candidates_use_seeded_django_rows(self):
         self.sign_in()
-        automation = self.get("automation").json()
-        sent = automation["sent"]
-        upcoming = automation["upcoming"]
+        sent_first = self.get("automation?list=sent").json()
+        sent = sent_first["sent"] + [
+            row for page in range(2, sent_first["totalPages"] + 1)
+            for row in self.get(f"automation?list=sent&page={page}").json()["sent"]
+        ]
+        upcoming_first = self.get("automation?list=upcoming").json()
+        upcoming = upcoming_first["upcoming"] + [
+            row for page in range(2, upcoming_first["totalPages"] + 1)
+            for row in self.get(f"automation?list=upcoming&page={page}").json()["upcoming"]
+        ]
         ishita = next(row for row in sent if row["instalmentId"] == "STU-0587-3" and row["step"] == 15)
         mohit = next(row for row in upcoming if row["instalmentId"] == "STU-0219-3")
         self.assertEqual((ishita["language"], ishita["amount"], ishita["on"]), ("en", 1500000, "2026-10-25"))
@@ -76,11 +83,66 @@ class AutomationViewTests(TestCase):
         item = self.create_queue_item(instalment=outside)
 
         candidates = self.get("payment_candidates").json()["candidates"]
-        data = self.get("automation").json()
+        data = self.get("automation?list=unmatched").json()
 
         self.assertTrue(all(row["code"] != outside.plan.student.code for row in candidates))
         self.assertNotIn(str(item.pk), [row["id"] for row in data["unmatched"]])
         self.assertEqual(data["unmatchedOpen"], sum(row["status"] == "open" for row in data["unmatched"]))
+        counts = self.get("automation_counts").json()
+        self.assertEqual(counts["unmatchedOpen"], UnmatchedPayment.objects.filter(status="open").filter(
+            Q(suggested_instalment__isnull=True) |
+            Q(suggested_instalment__plan__student__batch__centre_id=staff.centre_id),
+        ).count())
+        self.assertEqual(counts["needsCall"], InstalmentBalance.objects.filter(
+            centre_id=staff.centre_id, student__archived_at__isnull=True, balance_paise__gt=0,
+            due_date__lt=DEMO_TODAY - timedelta(days=30),
+        ).count())
+
+    def test_automation_counts_are_accounts_only_and_return_only_counts(self):
+        self.assertEqual(self.get("automation_counts").status_code, 401)
+        self.sign_in()
+        response = self.get("automation_counts")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(set(data), {"ok", "unmatchedOpen", "needsCall"})
+        self.assertEqual(data["unmatchedOpen"], UnmatchedPayment.objects.filter(status="open").count())
+        self.assertEqual(data["needsCall"], InstalmentBalance.objects.filter(
+            student__archived_at__isnull=True, balance_paise__gt=0,
+            due_date__lt=DEMO_TODAY - timedelta(days=30),
+        ).count())
+        self.sign_in("counsellor@demo.test")
+        self.assertEqual(self.get("automation_counts").status_code, 403)
+
+    def test_automation_lists_are_server_paged_and_focus_opens_the_queue_item(self):
+        self.sign_in()
+        items = [self.create_queue_item() for _ in range(27)]
+        first = self.get("automation?list=unmatched&page=1").json()
+        second = self.get("automation?list=unmatched&page=2").json()
+        self.assertEqual((first["page"], first["pageSize"], first["totalPages"]), (1, 25, 2))
+        self.assertEqual((len(first["unmatched"]), second["page"], len(second["unmatched"])), (25, 2, first["total"] - 25))
+        self.assertEqual(len({row["id"] for row in first["unmatched"] + second["unmatched"]}), first["total"])
+        focused = self.get(f"automation?list=unmatched&focus={items[0].pk}").json()
+        self.assertEqual(focused["page"], 2)
+        self.assertIn(str(items[0].pk), [row["id"] for row in focused["unmatched"]])
+        self.assertEqual(self.get("automation?list=invalid").status_code, 400)
+        self.assertEqual(self.get("automation?list=unmatched&page=0").status_code, 400)
+
+    def test_sent_reminders_are_server_paged(self):
+        self.sign_in()
+        ReminderLog.objects.all().delete()
+        instalments = Instalment.objects.filter(plan__student__archived_at__isnull=True).order_by("pk")[:27]
+        ReminderLog.objects.bulk_create([
+            ReminderLog(instalment=row, step=1000 + index, language="en", amount_paise=100,
+                        sent_on=DEMO_TODAY)
+            for index, row in enumerate(instalments)
+        ])
+
+        first = self.get("automation?list=sent&page=1").json()
+        second = self.get("automation?list=sent&page=2").json()
+
+        self.assertEqual((first["page"], first["pageSize"], first["total"], first["totalPages"]), (1, 25, 27, 2))
+        self.assertEqual((len(first["sent"]), second["page"], len(second["sent"])), (25, 2, 2))
+
     def test_match_allocates_oldest_first_creates_receipt_and_rejects_replay(self):
         staff = self.sign_in()
         instalment = Instalment.objects.select_related("plan__student").get(plan__student__code="STU-0587", seq=3)
@@ -106,7 +168,7 @@ class AutomationViewTests(TestCase):
         self.assertEqual(self.post("resolve_unmatched", body).status_code, 409)
         self.assertEqual(Payment.objects.filter(event_id="review-match-event").count(), 1)
 
-        row = next(row for row in self.get("automation").json()["unmatched"] if row["id"] == str(item.pk))
+        row = next(row for row in self.get("automation?list=unmatched").json()["unmatched"] if row["id"] == str(item.pk))
         self.assertEqual(row["resolvedBy"], staff.full_name)
 
     def test_match_above_remaining_balance_is_rejected_without_writes(self):

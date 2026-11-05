@@ -16,11 +16,12 @@ import { Button } from "@/components/base/buttons/button";
 import { LinkButton } from "@/components/base/buttons/link-button";
 import { Chip } from "@/components/base/badges/chip";
 import { AlertDialog } from "@/components/base/modal/modal";
+import { Pagination } from "@/components/base/pagination/pagination";
 import { toast } from "@/components/base/toast/toast";
 import { resolveUnmatched } from "@/lib/actions/payments";
 import { setDemoDate, runRemindersNow, resetDemo } from "@/lib/actions/demo";
 import { inr, dateLabel } from "@/lib/format";
-import type { AutomationVM, ReminderRow } from "@/lib/types";
+import type { AutomationList, AutomationPageVM, AutomationVM, ReminderRow } from "@/lib/types";
 import { EmptyState } from "./EmptyState";
 import { StaffFrame, StaffPageHeader } from "./StaffPage";
 
@@ -28,9 +29,9 @@ type QueueItem = AutomationVM["unmatched"][number];
 type Candidate = { code: string; name: string; instalments: { id: string; balance: number; seq: number }[] };
 type ListedReminder = ReminderRow & { id: string };
 
-export function AutomationWorkspace({ view, candidates, tab, initialItem, initialFilter = "upcoming" }: { view: AutomationVM; candidates: Candidate[]; tab: "reminders" | "unmatched"; initialItem?: string; initialFilter?: "upcoming" | "needsCall" }) {
+export function AutomationWorkspace({ view, candidates, tab, initialItem, initialFilter = "upcoming" }: { view: AutomationPageVM; candidates: Candidate[]; tab: "reminders" | "unmatched"; initialItem?: string; initialFilter?: Exclude<AutomationList, "unmatched"> }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<"sent" | "upcoming" | "stopped" | "needsCall">(initialFilter);
+  const filter: Exclude<AutomationList, "unmatched"> = view.list === "unmatched" ? initialFilter : view.list;
   const [message, setMessage] = useState<ReminderRow | null>(null);
   const [queueId, setQueueId] = useState<string | null>(initialItem ?? null);
   const [student, setStudent] = useState("");
@@ -43,6 +44,16 @@ export function AutomationWorkspace({ view, candidates, tab, initialItem, initia
   const [beforeRun, setBeforeRun] = useState<Set<string> | null>(null);
   const queue = view.unmatched.find((item) => item.id === queueId) ?? null;
   const selected = candidates.find((item) => item.code === student);
+  function visit(list: AutomationList, page: number) {
+    setQueueId(null);
+    const query = new URLSearchParams({ page: String(page) });
+    if (list === "unmatched") {
+      query.set("tab", "unmatched");
+      query.set("filter", filter);
+    }
+    else query.set("filter", list);
+    router.push(`/staff/automation?${query}`);
+  }
   function openQueue(item: QueueItem) {
     setQueueId(item.id); setStudent(item.suggested?.studentCode ?? ""); setSearch(item.suggested?.studentName ?? ""); setInstalment(item.suggested?.instalmentId ?? ""); setNote(""); setError("");
   }
@@ -50,9 +61,13 @@ export function AutomationWorkspace({ view, candidates, tab, initialItem, initia
     setError("");
     if (action === "reject" && !note.trim()) { setError("Enter a reason before rejecting this payment."); return; }
     if (action === "match" && !instalment) { setError("Choose a student and instalment."); return; }
-    startTransition(async () => { try { const result = await resolveUnmatched({ id: queue!.id, action, instalmentId: instalment || undefined, note }); if (!result.ok) { setError(result.message); return; } toast.success(action === "match" ? "Payment matched. Receipt created." : "Payment rejected"); setQueueId(null); router.refresh(); } catch { setError("Could not resolve this payment. Please try again."); } });
+    startTransition(async () => { try { const result = await resolveUnmatched({ id: queue!.id, action, instalmentId: instalment || undefined, note }); if (!result.ok) { setError(result.message); return; } toast.success(action === "match" ? "Payment matched. Receipt created." : "Payment rejected"); setQueueId(null); visit("unmatched", view.page); } catch { setError("Could not resolve this payment. Please try again."); } });
   }
-  const reminders = view[filter].map((row, index) => ({ ...row, id: `${row.instalmentId}-${row.step}-${index}` }));
+  const reminderRows = view[filter];
+  const visibleReminders = reminderRows.map((row) => ({ ...row, id: `${row.instalmentId}-${row.step}-${row.on}` }));
+  const visibleQueue = view.unmatched;
+  const showingStart = view.total ? (view.page - 1) * view.pageSize + 1 : 0;
+  const showingEnd = Math.min(view.page * view.pageSize, view.total);
   const reminderColumns: ColumnDef<ListedReminder>[] = [
     { accessorKey: "studentName", header: "Student", cell: ({ row }) => <LinkButton variant="secondary" onClick={() => setMessage(row.original)}>{row.original.studentName}</LinkButton> },
     { accessorKey: "instalmentId", header: "Instalment", cell: ({ row }) => row.original.instalmentId.split("-").at(-1) },
@@ -72,10 +87,10 @@ export function AutomationWorkspace({ view, candidates, tab, initialItem, initia
   return <>
     <StaffPageHeader title="Automation" description="Reminders and payments that need a decision" />
     <StaffFrame>
-    {view.demo ? <section aria-label="Demo controls"><div className="flex flex-wrap items-center gap-4"><span className="text-body-medium">Demo date</span><DatePicker aria-label="Demo date" value={parseDate(view.today)} isDisabled={pending} onChange={(value) => value && startTransition(async () => { try { const result = await setDemoDate({ date: value.toString() }); if (!result.ok) toast.error(result.message); else { toast.success("Demo date saved"); router.refresh(); } } catch { toast.error("Could not save the demo date"); } })} /><Button variant="secondary" disabled={pending} onClick={() => startTransition(async () => { try { setBeforeRun(new Set(view.sent.map((row) => `${row.instalmentId}:${row.step}:${row.on}`))); const result = await runRemindersNow(); if (!result.ok) toast.error(result.message); else { toast.success(`Sent ${result.sent}. Nothing else due.`); setFilter("sent"); router.refresh(); } } catch { toast.error("Could not run reminders"); } })}>Run today&apos;s reminders</Button><LinkButton variant="secondary" onClick={() => setResetOpen(true)}>Reset demo</LinkButton></div></section> : null}
-    <section><Tabs selectedKey={tab} onSelectionChange={(key) => router.push(`/staff/automation?tab=${key}`)}><TabList aria-label="Automation views"><Tab id="reminders">Reminders</Tab><Tab id="unmatched" count={view.unmatchedOpen}>Unmatched payments</Tab></TabList>
-      <TabPanel id="reminders"><div className="flex flex-col gap-6"><SegmentedControl aria-label="Reminder status" className="flex-wrap" selectedKeys={[filter]} onSelectionChange={(keys) => setFilter(String(Array.from(keys)[0]) as typeof filter)}>{[["sent", "Sent"], ["upcoming", "Upcoming"], ["stopped", "Stopped"], ["needsCall", "Needs a call"]].map(([id, label]) => <SegmentedControlItem id={id} key={id}>{label}</SegmentedControlItem>)}</SegmentedControl>{reminders.length ? <DataTable label="Reminders" data={reminders} columns={reminderColumns} rowClassName={(row) => filter === "sent" && beforeRun && !beforeRun.has(`${row.instalmentId}:${row.step}:${row.on}`) ? "reminder-new" : undefined} renderCard={(row) => <div className="flex flex-col gap-2"><LinkButton variant="secondary" onClick={() => setMessage(row)}>{row.studentName} · {row.studentCode}</LinkButton><p className="text-body-regular">Instalment {row.instalmentId.split("-").at(-1)} · Step {row.step ?? "—"} · {row.language === "hi" ? "Hindi" : "English"}</p><p className="text-body-regular">{row.stoppedReason ? `Stopped: ${row.stoppedReason}` : row.on ? dateLabel(row.on, "en", view.today) : "—"}</p></div>} /> : <EmptyState title="No reminders in this view" />}</div></TabPanel>
-      <TabPanel id="unmatched">{view.unmatched.length ? <DataTable label="Unmatched payments" data={view.unmatched} columns={queueColumns} renderCard={(item) => <div className="flex flex-col gap-3"><LinkButton variant="secondary" onClick={() => openQueue(item)}>{item.suggested?.studentName ?? item.reference ?? "Find student"}</LinkButton><div className="flex justify-between"><span className="tabular-nums">{inr(item.amount)}</span><Chip color={item.status === "open" ? "yellow" : "neutral"}>{item.status}</Chip></div><p className="text-body-regular">{dateLabel(item.receivedOn, "en", view.today)} · {item.reason.replaceAll("_", " ")}</p>{item.resolvedBy ? <p className="text-body-2-regular text-text-secondary">Resolved by {item.resolvedBy}</p> : null}</div>} /> : <EmptyState title="No payments need matching" />}</TabPanel>
+    {view.demo ? <section aria-label="Demo controls"><div className="flex flex-wrap items-center gap-4"><span className="text-body-medium">Demo date</span><DatePicker aria-label="Demo date" value={parseDate(view.today)} isDisabled={pending} onChange={(value) => value && startTransition(async () => { try { const result = await setDemoDate({ date: value.toString() }); if (!result.ok) toast.error(result.message); else { toast.success("Demo date saved"); router.refresh(); } } catch { toast.error("Could not save the demo date"); } })} /><Button variant="secondary" disabled={pending} onClick={() => startTransition(async () => { try { setBeforeRun(view.list === "sent" ? new Set(view.sent.map((row) => `${row.instalmentId}:${row.step}:${row.on}`)) : null); const result = await runRemindersNow(); if (!result.ok) toast.error(result.message); else { toast.success(`Sent ${result.sent}. Nothing else due.`); visit("sent", 1); } } catch { toast.error("Could not run reminders"); } })}>Run today&apos;s reminders</Button><LinkButton variant="secondary" onClick={() => setResetOpen(true)}>Reset demo</LinkButton></div></section> : null}
+    <section><Tabs selectedKey={tab} onSelectionChange={(key) => key === "unmatched" ? visit("unmatched", 1) : visit(filter, 1)}><TabList aria-label="Automation views"><Tab id="reminders">Reminders</Tab><Tab id="unmatched" count={view.unmatchedOpen}>Unmatched payments</Tab></TabList>
+      <TabPanel id="reminders"><div className="flex flex-col gap-6"><SegmentedControl aria-label="Reminder status" className="flex-wrap" selectedKeys={[filter]} onSelectionChange={(keys) => { const next = String(Array.from(keys)[0]) as Exclude<AutomationList, "unmatched">; visit(next, 1); }}>{[["sent", "Sent"], ["upcoming", "Upcoming"], ["stopped", "Stopped"], ["needsCall", "Needs a call"]].map(([id, label]) => <SegmentedControlItem id={id} key={id}>{label}</SegmentedControlItem>)}</SegmentedControl>{reminderRows.length ? <><DataTable label="Reminders" data={visibleReminders} columns={reminderColumns} rowClassName={(row) => filter === "sent" && beforeRun && !beforeRun.has(`${row.instalmentId}:${row.step}:${row.on}`) ? "reminder-new" : undefined} renderCard={(row) => <div className="flex flex-col gap-2"><LinkButton variant="secondary" onClick={() => setMessage(row)}>{row.studentName} · {row.studentCode}</LinkButton><p className="text-body-regular">Instalment {row.instalmentId.split("-").at(-1)} · Step {row.step ?? "—"} · {row.language === "hi" ? "Hindi" : "English"}</p><p className="text-body-regular">{row.stoppedReason ? `Stopped: ${row.stoppedReason}` : row.on ? dateLabel(row.on, "en", view.today) : "—"}</p></div>} /><div className="flex flex-col gap-3"><p className="text-body-2-regular text-text-secondary">Showing {showingStart}–{showingEnd} of {view.total}</p><Pagination page={view.page} totalPages={view.totalPages} onChange={(page) => visit(filter, page)} aria-label="Reminder pages" /></div></> : <EmptyState title="No reminders in this view" />}</div></TabPanel>
+      <TabPanel id="unmatched">{view.unmatched.length ? <div className="flex flex-col gap-3"><DataTable label="Unmatched payments" data={visibleQueue} columns={queueColumns} renderCard={(item) => <div className="flex flex-col gap-3"><LinkButton variant="secondary" onClick={() => openQueue(item)}>{item.suggested?.studentName ?? item.reference ?? "Find student"}</LinkButton><div className="flex justify-between"><span className="tabular-nums">{inr(item.amount)}</span><Chip color={item.status === "open" ? "yellow" : "neutral"}>{item.status}</Chip></div><p className="text-body-regular">{dateLabel(item.receivedOn, "en", view.today)} · {item.reason.replaceAll("_", " ")}</p>{item.resolvedBy ? <p className="text-body-2-regular text-text-secondary">Resolved by {item.resolvedBy}</p> : null}</div>} /><p className="text-body-2-regular text-text-secondary">Showing {showingStart}–{showingEnd} of {view.total}</p><Pagination page={view.page} totalPages={view.totalPages} onChange={(page) => visit("unmatched", page)} aria-label="Unmatched payment pages" /></div> : <EmptyState title="No payments need matching" />}</TabPanel>
     </Tabs>
     <Drawer isOpen={!!message} onOpenChange={(open) => !open && setMessage(null)} aria-label="Reminder details"><DrawerHeader title={message?.studentName ?? "Reminder"} /><DrawerBody><div className="flex flex-col gap-6"><p className="text-body-regular text-text-secondary">{message?.language === "hi" ? "Hindi" : "English"} · Step {message?.step ?? "—"}</p><p className="whitespace-pre-wrap text-body-regular">{message?.body ?? (message?.stoppedReason ? `Stopped: ${message.stoppedReason}` : "No reminder message is scheduled.")}</p><LinkButton href={`/staff/students/${message?.studentCode}`} variant="secondary">Open student ledger</LinkButton></div></DrawerBody></Drawer>
     </section></StaffFrame>
