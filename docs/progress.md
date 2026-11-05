@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T4.3 (2026-11-06):** real dashboard, student roster and staff directory. Files: backend/fees/services/reporting.py, backend/fees/views/dashboard.py, backend/fees/views/students.py, backend/fees/forms.py, backend/fees/urls.py, backend/fees/tests/test_dashboard.py, lib/data/dashboard.ts, lib/data/students.ts, lib/data/staff.ts (sid branches), tests/backend-staff-reporting.test.ts, docs/decisions.md, docs/progress.md. Shared claims: lib/data/dashboard.ts, lib/data/students.ts, lib/data/staff.ts. No frontend files/fixtures edited. Test lock will be taken for checks and full-seed timing; seed is idempotent and no database reset is planned.
+
 
 
 
