@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { createHmac, randomUUID } from "node:crypto";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { codeSchema, dateSchema, moneySchema, mutateProto, mutatePublicPreview, fail } from "@/lib/fixtures/state";
 import { ledgerFor, queueFor, receiptsFor } from "@/lib/fixtures/views";
 import { requireCentre } from "@/lib/data/scope";
@@ -76,8 +78,18 @@ async function submitRealMockPayment(token: string, outcome: "success" | "failed
 }
 
 export async function recordCounterPayment(input: unknown) {
+  const parsed = z.object({ studentId: codeSchema, amountPaise: moneySchema, method: z.enum(["cash", "cheque", "bank"]), receivedOn: dateSchema, note: z.string().max(300).optional() }).safeParse(input);
+  if (!parsed.success) return { ok: false as const, code: "invalid", message: "Check the payment values." };
+  if ((await cookies()).get("sid")?.value) {
+    const response = await backendResponse("counter_payment", {
+      student: parsed.data.studentId, amount_paise: parsed.data.amountPaise,
+      method: parsed.data.method, received_on: parsed.data.receivedOn, note: parsed.data.note ?? "",
+    });
+    if (response.status === 401) redirect("/staff/login");
+    return backendResult<{ receiptId: string | null; receiptNumber: string | null; excess: number }>(response);
+  }
   return mutateProto("accounts", async (state) => {
-    const value = z.object({ studentId: codeSchema, amountPaise: moneySchema.positive(), method: z.enum(["cash", "cheque", "bank"]), receivedOn: dateSchema, note: z.string().max(300).optional() }).parse(input);
+    const value = parsed.data;
     requireCentre(state, value.studentId);
     const on = await today();
     if (value.receivedOn > on) fail("invalid_date", "A payment cannot be recorded in the future.");

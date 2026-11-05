@@ -10,9 +10,9 @@ from django.http import JsonResponse
 from fees.auth import api, error, has_parent_consent
 from fees.clock import today
 from fees.domain.pay_token import unsign_pay_token
-from fees.forms import PaymentResultQueryForm, PaymentWebhookForm, PayTokenQueryForm
-from fees.models import Guardian, GuardianStudent, InstalmentBalance, PaymentEvent, Receipt, StaffUser
-from fees.services.payments import process_payment_event
+from fees.forms import CounterPaymentForm, PaymentResultQueryForm, PaymentWebhookForm, PayTokenQueryForm
+from fees.models import Guardian, GuardianStudent, InstalmentBalance, PaymentEvent, Receipt, StaffUser, Student
+from fees.services.payments import CounterPaymentError, process_payment_event, record_counter_payment
 
 
 def _token_id(token):
@@ -81,6 +81,31 @@ def payment_result(request):
         "on": event.payload["paid_on"], "reference": f"TXN-{event.event_id.replace('-', '')[:12].upper()}",
         "receiptNumber": receipt.number if receipt else None,
         "parentCanAccess": parent_can_access, "canViewReceipt": can_view_receipt,
+    })
+
+
+@api(role="accounts", form=CounterPaymentForm)
+def counter_payment(request):
+    student = Student.objects.select_related("batch__centre").filter(
+        code=request.data["student"], archived_at__isnull=True,
+    ).first()
+    if not student:
+        return error("not_found", "Student not found.", 404)
+    if request.subject.centre_id and student.batch.centre_id != request.subject.centre_id:
+        return error("forbidden", "Student is outside your centre.", 403)
+    try:
+        payment, receipt, excess = record_counter_payment(
+            student_code=student.code, amount_paise=request.data["amount_paise"],
+            method=request.data["method"], received_on=request.data["received_on"],
+            note=request.data["note"], recorded_by=request.subject,
+        )
+    except CounterPaymentError as exc:
+        return error(exc.code, str(exc), 409 if exc.code == "withdrawn" else 400)
+    except ValueError as exc:
+        return error("invalid", str(exc))
+    return JsonResponse({
+        "ok": True, "receiptId": str(receipt.pk) if receipt else None,
+        "receiptNumber": receipt.number if receipt else None, "excess": excess,
     })
 
 

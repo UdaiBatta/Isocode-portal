@@ -81,6 +81,17 @@ it("loads receipt summaries, invoice rows and receipt detail from Django for a r
   expect(fetcher.mock.calls.every(([, options]) => options.headers["X-Internal-Key"] === "test-internal-key")).toBe(true);
 });
 
+it("records counter payments through the accounts API with integer paise", async () => {
+  jar.set("sid", "accounts-session");
+  fetcher.mockResolvedValueOnce(response({ ok: true, receiptId: "receipt-id", receiptNumber: "MLV/2026-27/000002", excess: 0 }));
+  expect(await recordCounterPayment({ studentId: "STU-0587", amountPaise: 5000000, method: "cash", receivedOn: "2026-11-02", note: "Front desk" })).toMatchObject({ ok: true, receiptNumber: "MLV/2026-27/000002", excess: 0 });
+  expect(fetcher.mock.calls[0][0]).toBe("http://localhost:8000/api/counter_payment");
+  expect(fetcher.mock.calls[0][1]).toMatchObject({
+    method: "POST", headers: { "X-Internal-Key": "test-internal-key", Cookie: "sid=accounts-session" },
+    body: JSON.stringify({ student: "STU-0587", amount_paise: 5000000, method: "cash", received_on: "2026-11-02", note: "Front desk" }),
+  });
+});
+
 it("uses Django identity and children over a forged prototype cookie whenever sid exists", async () => {
   jar.set("sid", "parent-session"); jar.set("proto", JSON.stringify({ role: "accounts", phone, centreId: "RJP", consent: true }));
   const me = { ok: true, role: "parent", phone: "+919876543210", centreId: null, consent: false, declined: false, children: [{ id: "STU-2222", name: "Demo child" }] };
@@ -162,7 +173,7 @@ it("completes a public payment action and recorded result with stale sid without
   expect(await getPayDetails("STU-0587-3")).toMatchObject({ firstName: "Ishita", paid: true, amount: 0 });
   expect(await getPaymentResult("STU-0587-3", paid.eventId)).toMatchObject({ result: "paid", amount: 1500000, parentCanAccess: false, canViewReceipt: false });
   await expect(getReceipt(paid.receiptId!)).rejects.toThrow("redirect:/login");
-  await expect(recordCounterPayment({ studentId: "STU-0587", amountPaise: 100, method: "cash", receivedOn: "2026-11-02" })).rejects.toThrow("redirect:/login");
+  await expect(recordCounterPayment({ studentId: "STU-0587", amountPaise: 100, method: "cash", receivedOn: "2026-11-02" })).rejects.toThrow("redirect:/staff/login");
 });
 
 it("loads signed payment details and results through Django", async () => {

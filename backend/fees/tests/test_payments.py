@@ -169,6 +169,10 @@ class PaymentServiceTests(TestCase):
         self.assertEqual(self.post_event(payload, signature=valid_signature, raw=raw + b" ").status_code, 401)
         del payload["method"]
         self.assertEqual(self.post_event(payload).status_code, 400)
+        payload = self.gateway_payload(instalment, event_id="gateway-float")
+        payload["amount_paise"] = 1500000.5
+        self.assertEqual(self.post_event(payload).status_code, 400)
+        self.assertFalse(PaymentEvent.objects.filter(event_id="gateway-float").exists())
         with patch.dict(os.environ, {"PAYMENT_WEBHOOK_SECRET": ""}):
             self.assertEqual(self.post_event(payload).status_code, 401)
         self.assertFalse(PaymentEvent.objects.filter(event_id="gateway-invalid").exists())

@@ -3,6 +3,12 @@ from django import forms
 from fees.domain.phone import normalize_phone
 
 
+def _clean_paise(value):
+    if type(value) is not int:
+        raise forms.ValidationError("Enter the amount as whole paise.")
+    return value
+
+
 class PhoneForm(forms.Form):
     phone = forms.CharField(max_length=40)
 
@@ -59,6 +65,17 @@ class ReceiptQueryForm(forms.Form):
     id = forms.UUIDField()
 
 
+class CounterPaymentForm(forms.Form):
+    student = forms.RegexField(r"^STU-[0-9]{4}$", max_length=32)
+    amount_paise = forms.IntegerField(min_value=1)
+    method = forms.ChoiceField(choices=[("cash", "Cash"), ("cheque", "Cheque"), ("bank", "Bank")])
+    received_on = forms.DateField(input_formats=["%Y-%m-%d"])
+    note = forms.CharField(required=False, max_length=300)
+
+    def clean_amount_paise(self):
+        return _clean_paise(self.data.get("amount_paise"))
+
+
 class PayTokenQueryForm(forms.Form):
     token = forms.CharField(max_length=256)
 
@@ -74,6 +91,9 @@ class PaymentWebhookForm(forms.Form):
     status = forms.ChoiceField(choices=[("success", "success"), ("failed", "failed"), ("pending", "pending")])
     paid_on = forms.DateField(input_formats=["%Y-%m-%d"])
     method = forms.ChoiceField(choices=[("upi", "upi"), ("card", "card"), ("netbanking", "netbanking")])
+
+    def clean_amount_paise(self):
+        return _clean_paise(self.data.get("amount_paise"))
 
     def clean_reference(self):
         return self.cleaned_data["reference"] or None

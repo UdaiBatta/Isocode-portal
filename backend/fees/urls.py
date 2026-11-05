@@ -17,5 +17,6 @@ urlpatterns = [
     path("receipt", receipts.receipt),
     path("pay_details", payment.pay_details),
     path("payment_result", payment.payment_result),
+    path("counter_payment", payment.counter_payment),
     path("webhooks/payment", payment.webhook),
 ]

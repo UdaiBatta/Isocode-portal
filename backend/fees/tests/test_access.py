@@ -47,7 +47,7 @@ class AccessTests(TestCase):
         walk(get_resolver().url_patterns)
 
     def test_missing_wrong_or_unconfigured_internal_key_is_refused(self):
-        for name in ["request_otp", "verify_otp", "staff_login", "logout", "set_language", "grant_consent", "decline_consent", "me"]:
+        for name in ["request_otp", "verify_otp", "staff_login", "logout", "set_language", "grant_consent", "decline_consent", "me", "counter_payment"]:
             with self.subTest(name=name):
                 method = self.client.get if name == "me" else self.client.post
                 self.assertEqual(method(f"/api/{name}").status_code, 403)
@@ -57,6 +57,7 @@ class AccessTests(TestCase):
 
     def test_methods_json_and_forms(self):
         self.assertEqual(self.client.get("/api/staff_login", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 405)
+        self.assertEqual(self.client.get("/api/counter_payment", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 405)
         self.assertEqual(self.post("me").status_code, 405)
         for body in ["not json", "[]", '{"phone":"12345"}']:
             self.assertEqual(self.client.post("/api/request_otp", body, content_type="application/json",
@@ -81,6 +82,7 @@ class AccessTests(TestCase):
     def test_private_views_require_session(self):
         self.assertEqual(self.client.get("/api/me", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 401)
         self.assertEqual(self.post("logout").status_code, 401)
+        self.assertEqual(self.post("counter_payment", {"student": "STU-0412", "amount_paise": 1, "method": "cash", "received_on": "2026-11-02"}).status_code, 401)
         session = self.client.session
         session["subject_type"] = "staff"
         session["subject_id"] = "not-a-uuid"

@@ -4,11 +4,19 @@ from uuid import UUID
 from django.db import transaction
 from django.utils import timezone
 
+from fees.clock import today
 from fees.domain.dates import financial_year
+from fees.domain.ledger import allocate_oldest_first
 from fees.domain.matching import decide_payment
 from fees.domain.money import gst_split
 from fees.models import (Allocation, AuditLog, Instalment, InstalmentBalance, Payment, PaymentEvent,
-                         Receipt, ReceiptCounter, UnmatchedPayment)
+                         Receipt, ReceiptCounter, Student, UnmatchedPayment)
+
+
+class CounterPaymentError(Exception):
+    def __init__(self, code, message):
+        super().__init__(message)
+        self.code = code
 
 
 @transaction.atomic
@@ -111,3 +119,53 @@ def process_payment_event(*, event_id, reference, amount_paise, status, paid_on,
         event.payment = payment
     event.save(update_fields=["result", "unmatched", "payment"])
     return event
+
+
+@transaction.atomic
+def record_counter_payment(*, student_code, amount_paise, method, received_on, note, recorded_by):
+    if not isinstance(amount_paise, int) or isinstance(amount_paise, bool) or amount_paise <= 0:
+        raise ValueError("Payment amount must be a positive whole number of paise.")
+    if method not in {"cash", "cheque", "bank"}:
+        raise ValueError("Counter payment method is invalid.")
+    if not isinstance(received_on, date):
+        raise ValueError("Payment date must be a date.")
+    if len(note or "") > 300:
+        raise ValueError("Payment note is too long.")
+
+    student = Student.objects.select_for_update(of=("self",)).select_related("batch__centre").filter(
+        code=student_code, archived_at__isnull=True,
+    ).first()
+    if not student:
+        raise CounterPaymentError("not_found", "Student not found.")
+    if student.status != "active":
+        raise CounterPaymentError("withdrawn", "This student has withdrawn.")
+    if received_on > today():
+        raise CounterPaymentError("invalid_date", "A payment cannot be recorded in the future.")
+
+    instalments = list(Instalment.objects.select_for_update(of=("self",)).filter(
+        plan__student=student,
+    ).order_by("due_date", "seq"))
+    balances = dict(InstalmentBalance.objects.filter(
+        pk__in=[row.pk for row in instalments],
+    ).values_list("pk", "balance_paise"))
+    unpaid = [(row, balances.get(row.pk, 0)) for row in instalments if balances.get(row.pk, 0) > 0]
+    amounts, excess = allocate_oldest_first(amount_paise, [balance for _, balance in unpaid])
+    allocations = [(row, amount) for (row, _), amount in zip(unpaid, amounts) if amount]
+
+    payment = receipt = None
+    if allocations:
+        payment, receipt = allocate_and_issue_receipt(
+            student=student, allocations=allocations, method=method, received_on=received_on,
+            note=note or None, recorded_by=recorded_by,
+        )
+    if excess:
+        queued = UnmatchedPayment.objects.create(
+            amount_paise=excess, reason="excess_counter_payment",
+            suggested_instalment=instalments[0] if instalments else None, received_on=received_on,
+        )
+        AuditLog.objects.create(
+            actor_type="staff", actor_id=recorded_by.pk, action="counter_payment_excess_queued",
+            entity="unmatched_payment", entity_id=queued.pk,
+            after={"student_code": student.code, "amount_paise": excess},
+        )
+    return payment, receipt, excess
