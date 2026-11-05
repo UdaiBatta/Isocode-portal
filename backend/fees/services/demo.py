@@ -21,14 +21,18 @@ def reset_demo(*, actor=None):
         plan__student_id__in=student_ids,
     ).order_by("pk").values_list("pk", flat=True))
     payment_ids = list(m.Payment.objects.filter(student_id__in=student_ids).values_list("pk", flat=True))
+    # A matched review belongs to the student whose payment it created.
     queue_ids = list(m.UnmatchedPayment.objects.select_for_update(of=("self",), nowait=True).filter(
-        Q(suggested_instalment_id__in=instalment_ids) | Q(payment_id__in=payment_ids) |
-        Q(reference__in=codes + [str(pk) for pk in instalment_ids]) |
-        Q(pk__in=[seed_id(f"queue/{index}") for index in range(6)])
+        Q(payment_id__in=payment_ids) | Q(payment__isnull=True) & (
+            Q(suggested_instalment_id__in=instalment_ids) | Q(suggested_instalment__isnull=True) & (
+                Q(reference__in=codes + [str(pk) for pk in instalment_ids]) |
+                Q(pk__in=[seed_id(f"queue/{index}") for index in range(6)])
+            )
+        )
     ).order_by("pk").values_list("pk", flat=True))
     event_ids = list(m.PaymentEvent.objects.select_for_update(nowait=True).filter(
         Q(payment_id__in=payment_ids) | Q(unmatched_id__in=queue_ids) |
-        Q(payload__reference__in=[str(pk) for pk in instalment_ids])
+        Q(payment__isnull=True, unmatched__isnull=True, payload__reference__in=[str(pk) for pk in instalment_ids])
     ).order_by("pk").values_list("pk", flat=True))
     m.PaymentEvent.objects.filter(pk__in=event_ids).delete()
     m.UnmatchedPayment.objects.filter(pk__in=queue_ids).delete()

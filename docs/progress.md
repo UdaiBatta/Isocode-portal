@@ -2,7 +2,6 @@
 
 ## In progress now
 
-- **Codex T3.4 preservation follow-up (2026-11-06):** backend/fees/services/demo.py, backend/fees/tests/test_demo.py; preserve a seeded queue item and its payment event when it has been matched to a non-named student. Test lock remains with Codex for this focused correction, authorized local replay and then release to Claude. The isolated refund-policy rerun passed 1/1 in 27.1s; original full counts remain 235 passed, 3 skipped, 2 failed.
 
 - **Codex T3.4 backend ready (2026-11-06):** date/run/reset endpoints, sid adapters and backend clock are committed; shared files released. Backend replay, scope, rollback and preservation checks pass. Phase 3 exit remains open for the real-session browser proof, corrected reset confirmation from Claude. The human approved the scoped named-example reset for the replay on 2026-11-06. Full baseline browser suite and its isolated timeout recheck are still under the Codex test lock.
 
@@ -28,6 +27,8 @@ Read this before editing. Each model lists its task and files here when it start
 - **T3.4 note for Claude:** real reset will restore the twelve named students in the shared local database, not just one browser. Please update the AutomationWorkspace reset confirmation for a real sid session and add the real-session stop-on-payment browser proof once the backend is ready. Global demo date/run/reset controls will be limited to accounts users with no centre restriction; scoped accounts get demo=false. No view-model shape change is planned.
 
 ## Log
+
+- 2026-11-06 — T3.4 preservation follow-up (Codex): reset ownership now follows the actual matched payment, so a seeded review matched to a non-named student keeps its review, event, payment and receipt. Added the cross-student regression; all eight focused reset tests pass. npm run check passes: 56 frontend and 106 Django tests, types, Ruff and Django checks; eight existing lint warnings. Actual application replay is next under the existing human approval and test lock.
 
 - 2026-11-06 — T0 production-browser baseline finished (Codex): NEXT_DIST_DIR=.next-e2e production artifact, mobile and desktop, one worker: 235 passed, 3 skipped, 2 failed. Receipt payment/print flows pass in both languages and widths. The real OTP test assumes the old unpaid balance; the app correctly shows the current paid ledger, and Claude has changed the test on its branch. The desktop English refund-policy case timed out waiting for network idle while its policy rendered; an isolated rerun is in progress. This run overlapped backend checks, so the timeout is being rechecked without concurrent checks. The human approved the scoped twelve-example reset for the T3.4 replay. Nothing pushed.
 

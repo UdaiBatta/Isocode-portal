@@ -8,9 +8,10 @@ from django.db import OperationalError
 from django.test import TestCase
 
 from fees import models as m
+from fees.seed import seed_id
 from fees.seed_data import DEMO_TODAY, NAMED_CODES
 from fees.services.demo import reset_demo
-from fees.services.payments import process_payment_event
+from fees.services.payments import process_payment_event, resolve_unmatched_payment
 
 
 class DemoTests(TestCase):
@@ -104,6 +105,25 @@ class DemoTests(TestCase):
         self.assertEqual(self.post("reset_demo").status_code, 200)
         self.assertFalse(m.PaymentEvent.objects.filter(pk="demo-reset-failed").exists())
         self.assertTrue(m.PaymentEvent.objects.filter(pk="unrelated-failed").exists())
+
+    def test_seeded_review_matched_to_another_student_keeps_its_financial_history(self):
+        actor = self.sign_in()
+        codes = [f"STU-{number:04d}" for number in NAMED_CODES]
+        item = m.UnmatchedPayment.objects.get(pk=seed_id("queue/1"))
+        target = m.InstalmentBalance.objects.exclude(student__code__in=codes).filter(
+            balance_paise__gte=item.amount_paise, student__status="active",
+        ).first()
+        result = resolve_unmatched_payment(
+            unmatched_id=item.pk, action="match", instalment_id=target.pk, resolved_by=actor,
+        )
+        event = m.PaymentEvent.objects.get(pk=item.event_id)
+        reset_demo(actor=actor)
+        item.refresh_from_db()
+        event.refresh_from_db()
+        self.assertEqual(item.status, "matched")
+        self.assertEqual(item.payment_id, event.payment_id)
+        self.assertEqual(str(item.payment_id), result["paymentId"])
+        self.assertTrue(m.Receipt.objects.filter(pk=result["receiptId"], payment_id=result["paymentId"]).exists())
 
     def test_reset_is_atomic_when_restoration_fails(self):
         self.sign_in()
