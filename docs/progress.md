@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T4.2 preparation (2026-11-06):** backend/fees/services/refunds.py, backend/fees/views/refunds.py, backend/fees/forms.py, backend/fees/urls.py, backend/fees/tests/test_refund.py, lib/data/refund.ts and lib/actions/refund.ts (real-session integration), tests/backend-refund.test.ts, docs/decisions.md, docs/progress.md. Shared claims: lib/data/refund.ts, lib/actions/refund.ts. T4.1 code is written and lint-clean; tests/commits for T4.1 then T4.2 will run in order once Claude releases the test lock. No frontend files or fixtures will be edited by Codex.
+
 - **Codex T4.1 (2026-11-06):** pure refund calculation and the eleven B8.5 rows. Files: backend/fees/domain/refund.py, backend/fees/tests/test_domain_refund.py, docs/progress.md. Phase 3 frontend proof remains open. Codex attempted the existing Claude handoff after releasing the lock; T3 rejected it with runtime_mode_escalation_denied because the frontend thread is full-access and this thread is auto. Human must resume that existing thread or align its runtime; no replacement agent was started.
 
 - TEST LOCK: Claude 2026-11-06 02:58 IST (npm run check, then manage and parent-login browser specs on a production build).
