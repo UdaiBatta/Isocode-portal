@@ -2,7 +2,7 @@
 
 ## In progress now
 
-- **Codex T5.2 (2026-11-06):** isolated risk assessment job and bearer cron. Files: backend/fees/services/risk.py, backend/fees/views/cron.py, backend/fees/urls.py, backend/fees/tests/test_risk_job.py, backend/fees/tests/test_risk_isolation.py, docs/decisions.md, docs/progress.md. TEST LOCK: Codex 2026-11-06 04:49 IST — focused isolation/job and full checks. Uses bulk reads/writes, numeric features and task audit snapshots; no financial or reminder write imports/actions. SDK dependency approval is pending for T5.3.
+- **Codex T5.2 (2026-11-06):** isolated risk assessment job and bearer cron. Files: backend/fees/services/risk.py, backend/fees/views/cron.py, backend/fees/urls.py, backend/fees/tests/test_risk_job.py, backend/fees/tests/test_risk_isolation.py, docs/decisions.md, docs/progress.md. TEST LOCK: Codex 2026-11-06 04:49 IST — focused isolation/job and full checks. Also claimed: backend/fees/seed_data.py to correct B10 Arjun (Watch, fees only) from one overdue instalment / score 30 to two / score 40 in fresh seeds. Saved application histories will not be reset without fresh approval; that question is pending. Uses bulk reads/writes, numeric features and task audit snapshots; no financial or reminder write imports/actions. SDK dependency approval is pending for T5.3.
 
 
 
