@@ -51,6 +51,14 @@ class LedgerQueryForm(forms.Form):
     student = forms.RegexField(r"^STU-[0-9]{4}$", max_length=32)
 
 
+class ReceiptListQueryForm(forms.Form):
+    student = forms.RegexField(r"^STU-[0-9]{4}$", required=False, max_length=32)
+
+
+class ReceiptQueryForm(forms.Form):
+    id = forms.UUIDField()
+
+
 class PayTokenQueryForm(forms.Form):
     token = forms.CharField(max_length=256)
 

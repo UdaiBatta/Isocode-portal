@@ -11,7 +11,7 @@ import { readProto, mutatePublicPreview } from "@/lib/fixtures/state";
 import { backend } from "@/lib/backend";
 import { submitMockPayment, recordCounterPayment } from "@/lib/actions/payments";
 import { getPayDetails, getPaymentResult } from "@/lib/data/payments";
-import { getReceipt } from "@/lib/data/receipts";
+import { getInvoices, getReceipt, getReceipts } from "@/lib/data/receipts";
 import { getDues } from "@/lib/data/dues";
 import { getProgress } from "@/lib/data/progress";
 import { getLedger } from "@/lib/data/ledger";
@@ -58,6 +58,27 @@ it("keeps invalid credentials as an action error and clears sid on logout", asyn
   expect(fetcher.mock.calls[1][1].headers.Cookie).toBe("sid=staff-session");
   expect(jar.has("sid")).toBe(false); expect(jar.has("proto")).toBe(false);
   expect(writeCookie).toHaveBeenLastCalledWith("sid", "", expect.objectContaining({ httpOnly: true, sameSite: "lax", maxAge: 0, secure: false }));
+});
+
+it("loads receipt summaries, invoice rows and receipt detail from Django for a real session", async () => {
+  jar.set("sid", "parent-session");
+  const receiptId = "550e8400-e29b-41d4-a716-446655440000";
+  const summary = { id: receiptId, number: "MLV/2026-27/000001", issuedOn: "2026-10-10", amount: 1500000 };
+  const invoice = { ...summary, method: "upi", status: "paid" as const, href: `/receipts/${receiptId}` };
+  fetcher.mockResolvedValueOnce(response({ ok: true, selectedStudentId: "STU-0587", receipts: [summary], invoices: [invoice] }));
+  expect(await getReceipts("STU-0587")).toEqual([summary]);
+  expect(fetcher.mock.calls[0][0]).toBe("http://localhost:8000/api/receipts?student=STU-0587");
+
+  fetcher.mockResolvedValueOnce(response({ ok: true, invoices: [invoice] }));
+  expect(await getInvoices()).toEqual([invoice]);
+  expect(fetcher.mock.calls[1][0]).toBe("http://localhost:8000/api/receipts");
+
+  const receipt = { ...summary, taxable: 1271186, cgst: 114407, sgst: 114407,
+    student: { code: "STU-0587", name: "Ishita Sharma", batch: "JEE 2027 Evening", centre: "Malviya Nagar" }, method: "upi" };
+  fetcher.mockResolvedValueOnce(response({ ok: true, receipt }));
+  expect(await getReceipt(receiptId)).toEqual(receipt);
+  expect(fetcher.mock.calls[2][0]).toBe(`http://localhost:8000/api/receipt?id=${receiptId}`);
+  expect(fetcher.mock.calls.every(([, options]) => options.headers["X-Internal-Key"] === "test-internal-key")).toBe(true);
 });
 
 it("uses Django identity and children over a forged prototype cookie whenever sid exists", async () => {
