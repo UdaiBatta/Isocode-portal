@@ -4,7 +4,7 @@
 
 - TEST LOCK: Codex 2026-11-06 03:27 IST (T4.1 focused and full checks; then T4.2 integration checks).
 
-- **Codex T4.2 preparation (2026-11-06):** backend/fees/services/refunds.py, backend/fees/services/reminders.py, backend/fees/views/refunds.py, backend/fees/forms.py, backend/fees/urls.py, backend/fees/tests/test_refund.py, lib/data/refund.ts and lib/actions/refund.ts (real-session integration), tests/backend-refund.test.ts, docs/decisions.md, docs/progress.md. Shared claims: lib/data/refund.ts, lib/actions/refund.ts. T4.1 is tested and committed; Codex now holds the test lock for T4.2. No frontend files or fixtures will be edited by Codex.
+- **Codex T4.2 preparation (2026-11-06):** backend/fees/services/refunds.py, backend/fees/services/reminders.py, backend/fees/seed.py (synthetic refund reason must use an allowed choice), backend/fees/views/refunds.py, backend/fees/forms.py, backend/fees/urls.py, backend/fees/tests/test_refund.py, lib/data/refund.ts and lib/actions/refund.ts (real-session integration), tests/backend-refund.test.ts, docs/decisions.md, docs/progress.md. Shared claims: lib/data/refund.ts, lib/actions/refund.ts. T4.1 is tested and committed; Codex now holds the test lock for T4.2. No frontend files or fixtures will be edited by Codex.
 
 
 
