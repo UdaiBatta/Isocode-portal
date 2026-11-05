@@ -2,7 +2,9 @@
 
 ## In progress now
 
-- **Codex T0 follow-up (2026-11-06):** reviewing commits 9c10320, d973bc4, aecf46e and existing five-file diff; then production browser acceptance and centre-scoped student record API. Owned files: backend/fees/views/students.py, backend/fees/urls.py, backend/fees/tests/test_student_record.py, lib/data/ledger.ts (sid branch only), tests/backend-student-record.test.ts, docs/progress.md. Shared claim: lib/data/ledger.ts. The five existing uncommitted files remain unowned pending the human's decision; no package changes authorized yet.
+- TEST LOCK: Codex 2026-11-06 00:00 IST (baseline checks and production browser suite; exact acquisition time follows git commit timestamp).
+
+- **Codex T0 follow-up (2026-11-06):** reviewing commits 9c10320, d973bc4, aecf46e and existing five-file diff; then production browser acceptance and centre-scoped student record API. Owned files: backend/fees/views/students.py, backend/fees/urls.py, backend/fees/tests/test_student_record.py, lib/data/ledger.ts (sid branch only), tests/backend-student-record.test.ts, docs/progress.md. Shared claim: lib/data/ledger.ts. Human authorized adopting and verifying next.config.ts, package.json, package-lock.json, postcss.config.mjs and e2e/parent-dashboard.spec.ts. Shared claims also cover next.config.ts, package.json and package-lock.json.
 
 Read this before editing. Each model lists its task and files here when it starts and clears them when it commits. Do not edit a file the other model has listed; add a note under your own name instead.
 
