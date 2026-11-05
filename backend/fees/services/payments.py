@@ -19,6 +19,12 @@ class CounterPaymentError(Exception):
         self.code = code
 
 
+class UnmatchedPaymentError(Exception):
+    def __init__(self, code, message):
+        super().__init__(message)
+        self.code = code
+
+
 @transaction.atomic
 def allocate_and_issue_receipt(*, student, allocations, method, received_on, event_id=None, note=None, recorded_by=None):
     amount = sum(value for _, value in allocations)
@@ -169,3 +175,91 @@ def record_counter_payment(*, student_code, amount_paise, method, received_on, n
             after={"student_code": student.code, "amount_paise": excess},
         )
     return payment, receipt, excess
+
+
+@transaction.atomic
+def resolve_unmatched_payment(*, unmatched_id, action, instalment_id=None, note="", resolved_by):
+    item = UnmatchedPayment.objects.select_for_update(of=("self",)).select_related(
+        "suggested_instalment__plan__student__batch",
+    ).filter(pk=unmatched_id).first()
+    if not item:
+        raise UnmatchedPaymentError("not_found", "Payment review not found.")
+    if item.status != "open":
+        raise UnmatchedPaymentError("resolved", "This payment was already resolved.")
+    if item.amount_paise <= 0:
+        raise UnmatchedPaymentError("invalid", "This payment amount cannot be resolved.")
+    if action not in {"match", "reject"}:
+        raise UnmatchedPaymentError("invalid", "Choose match or reject.")
+    if action == "reject" and not note.strip():
+        raise UnmatchedPaymentError("note_required", "A rejection reason is required.")
+    if resolved_by.centre_id and item.suggested_instalment_id and \
+            item.suggested_instalment.plan.student.batch.centre_id != resolved_by.centre_id:
+        raise UnmatchedPaymentError("forbidden", "This payment is outside your centre.")
+
+    event = PaymentEvent.objects.select_for_update().filter(event_id=item.event_id).first() if item.event_id else None
+    now = timezone.now()
+    payment = receipt = None
+    if action == "match":
+        if not instalment_id:
+            raise UnmatchedPaymentError("invalid", "Choose a student and instalment.")
+        selected = Instalment.objects.select_related("plan__student").filter(pk=instalment_id).first()
+        if not selected:
+            raise UnmatchedPaymentError("instalment_not_found", "Choose an unpaid instalment.")
+        student = Student.objects.select_for_update(of=("self",)).select_related("batch__centre").filter(
+            pk=selected.plan.student_id, archived_at__isnull=True,
+        ).first()
+        if not student:
+            raise UnmatchedPaymentError("instalment_not_found", "Choose an unpaid instalment.")
+        if resolved_by.centre_id and student.batch.centre_id != resolved_by.centre_id:
+            raise UnmatchedPaymentError("forbidden", "This student is outside your centre.")
+        if student.status != "active":
+            raise UnmatchedPaymentError("withdrawn", "A payment cannot be allocated to a withdrawn student.")
+
+        instalments = list(Instalment.objects.select_for_update(of=("self",)).filter(
+            plan__student=student,
+        ).select_related("plan").order_by("due_date", "seq"))
+        start = next((index for index, row in enumerate(instalments) if row.pk == selected.pk), None)
+        if start is None:
+            raise UnmatchedPaymentError("instalment_not_found", "Choose an unpaid instalment.")
+        balances = dict(InstalmentBalance.objects.filter(
+            pk__in=[row.pk for row in instalments[start:]],
+        ).values_list("pk", "balance_paise"))
+        open_balances = [balances.get(row.pk, 0) for row in instalments[start:]]
+        if open_balances[0] <= 0:
+            raise UnmatchedPaymentError("already_paid", "Choose an unpaid instalment.")
+        amounts, excess = allocate_oldest_first(item.amount_paise, open_balances)
+        if excess:
+            raise UnmatchedPaymentError("excess", "The payment exceeds the remaining balance.")
+        allocations = [(row, amount) for row, amount in zip(instalments[start:], amounts) if amount]
+        method = event.payload.get("method", "bank") if event and isinstance(event.payload, dict) else "bank"
+        if method not in {"gateway", "cash", "cheque", "bank", "upi", "card", "netbanking"}:
+            method = "bank"
+        payment, receipt = allocate_and_issue_receipt(
+            student=student, allocations=allocations, method=method, received_on=item.received_on,
+            event_id=item.event_id, note=note.strip() or None, recorded_by=resolved_by,
+        )
+        item.payment = payment
+        item.status = "matched"
+        item.resolved_by = resolved_by
+        item.resolved_at = now
+        item.resolution_note = note.strip() or None
+        if event:
+            event.result = "allocated"
+            event.payment = payment
+            event.save(update_fields=["result", "payment"])
+    else:
+        item.status = "rejected"
+        item.resolved_by = resolved_by
+        item.resolved_at = now
+        item.resolution_note = note.strip()
+
+    item.save(update_fields=["payment", "status", "resolved_by", "resolved_at", "resolution_note"])
+    AuditLog.objects.create(
+        actor_type="staff", actor_id=resolved_by.pk,
+        action=f"unmatched_payment_{item.status}", entity="unmatched_payment", entity_id=item.pk,
+        after={"amount_paise": item.amount_paise, "note": item.resolution_note,
+               "payment_id": str(payment.pk) if payment else None},
+    )
+    return {"paymentId": str(payment.pk) if payment else None,
+            "receiptId": str(receipt.pk) if receipt else None,
+            "receiptNumber": receipt.number if receipt else None}

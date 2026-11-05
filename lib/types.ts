@@ -84,7 +84,7 @@ export interface AutomationVM {
   unmatched: { id: string; receivedOn: string; amount: number; reference: string | null;
     reason: "unknown_reference" | "amount_mismatch" | "already_paid" | "student_withdrawn" | "excess_counter_payment";
     suggested: { instalmentId: string; studentCode: string; studentName: string } | null;
-    status: "open" | "matched" | "rejected" }[];
+    status: "open" | "matched" | "rejected"; resolvedBy: string | null }[];
 }
 
 export interface ReminderRow {

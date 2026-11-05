@@ -97,3 +97,17 @@ class PaymentWebhookForm(forms.Form):
 
     def clean_reference(self):
         return self.cleaned_data["reference"] or None
+
+class ResolveUnmatchedForm(forms.Form):
+    id = forms.UUIDField()
+    action = forms.ChoiceField(choices=[("match", "Match"), ("reject", "Reject")])
+    instalmentId = forms.UUIDField(required=False)
+    note = forms.CharField(required=False, max_length=300)
+
+    def clean(self):
+        data = super().clean()
+        if data.get("action") == "match" and not data.get("instalmentId"):
+            self.add_error("instalmentId", "Choose a student and instalment.")
+        if data.get("action") == "reject" and not data.get("note"):
+            self.add_error("note", "A rejection reason is required.")
+        return data

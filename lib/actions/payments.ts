@@ -113,6 +113,18 @@ export async function recordCounterPayment(input: unknown) {
 }
 
 export async function resolveUnmatched(input: unknown) {
+  if ((await cookies()).get("sid")?.value) {
+    const parsed = z.object({
+      id: z.string().uuid(), action: z.enum(["match", "reject"]),
+      instalmentId: z.string().uuid().optional(), note: z.string().max(300).default(""),
+    }).safeParse(input);
+    if (!parsed.success) return { ok: false as const, code: "invalid", message: "Check the payment review details." };
+    if (parsed.data.action === "match" && !parsed.data.instalmentId) return { ok: false as const, code: "invalid", message: "Choose a student and instalment." };
+    if (parsed.data.action === "reject" && !parsed.data.note.trim()) return { ok: false as const, code: "note_required", message: "A rejection reason is required." };
+    const response = await backendResponse("resolve_unmatched", parsed.data);
+    if (response.status === 401) redirect("/staff/login");
+    return backendResult<{ paymentId: string | null; receiptId: string | null; receiptNumber: string | null }>(response);
+  }
   return mutateProto("accounts", async (state) => {
     const value = z.object({ id: z.string().max(30), action: z.enum(["match", "reject"]), instalmentId: z.string().regex(/^STU-\d{4}-[1-4]$/).optional(), note: z.string().trim().max(300).default("") }).parse(input);
     const item = queueFor(state).find((row) => row.id === value.id);

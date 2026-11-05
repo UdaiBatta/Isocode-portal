@@ -112,6 +112,7 @@ export function queueFor(state: ProtoState): AutomationVM["unmatched"] {
     id: item.id, amount: item.amount, receivedOn: "on" in item ? item.on : "2026-11-02", reference: item.instalmentId ?? `DEMO-${item.id}`, reason: item.reason,
     suggested: item.instalmentId ? { instalmentId: item.instalmentId, studentCode: item.instalmentId.slice(0, 8), studentName: studentFor(item.instalmentId.slice(0, 8)).name } : null,
     status: state.resolved?.[item.id]?.action === "match" ? "matched" : state.resolved?.[item.id]?.action === "reject" ? "rejected" : "open",
+    resolvedBy: state.resolved?.[item.id] ? "Demo accounts executive" : null,
   }));
 }
 
