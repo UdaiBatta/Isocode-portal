@@ -86,3 +86,14 @@ The default @api(role="parent") gate returns 403 consent_required until every no
 Not now is persisted only in Django's database-backed session. It does not set Consent.withdrawn_at or alter existing child consent rows; explicit withdrawal is T6.4. Fresh verified OTP sign-in clears the declined marker and can show the agreement again, matching the existing Logout-only declined screen. These are operational choices for the TDD, with no new schema or client fact.
 
 Focused consent/access tests (15) and frontend auth-boundary tests (11) pass. npm run check passes 39 frontend and 52 backend tests, TypeScript, Ruff and Django checks, with eight existing frontend lint warnings. Production browser acceptance and the old e2e credential setup migration remain Phase 1 exit work. No seed, deployment or push was performed.
+
+
+## 2026-11-05 — Phase 1 production-browser acceptance
+
+Applied the frontend-testing/debugging skill. Browser plugin not available; use the existing Playwright production-server workflow at http://127.0.0.1:3001, with Django on port 8000. The flow is real parent OTP to consent/dues, real accounts/counsellor sign-in, and public payment with stale sid. One real mobile UI OTP runs per suite; layout coverage remains at both widths. Existing consent is accepted on repeat runs; a missing consent must redirect direct /dues to /consent before agreement. There is no test DB cleanup/reset or reseed. Phase 0 payment UI cases use explicit no-sid fixtures, keeping their money simulated and their consent state separate from real authentication acceptance.
+
+Playwright loads local environment values with the already-installed @next/env; staff credentials never appear in tracked files or output. Auth specs disable tracing so password/OTP entry is not recorded in traces. Browser credentials are read only from the loaded environment. One worker keeps stateful local UI checks stable and limits duplicate OTP requests.
+
+The local production build uses `.next-e2e`, so test builds do not overwrite the development build on port 3000. The complete suite passes at mobile and desktop widths: 237 passed, 3 skipped, 0 failed. The family-isolation test initially failed because its strict text locator matched two visible copies of the child's name in the shell. The test now selects the first visible match; the focused test passed at both widths and the full rerun passed. `npm run check` passes 39 frontend and 52 Django tests, TypeScript, Ruff and Django checks, with eight existing lint warnings.
+
+The production staff export previously requested a ledger per student, causing repeated authentication requests. It now reads one authenticated, centre-scoped directory and one preview snapshot before calculating the rows. The prototype language action also updates the fixture language used by Student info after Django accepts the change. No seed reset or deployment was performed.

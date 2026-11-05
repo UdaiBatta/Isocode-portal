@@ -86,6 +86,7 @@ test("counter date validation, bank method, excess queue and receipt link work",
   await modal.getByRole("button", { name: "Save payment", exact: true }).click();
   await expect(modal).not.toBeVisible();
   await expect(page.getByText("₹5,000 sent to the unmatched queue.", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Funds", exact: true }).click();
   await page.getByRole("link", { name: "View receipt", exact: true }).filter({ visible: true }).first().click();
   await expect(page.getByRole("heading", { name: "Fee receipt", exact: true })).toBeVisible();
 });

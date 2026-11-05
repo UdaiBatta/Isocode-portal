@@ -61,7 +61,14 @@ export async function staffLogin(input: unknown) {
 
 export async function setLanguage(input: unknown) {
   const result = await authAction<{ language: "hi" | "en" }>("set_language", input);
-  if (result.ok) (await cookies()).set("lang", result.language, { sameSite: "lax", path: "/", maxAge: 31536000, secure: process.env.APP_URL?.startsWith("https://") ?? false });
+  if (result.ok) {
+    const jar = await cookies();
+    jar.set("lang", result.language, { sameSite: "lax", path: "/", maxAge: 31536000, secure: process.env.APP_URL?.startsWith("https://") ?? false });
+    if (process.env.NEXT_PUBLIC_PROTO === "1" && jar.get("proto")) await mutateProto(null, (state) => {
+      if (state.role === "parent" && state.phone) (state.languages ??= {})[state.phone] = result.language;
+      return {};
+    });
+  }
   return result;
 }
 

@@ -3,19 +3,14 @@ import { expect, test } from "@playwright/test";
 import { t } from "../lib/i18n";
 import type { Language } from "../lib/types";
 
-for (const language of ["hi", "en"] as Language[]) test(`parent signs in, pays and prints a GST receipt in ${language}`, async ({ page, context }) => {
+for (const language of ["hi", "en"] as Language[]) test(`fixture parent pays and prints a GST receipt in ${language}`, async ({ page, context }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await context.addCookies([{ name: "lang", value: language, url: "http://127.0.0.1:3001" }]);
-  await page.goto("/login");
-  await page.getByRole("textbox", { name: t(language, "login.phone") }).fill("9000000587");
-  await page.getByRole("button", { name: t(language, "login.sendCode"), exact: true }).click();
-  await page.getByRole("textbox", { name: t(language, "login.digit", { n: 1, total: 6 }), exact: true }).fill("123456");
-  await expect(page).toHaveURL(/\/consent/);
-  await page.getByText(t(language, "consent.check", { student: "Ishita Sharma" }), { exact: true }).click();
-  await expect(page.getByRole("checkbox")).toBeChecked();
-  await page.getByRole("button", { name: t(language, "consent.agree"), exact: true }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await context.addCookies([
+    { name: "lang", value: language, url: "http://127.0.0.1:3001" },
+    { name: "proto", value: encodeURIComponent(JSON.stringify({ role: "parent", phone: "+919000000587", consent: true })), url: "http://127.0.0.1:3001" },
+  ]);
+  await page.goto("/dashboard");
   await page.getByRole("link", { name: t(language, "dues.pay", { amount: "₹15,000" }), exact: true }).click();
   await expect(page.getByRole("note")).toHaveText(t(language, "pay.testMode"));
   await page.getByRole("button", { name: t(language, "pay.button", { amount: "₹15,000" }), exact: true }).click();
@@ -59,8 +54,11 @@ test("failed and wrong-amount attempts do not create a paid result or receipt", 
   await expect(page.getByRole("link", { name: /^Pay/ })).toHaveCount(0);
 });
 
-test("public payment is minimal, result URLs cannot fake success, receipts require sign-in", async ({ page, context }) => {
-  await context.addCookies([{ name: "lang", value: "en", url: "http://127.0.0.1:3001" }]);
+test("public payment survives stale sid, result URLs cannot fake success, receipts require sign-in", async ({ page, context }) => {
+  await context.addCookies([
+    { name: "lang", value: "en", url: "http://127.0.0.1:3001" },
+    { name: "sid", value: "expired-session", url: "http://127.0.0.1:3001" },
+  ]);
   await page.goto("/pay/STU-0587-3");
   await expect(page.getByRole("heading", { name: "Fee payment for Ishita", exact: true })).toBeVisible();
   await expect(page.getByText("Ishita Sharma", { exact: true })).toHaveCount(0);
@@ -69,6 +67,8 @@ test("public payment is minimal, result URLs cannot fake success, receipts requi
   await expect(page.getByRole("link", { name: "View receipt", exact: true })).toHaveAttribute("href", /\/login\?next=/);
   await page.getByRole("link", { name: "View receipt", exact: true }).click();
   await expect(page).toHaveURL(/\/login\?next=/);
+  await page.goto("/receipts/demo-receipt-1");
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
   await page.goto("/pay/STU-0587-3/result?e=paid");
   await expect(page.getByText("Your payment is being processed. Please check again shortly.", { exact: true })).toBeVisible();
   await page.goto("/pay/not-a-token");

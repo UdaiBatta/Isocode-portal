@@ -1,7 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test("parent sign-in, wrong code, consent choices and language controls work", async ({ page, context }) => {
+test.use({ trace: "off" });
+
+test("real parent OTP and consent permit dues access", async ({ page, context }, info) => {
+  test.skip(info.project.name !== "mobile", "One real UI OTP per suite; layout coverage still runs at both widths.");
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/login");
@@ -13,20 +16,37 @@ test("parent sign-in, wrong code, consent choices and language controls work", a
   await page.getByRole("textbox", { name: "Mobile number" }).fill("9000000587");
   await page.getByRole("button", { name: "Send code", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Enter the 6-digit code" })).toBeVisible();
+  const demo = page.getByText(/^Demo code: [0-9]{6}$/);
+  await expect(demo).toBeVisible();
+  const code = (await demo.innerText()).match(/[0-9]{6}/)?.[0];
+  if (!code) throw new Error("The demo OTP was not displayed.");
   await expect(page.getByRole("button", { name: /New code in/ })).toBeDisabled();
-  await page.getByRole("textbox", { name: "Digit 1 of 6", exact: true }).fill("000000");
+  await page.getByRole("textbox", { name: "Digit 1 of 6", exact: true }).fill(code === "000000" ? "000001" : "000000");
   await expect(page.getByRole("main").getByRole("alert")).toHaveText("That code is wrong. Try again.");
-  await page.getByRole("textbox", { name: "Digit 1 of 6", exact: true }).fill("123456");
-  await expect(page).toHaveURL(/\/consent/);
-  await expect(page.getByRole("button", { name: "Agree and continue" })).toBeDisabled();
-  await page.getByRole("button", { name: "Not now", exact: true }).click();
-  await expect(page.getByText(/We can't show details without your permission/)).toBeVisible();
-  await page.getByRole("button", { name: "Log out", exact: true }).click();
-  await expect(page).toHaveURL(/\/login$/);
-  await page.getByRole("link", { name: "Staff sign-in", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Staff sign-in" })).toBeVisible();
+  await page.getByRole("textbox", { name: "Digit 1 of 6", exact: true }).fill(code).catch(() => {
+    throw new Error("Could not enter the displayed demo code.");
+  });
+  await expect(page).toHaveURL(/\/(consent|dashboard)(?:\?|$)/);
+  const sid = (await context.cookies()).find((cookie) => cookie.name === "sid");
+  expect(Boolean(sid)).toBe(true);
+  expect(sid?.httpOnly).toBe(true);
+  expect(sid?.sameSite).toBe("Lax");
+  expect(sid?.secure).toBe(false);
+  if (new URL(page.url()).pathname === "/consent") {
+    await page.goto("/dues");
+    await expect(page).toHaveURL(/\/consent(?:\?|$)/);
+    await expect(page.getByRole("button", { name: "Agree and continue" })).toBeDisabled();
+    const consent = page.getByRole("checkbox");
+    await page.getByText("I am the parent or guardian of Ishita Sharma and I agree", { exact: true }).click();
+    await expect(consent).toBeChecked();
+    await page.getByRole("button", { name: "Agree and continue", exact: true }).click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+  }
+  await page.goto("/dues");
+  await expect(page.getByRole("link", { name: "Pay ₹15,000", exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("link", { name: "Pay ₹15,000", exact: true })).toBeVisible();
   expect(errors).toEqual([]);
-  await context.clearCookies();
 });
 
 for (const language of ["hi", "en"]) test(`sign-in fits and is accessible in ${language}`, async ({ page, context }) => {

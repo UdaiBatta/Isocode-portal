@@ -1,12 +1,24 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+test.use({ trace: "off" });
+
+async function staffSignIn(page: Page, email: string) {
+  const password = process.env.SEED_DEMO_PASSWORD;
+  if (!password) throw new Error("SEED_DEMO_PASSWORD is required for staff acceptance.");
+  await page.goto("/staff/login");
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
+  await page.getByRole("textbox", { name: "Password", exact: true }).fill(password).catch(() => {
+    throw new Error("Could not enter the staff credential.");
+  });
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+}
 
 test("staff dashboard groups, searches, exports and provides phone navigation", async ({ page }, info) => {
-  await page.goto("/staff/login");
-  await page.getByRole("textbox", { name: "Email", exact: true }).fill("accounts@demo.test");
-  await page.getByRole("textbox", { name: "Password", exact: true }).fill("prototype");
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await staffSignIn(page, "accounts@demo.test");
   await expect(page).toHaveURL(/\/staff\/dashboard$/);
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Dues dashboard" })).toBeVisible();
   await page.getByRole("radio", { name: "By batch", exact: true }).click();
   await expect(page).toHaveURL(/group=batch/);
   await expect(page.getByRole("heading", { name: "Dues dashboard" })).toBeVisible();
@@ -23,4 +35,11 @@ test("staff dashboard groups, searches, exports and provides phone navigation", 
     await expect(page.getByRole("dialog", { name: "Workspace navigation" })).toBeVisible();
     await page.getByRole("button", { name: "Close", exact: true }).click();
   }
+});
+
+test("counsellor signs in to the call workspace and keeps the session on refresh", async ({ page }) => {
+  await staffSignIn(page, "counsellor@demo.test");
+  await expect(page).toHaveURL(/\/counsellor\/tasks$/);
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Counsellor calls", exact: true })).toBeVisible();
 });
