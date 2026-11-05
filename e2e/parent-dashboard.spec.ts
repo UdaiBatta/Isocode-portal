@@ -8,16 +8,25 @@ async function signIn(context: BrowserContext, phone: string, language: "en" | "
   ]);
 }
 
+async function waitForParentPage(page: Page) {
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator("main [aria-busy=\"true\"]")).toHaveCount(0);
+}
+
 // On phones the less-used pages sit behind More; on desktop every page is in the left sidebar.
 async function openFromNav(page: Page, href: string) {
+  await waitForParentPage(page);
   const link = page.locator(`nav a[href="${href}"]:visible`);
   if (!await link.count()) await page.locator("nav.fixed summary").click();
   await link.click();
+  await waitForParentPage(page);
 }
 
 for (const language of ["en", "hi"] as const) test(`every page opens from the navigation without sideways scroll in ${language}`, async ({ page, context }) => {
   await signIn(context, "+919000000587", language);
   await page.goto("/dashboard");
+  await expect(page.getByText("₹15,000", { exact: true })).toBeVisible();
+  await waitForParentPage(page);
   for (const path of ["/dues", "/receipts", "/progress", "/course", "/student", "/settings", "/dashboard"]) {
     await openFromNav(page, path);
     await expect(page).toHaveURL(new RegExp(`${path}$`));
@@ -30,6 +39,8 @@ for (const language of ["en", "hi"] as const) test(`every page opens from the na
 for (const [language, amountDate, pay] of [["en", "Was due 10 Oct", "Pay ₹15,000"], ["hi", "अंतिम तिथि 10 अक्टूबर थी", "₹15,000 का भुगतान करें"]] as const) for (const path of ["/dashboard", "/dues"]) test(`${path} shows amount, date and Pay in the first view in ${language}`, async ({ page, context }) => {
   await signIn(context, "+919000000587", language);
   await page.goto(path);
+  await expect(page.getByText("₹15,000", { exact: true })).toBeVisible();
+  await waitForParentPage(page);
   const viewport = page.viewportSize()!;
   const bar = await page.locator("nav.fixed").boundingBox();
   const fold = bar ? bar.y : viewport.height;

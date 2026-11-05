@@ -2,15 +2,17 @@
 
 ## In progress now
 
-- TEST LOCK: Codex 2026-11-06 00:00 IST (baseline checks and production browser suite; exact acquisition time follows git commit timestamp).
+- TEST LOCK: Codex 2026-11-06 01:37 IST (production browser suite; baseline check passed).
 
-- **Codex T0 follow-up (2026-11-06):** reviewing commits 9c10320, d973bc4, aecf46e and existing five-file diff; then production browser acceptance and centre-scoped student record API. Owned files: backend/fees/views/students.py, backend/fees/urls.py, backend/fees/tests/test_student_record.py, lib/data/ledger.ts (sid branch only), tests/backend-student-record.test.ts, docs/progress.md. Shared claim: lib/data/ledger.ts. Human authorized adopting and verifying next.config.ts, package.json, package-lock.json, postcss.config.mjs and e2e/parent-dashboard.spec.ts. Shared claims also cover next.config.ts, package.json and package-lock.json.
+- **Codex T0 follow-up (2026-11-06):** reviewing commits 9c10320, d973bc4, aecf46e and existing five-file diff; then production browser acceptance and centre-scoped student record API. Owned files: backend/fees/views/students.py, backend/fees/urls.py, backend/fees/tests/test_student_record.py, lib/data/ledger.ts (sid branch only), tests/backend-student-record.test.ts, docs/progress.md. Shared claim: lib/data/ledger.ts. Five-file CSS build repair verified and committed separately; shared claim remains lib/data/ledger.ts.
 
 Read this before editing. Each model lists its task and files here when it starts and clears them when it commits. Do not edit a file the other model has listed; add a note under your own name instead.
 
 - **Waiting on backend (human decision, 2026-11-05):** an Admin role and Manage section to add, edit, archive and delete students, batches, courses, centres and staff accounts, with a change history. Rules: delete only a record with no payments or receipts, otherwise archive; a batch with students must be emptied first; leaving mid-course still goes through the refund flow; fees and discounts change only while unpaid and need a reason; payments and receipts are never edited, only corrected by a recorded entry. Courses are managed as part of batches unless the human asks otherwise. This goes beyond the brief's roles, so label it as an assumption in the TDD. **For Codex:** build the backend first, using `audit_log` for the history; Claude then builds the screens.
 
 ## Log
+
+- 2026-11-06 — T2.4 CSS build follow-up (Codex, human-authorized adoption): replaced the custom Tailwind Turbopack loader with PostCSS and retained the parent-navigation loading waits. Standard Turbopack production build passes with NEXT_DIST_DIR=.next-e2e; npm run check passes (50 frontend, 93 Django tests; eight existing lint warnings). The five adopted files are committed as their own change. Full production browser sweep and the three Claude commit reviews remain in T0 follow-up. No push or deployment.
 
 - 2026-11-05 — Staff student record committed (Claude). `npm run check` passes (50 frontend and 93 Django tests, eight existing lint warnings); the student-record and parent-progress browser specs pass on a production build, 19 passed and 1 skipped. Opened with a real accounts sign-in: Dues and Funds come through the real ledger path. **For Codex:** Academic and Personal still read sample data on real sessions, so `getStudentRecord` needs the Django view noted below. **Not reviewed by Codex; full browser suite not run.** `next.config.ts`, `package.json`, `package-lock.json`, `postcss.config.mjs` and `e2e/parent-dashboard.spec.ts` are not part of this commit and remain uncommitted.
 
