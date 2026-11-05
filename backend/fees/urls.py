@@ -1,6 +1,6 @@
 from django.urls import path
 
-from fees.views import auth, consent
+from fees.views import auth, consent, dues
 
 urlpatterns = [
     path("request_otp", auth.request_otp),
@@ -11,4 +11,5 @@ urlpatterns = [
     path("me", auth.me),
     path("grant_consent", consent.grant_consent),
     path("decline_consent", consent.decline_consent),
+    path("dues", dues.dues),
 ]

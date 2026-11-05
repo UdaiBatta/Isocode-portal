@@ -41,3 +41,7 @@ class GrantConsentForm(LanguageForm):
         elif len(set(values)) != len(values):
             self.add_error("studentIds", "Each child can be selected once.")
         return data
+
+
+class DuesQueryForm(forms.Form):
+    student = forms.CharField(required=False, max_length=32)

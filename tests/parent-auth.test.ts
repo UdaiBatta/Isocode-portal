@@ -75,6 +75,7 @@ it("renders login context signed out for stale sid while protected reads still r
   fetcher.mockImplementation(async () => response({ ok: false, code: "unauthenticated", message: "Sign in." }, 401));
   expect(await getParentPageContext()).toMatchObject({ role: null, phone: null, consent: false, children: [], today: "2026-11-02" });
   await expect(readProto()).rejects.toThrow("redirect:/login");
+  await expect(getDues()).rejects.toThrow("redirect:/login");
   await expect(getStaffPageContext()).rejects.toThrow("redirect:/staff/login");
   fetcher.mockResolvedValueOnce(response({ ok: false, code: "consent_required", message: "Consent required." }, 403));
   await expect(backend("dues")).rejects.toThrow("redirect:/consent");
@@ -105,9 +106,11 @@ it("gates real-session fee and progress reads until saved consent while payment 
   jar.set("sid", "parent-session");
   let consented = false;
   let declined = false;
+  const dues = { children: [{ studentId: "STU-0587", fullName: "Ishita Sharma" }], selectedStudentId: "STU-0587", mode: "pay", current: { id: "installment", seq: 3, dueDate: "2026-10-10", amount: 3000000, paid: 1500000, balance: 1500000, status: "overdue", partPaid: true, daysOverdue: 23, dueInDays: 0, payUrl: "/mock-gateway/installment" }, next: { amount: 1500000, dueDate: "2026-10-10" }, moreUnpaid: 0, instalments: [], refund: null };
   fetcher.mockImplementation(async (url: string) => {
     if (url.endsWith("/grant_consent")) { consented = true; return response({ ok: true, next: "/dashboard" }); }
     if (url.endsWith("/decline_consent")) { consented = false; declined = true; return response({ ok: true }); }
+    if (url.includes("/dues")) return consented && !declined ? response({ ok: true, ...dues }) : response({ ok: false, code: "consent_required", message: "Consent required." }, 403);
     return response({ ok: true, role: "parent", phone, centreId: null, consent: consented, declined, children: [{ id: "STU-0587", name: "Ishita Sharma" }] });
   });
   expect(await getParentPageContext()).toMatchObject({ role: "parent", consent: false });
@@ -116,6 +119,8 @@ it("gates real-session fee and progress reads until saved consent while payment 
   expect(await getPayDetails("STU-0587-3")).toMatchObject({ firstName: "Ishita", amount: 1500000 });
   expect(await grantConsent({ studentIds: ["STU-0587"], wordingVersion: "v1" })).toMatchObject({ ok: true });
   expect((await getDues()).current?.balance).toBe(1500000);
+  expect((await getDues("STU-0587")).selectedStudentId).toBe("STU-0587");
+  expect(fetcher.mock.calls.find(([url]) => url === "http://localhost:8000/api/dues?student=STU-0587")).toBeTruthy();
   expect((await getProgress()).tests.length).toBeGreaterThan(0);
   await declineConsent();
   expect(await getParentPageContext()).toMatchObject({ consent: false, declined: true });

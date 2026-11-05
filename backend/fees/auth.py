@@ -59,12 +59,15 @@ def api(*, role, form=None, methods=("POST",), consent=True):
                 if role == "parent" and consent and (request.session.get("consent_declined", False) or not has_parent_consent(request.subject)):
                     return error("consent_required", "Parental consent is required.", 403)
             if form is not None:
-                try:
-                    data = json.loads(request.body)
-                except (ValueError, UnicodeDecodeError):
-                    return error("invalid", "A JSON object is required.")
-                if not isinstance(data, dict):
-                    return error("invalid", "A JSON object is required.")
+                if request.method == "GET":
+                    data = request.GET
+                else:
+                    try:
+                        data = json.loads(request.body)
+                    except (ValueError, UnicodeDecodeError):
+                        return error("invalid", "A JSON object is required.")
+                    if not isinstance(data, dict):
+                        return error("invalid", "A JSON object is required.")
                 validated = form(data)
                 if not validated.is_valid():
                     return error("invalid", "Check the entered values.")
