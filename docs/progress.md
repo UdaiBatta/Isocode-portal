@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T4.1 (2026-11-06):** pure refund calculation and the eleven B8.5 rows. Files: backend/fees/domain/refund.py, backend/fees/tests/test_domain_refund.py, docs/progress.md. Phase 3 frontend proof remains open. Codex attempted the existing Claude handoff after releasing the lock; T3 rejected it with runtime_mode_escalation_denied because the frontend thread is full-access and this thread is auto. Human must resume that existing thread or align its runtime; no replacement agent was started.
+
 - TEST LOCK: Claude 2026-11-06 02:58 IST (npm run check, then manage and parent-login browser specs on a production build).
 
 
