@@ -11,10 +11,10 @@ const id = z.string().regex(/^[A-Za-z0-9-]{2,20}$/);
 const name = z.string().trim().min(2).max(80);
 const reason = z.string().trim().min(5).max(200);
 
-function record(state: ProtoState, change: Omit<AdminChange, "id" | "at">) {
+async function record(state: ProtoState, change: Omit<AdminChange, "id" | "at">) {
   // shortcut: the prototype keeps 8 changes in its 3.8KB cookie. LIMIT: Django's audit_log has no cap.
   if ((state.admin?.length ?? 0) >= 8) fail("demo_full", "Reset the demo before recording more changes.");
-  (state.admin ??= []).push({ ...change, id: `chg-${nowMs().toString(36)}`, at: new Date(nowMs()).toISOString() });
+  (state.admin ??= []).push({ ...change, id: `chg-${nowMs().toString(36)}`, at: `${await today()}T${new Date(nowMs()).toISOString().slice(11)}` });
   return { id: change.entityId };
 }
 
@@ -33,7 +33,7 @@ export async function saveCentre(input: unknown) {
     if (value.id && !current?.actions.canEdit) fail("not_found", "Centre not found or archived.");
     if (current && current.code !== value.code) fail("code_locked", "A centre code cannot change because receipt numbers use it.");
     if (!current && centres.some((row) => row.code === value.code)) fail("duplicate", "Another centre already uses this code.");
-    return record(state, { entity: "centre", entityId: current?.id ?? value.code, action: current ? "update" : "create", patch: current ? { name: value.name } : { code: value.code, name: value.name } });
+    return await record(state, { entity: "centre", entityId: current?.id ?? value.code, action: current ? "update" : "create", patch: current ? { name: value.name } : { code: value.code, name: value.name } });
   });
 }
 
@@ -47,7 +47,7 @@ export async function saveBatch(input: unknown) {
     if (value.sessionEnd <= value.sessionStart) fail("invalid_dates", "The session must end after it starts.");
     if (current && current.students && current.centreId !== value.centreId) fail("has_students", "Move the students out before changing the centre.");
     const patch = { name: value.name, centreId: value.centreId, stream: value.stream, sessionStart: value.sessionStart, sessionEnd: value.sessionEnd };
-    return record(state, { entity: "batch", entityId: current?.id ?? `B-${world.batches.length + 1}`, action: current ? "update" : "create", patch });
+    return await record(state, { entity: "batch", entityId: current?.id ?? `B-${world.batches.length + 1}`, action: current ? "update" : "create", patch });
   });
 }
 
@@ -62,7 +62,7 @@ export async function saveStaff(input: unknown) {
     if (staff.some((row) => row.email.toLowerCase() === value.email.toLowerCase() && row.id !== current?.id)) fail("duplicate", "Another account already uses this email.");
     if (current?.id === PROTO_ADMIN.id && value.role !== "admin") fail("self", "You cannot change your own role.");
     // The password is checked and dropped: the prototype never stores one.
-    return record(state, { entity: "staff", entityId: current?.id ?? `STF-${String(world.staff.length + 1).padStart(2, "0")}`, action: current ? "update" : "create",
+    return await record(state, { entity: "staff", entityId: current?.id ?? `STF-${String(world.staff.length + 1).padStart(2, "0")}`, action: current ? "update" : "create",
       patch: { fullName: value.fullName, email: value.email, role: value.role, centreId: value.centreId } });
   });
 }
@@ -77,13 +77,13 @@ export async function saveStudent(input: unknown) {
     if (!batches.some((row) => row.id === value.batchId && row.state === "active")) fail("invalid_batch", "Choose an active batch.");
     if (value.enrolledOn > await today()) fail("invalid_date", "The enrolment date cannot be in the future.");
     const patch: AdminChange["patch"] = { name: value.fullName, batchId: value.batchId, enrolledOn: value.enrolledOn, guardianName: value.guardianName, guardianPhone: value.guardianPhone, guardianLanguage: value.guardianLanguage };
-    if (current) return record(state, { entity: "student", entityId: current.id, action: "update", patch });
+    if (current) return await record(state, { entity: "student", entityId: current.id, action: "update", patch });
     const discount = value.discount ?? 0;
     if (!value.gross) fail("fee_required", "Enter the course fee.");
     if (discount >= value.gross) fail("invalid_fee", "The discount must be less than the fee.");
     if (discount && !value.discountReason) fail("reason_required", "Give a reason for the discount.");
     const code = `STU-${Math.max(...world.students.map((row) => Number(String(row.code).slice(4)))) + 1}`;
-    return record(state, { entity: "student", entityId: code, action: "create", patch: { ...patch, code, gross: value.gross, discount, discountReason: value.discountReason ?? null } });
+    return await record(state, { entity: "student", entityId: code, action: "create", patch: { ...patch, code, gross: value.gross, discount, discountReason: value.discountReason ?? null } });
   });
 }
 
@@ -97,7 +97,7 @@ export async function changeFee(input: unknown) {
     if (value.discount >= value.gross) fail("invalid_fee", "The discount must be less than the fee.");
     if (value.gross - value.discount < student.fee.paid) fail("below_paid", "The new fee cannot be less than what is already paid.");
     if (value.gross === student.fee.gross && value.discount === student.fee.discount) fail("unchanged", "Change the fee or the discount first.");
-    return record(state, { entity: "student", entityId: student.id, action: "fee", reason: value.reason, patch: { gross: value.gross, discount: value.discount, discountReason: value.discount ? value.reason : null } });
+    return await record(state, { entity: "student", entityId: student.id, action: "fee", reason: value.reason, patch: { gross: value.gross, discount: value.discount, discountReason: value.discount ? value.reason : null } });
   });
 }
 
@@ -111,7 +111,7 @@ async function lifecycle(input: unknown, action: "archive" | "restore" | "delete
     const row = lists[value.entity].find((item) => item.id === value.id);
     if (!row) fail("not_found", "Record not found.");
     if (!row.actions[allowed]) fail("blocked", row.actions.blockedReason ?? "This record cannot change now.");
-    return record(state, { entity: value.entity, entityId: value.id, action, patch: {} });
+    return await record(state, { entity: value.entity, entityId: value.id, action, patch: {} });
   });
 }
 
