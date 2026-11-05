@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- TEST LOCK: Claude 2026-11-06 02:58 IST (npm run check, then manage and parent-login browser specs on a production build).
+
 
 - **Codex T3.4 backend ready (2026-11-06):** date/run/reset endpoints, sid adapters and backend clock are committed; shared files released. Backend replay, scope, rollback and preservation checks pass. Phase 3 exit remains open for the real-session browser proof, corrected reset confirmation from Claude. The human approved the scoped named-example reset for the replay on 2026-11-06. The approved real-session backend API replay passed; the application is restored to 2026-11-02. Codex released the test lock to Claude for frontend checks and the real-session browser proof.
 
