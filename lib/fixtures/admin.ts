@@ -90,10 +90,14 @@ export function batchVMs(world: ManageWorld): AdminBatchVM[] {
     const current = own.filter((student) => student.state === "active").length;
     const active = row.state === "active";
     const centre = world.centres.find((item) => item.id === row.centreId);
+    const restorable = centre?.state === "active";
+    // Archived students still belong to the batch, so they block archiving it too (board rule: empty the batch first).
     return { id: row.id, name: String(row.name), centreId: String(row.centreId), centre: String(centre?.name ?? row.centreId), stream: row.stream as "JEE" | "NEET",
       sessionStart: String(row.sessionStart), sessionEnd: String(row.sessionEnd), state: row.state, students: current,
-      actions: allow({ canEdit: active, canArchive: active && current === 0, canRestore: !active && centre?.state === "active", canDelete: own.length === 0,
-        blockedReason: current ? `Move its ${plural(current, "student")} to another batch first.` : own.length ? "Archived students keep this batch, so it can be archived but not deleted." : null }) };
+      actions: allow({ canEdit: active, canArchive: active && own.length === 0, canRestore: !active && restorable, canDelete: own.length === 0,
+        blockedReason: current ? `Move its ${plural(current, "student")} to another batch first.`
+          : active && own.length ? `${plural(own.length, "archived student")} still ${own.length === 1 ? "belongs" : "belong"} to this batch. Restore and move them first.`
+          : !active && !restorable ? "Restore its centre first." : null }) };
   });
 }
 
@@ -104,8 +108,8 @@ export function staffVMs(world: ManageWorld): AdminStaffVM[] {
     const centre = world.centres.find((item) => item.id === row.centreId);
     return { id: row.id, fullName: String(row.fullName), email: String(row.email), role: row.role as AdminStaffVM["role"], centreId: row.centreId === null ? null : String(row.centreId),
       centre: centre ? String(centre.name) : null, state: row.state,
-      actions: allow({ canEdit: active, canArchive: active && !self, canRestore: !active, canDelete: !self && !staffWithActivity.has(row.id),
-        blockedReason: self ? "You cannot archive or delete your own account." : staffWithActivity.has(row.id) ? "Has recorded payments or reviews, so it can be archived but not deleted." : null }) };
+      actions: allow({ canEdit: active, canArchive: active && !self, canRestore: !active && (row.centreId === null || centre?.state === "active"), canDelete: !self && !staffWithActivity.has(row.id),
+        blockedReason: self ? "You cannot archive or delete your own account." : !active && row.centreId !== null && centre?.state !== "active" ? "Restore its centre first." : staffWithActivity.has(row.id) ? "Has recorded payments or reviews, so it can be archived but not deleted." : null }) };
   });
 }
 
@@ -126,8 +130,9 @@ export function studentVMs(world: ManageWorld, state: ProtoState, today: string)
       guardian: { name: String(row.guardianName), phone: String(row.guardianPhone), language: row.guardianLanguage === "hi" ? "hi" : "en" },
       fee: { gross: Number(row.gross), discount: Number(row.discount), discountReason: row.discountReason === null ? null : String(row.discountReason), net, paid,
         editable: active && !settled, lockedReason: status === "withdrawn" ? "Withdrawn. Fee changes go through the refund." : settled ? "Fully paid. Payments are never edited." : null },
-      actions: allow({ canEdit: active, canArchive: active && settled, canRestore: !active, canDelete: !hasPayments,
-        blockedReason: active && !settled ? "Still studying with a balance. Withdraw through the refund flow first." : hasPayments ? "Has payments or receipts, so it can be archived but not deleted." : null }) };
+      actions: allow({ canEdit: active, canArchive: active && settled, canRestore: !active && batch?.state === "active" && centre?.state === "active", canDelete: !hasPayments,
+        blockedReason: active && !settled ? "Still studying with a balance. Withdraw through the refund flow first."
+          : !active && (batch?.state !== "active" || centre?.state !== "active") ? "Restore its batch and centre first." : hasPayments ? "Has payments or receipts, so it can be archived but not deleted." : null }) };
   });
 }
 

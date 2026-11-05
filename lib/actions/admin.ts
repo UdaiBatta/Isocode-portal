@@ -47,7 +47,7 @@ export async function saveBatch(input: unknown) {
     if (!value.name.startsWith(`${value.stream} `)) fail("invalid_name", "The batch name must start with its exam.");
     if (batches.some((row) => row.id !== current?.id && row.centreId === value.centreId && row.name === value.name && row.state === "active")) fail("duplicate", "This centre already has an active batch with this exam, year and timing.");
     if (value.sessionEnd <= value.sessionStart) fail("invalid_dates", "The session must end after it starts.");
-    if (current && current.students && current.centreId !== value.centreId) fail("has_students", "Move the students out before changing the centre.");
+    if (current && current.centreId !== value.centreId && world.students.some((row) => row.batchId === current.id)) fail("has_students", "Move the students out before changing the centre.");
     const patch = { name: value.name, centreId: value.centreId, stream: value.stream, sessionStart: value.sessionStart, sessionEnd: value.sessionEnd };
     return await record(state, { entity: "batch", entityId: current?.id ?? `B-${world.batches.length + 1}`, action: current ? "update" : "create", patch });
   });
