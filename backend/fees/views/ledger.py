@@ -2,10 +2,13 @@ from django.http import JsonResponse
 
 from fees.auth import api, error
 from fees.clock import today
+from fees.domain.dates import add_days
 from fees.domain.ledger import instalment_view
+from fees.domain.reminders import next_scheduled_step
 from fees.forms import LedgerQueryForm
 from fees.domain.pay_token import sign_pay_token
-from fees.models import FeePlan, GuardianStudent, InstalmentBalance, Payment, Receipt, Refund, Student
+from fees.models import (Allocation, FeePlan, GuardianStudent, InstalmentBalance, Payment, Receipt, Refund,
+                         ReminderLog, Student, UnmatchedPayment)
 
 
 @api(role="accounts", form=LedgerQueryForm, methods=("GET",))
@@ -44,6 +47,49 @@ def ledger(request):
         "-is_primary", "guardian__created_at",
     ).first()
     refund = Refund.objects.filter(student=student).first()
+    ids = [row.pk for row in rows]
+    reminders = {}
+    sent_steps = {}
+    for item in ReminderLog.objects.filter(instalment_id__in=ids).order_by("sent_on", "step").values(
+        "instalment_id", "step", "sent_on", "language",
+    ):
+        reminders.setdefault(item["instalment_id"], []).append({
+            "step": item["step"], "on": item["sent_on"].isoformat(), "language": item["language"],
+        })
+        sent_steps.setdefault(item["instalment_id"], []).append(item["step"])
+    open_reviews = set(UnmatchedPayment.objects.filter(
+        status="open", suggested_instalment_id__in=ids,
+    ).values_list("suggested_instalment_id", flat=True))
+    paid_by_instalment = {}
+    allocated_by_instalment = {}
+    amounts = {row.pk: row.amount_paise for row in rows}
+    for allocation in Allocation.objects.filter(instalment_id__in=ids).select_related("payment").order_by(
+        "payment__received_on", "payment__created_at",
+    ):
+        instalment_id = allocation.instalment_id
+        allocated_by_instalment[instalment_id] = allocated_by_instalment.get(instalment_id, 0) + allocation.amount_paise
+        if allocated_by_instalment[instalment_id] >= amounts[instalment_id]:
+            paid_by_instalment.setdefault(instalment_id, allocation.payment.received_on)
+    timeline = []
+    for row in rows:
+        history = sent_steps.get(row.pk, [])
+        stopped = None
+        next_reminder = None
+        if row.balance_paise == 0:
+            paid_on = paid_by_instalment.get(row.pk)
+            stopped = f"paid {paid_on.day} {paid_on.strftime('%b')}" if paid_on else "paid"
+        elif student.status == "withdrawn":
+            stopped = "withdrawn"
+        elif row.pk in open_reviews:
+            stopped = "payment being checked"
+        else:
+            step = next_scheduled_step(row.due_date, date, history)
+            if step is not None:
+                next_reminder = {"step": step, "on": add_days(row.due_date, step).isoformat()}
+        timeline.append({
+            "instalmentId": str(row.pk), "sent": reminders.get(row.pk, []),
+            "next": next_reminder, "stopped": stopped,
+        })
 
     return JsonResponse({
         "ok": True,
@@ -56,7 +102,7 @@ def ledger(request):
             "discountReason": plan.discount_reason, "net": plan.net_paise,
             "paid": paid, "balance": balance,
         },
-        "instalments": instalments, "payments": payments, "timeline": [],
+        "instalments": instalments, "payments": payments, "timeline": timeline,
         "refund": {"id": str(refund.pk), "status": refund.status} if refund else None,
         "guardianPhone": guardian.guardian.phone if guardian else "",
     })

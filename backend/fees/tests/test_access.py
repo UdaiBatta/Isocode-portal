@@ -43,6 +43,9 @@ class AccessTests(TestCase):
                     if str(pattern.pattern) == "webhooks/payment":
                         self.assertFalse(hasattr(pattern.callback, "api_role"), str(pattern.pattern))
                         continue
+                    if str(pattern.pattern).startswith("cron/"):
+                        self.assertTrue(getattr(pattern.callback, "cron_protected", False), str(pattern.pattern))
+                        continue
                     self.assertTrue(hasattr(pattern.callback, "api_role"), str(pattern.pattern))
         walk(get_resolver().url_patterns)
 

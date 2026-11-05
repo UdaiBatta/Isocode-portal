@@ -1,5 +1,6 @@
 import io
 import os
+from datetime import date
 from unittest.mock import patch
 
 from django.core.management import call_command
@@ -7,8 +8,9 @@ from django.test import TestCase
 
 from fees.domain.ledger import instalment_view
 from fees.domain.pay_token import unsign_pay_token
-from fees.models import StaffUser, Student
+from fees.models import AppSetting, Instalment, StaffUser, Student, UnmatchedPayment
 from fees.seed_data import DEMO_TODAY, build_named
+from fees.services.reminders import send_due_reminders
 
 
 class LedgerTests(TestCase):
@@ -67,9 +69,52 @@ class LedgerTests(TestCase):
                         self.assertEqual(unsign_pay_token(actual["payUrl"].removeprefix("/pay/")), actual["id"])
                 self.assertEqual(sum(payment["amount"] for payment in data["payments"]), paid)
                 self.assertTrue(all(payment["receiptId"] for payment in data["payments"]))
-                self.assertEqual(data["timeline"], [])
+                self.assertEqual([line["instalmentId"] for line in data["timeline"]], [row["id"] for row in data["instalments"]])
+                self.assertTrue(all(set(line) == {"instalmentId", "sent", "next", "stopped"} for line in data["timeline"]))
                 if source.refund_status:
                     self.assertEqual(data["refund"]["status"], source.refund_status)
+
+    def test_timeline_shows_real_sent_next_and_stopped_states(self):
+        self.sign_in()
+        ishita = self.get_ledger("STU-0587").json()
+        ishita_row = next(row for row in ishita["instalments"] if row["seq"] == 3)
+        ishita_line = next(line for line in ishita["timeline"] if line["instalmentId"] == ishita_row["id"])
+        self.assertEqual([row["step"] for row in ishita_line["sent"]], [-7, -3, 0, 3, 7, 15])
+        self.assertEqual(ishita_line["next"], {"step": 30, "on": "2026-11-09"})
+
+        mohit = Instalment.objects.get(plan__student__code="STU-0219", seq=3)
+        initial = self.get_ledger("STU-0219").json()
+        initial_line = next(line for line in initial["timeline"] if line["instalmentId"] == str(mohit.pk))
+        self.assertEqual(initial_line["next"], {"step": -7, "on": "2026-11-08"})
+        send_due_reminders(date(2026, 11, 9))
+        AppSetting.objects.filter(pk="demo_today").update(value="2026-11-09")
+
+        response = self.get_ledger("STU-0219").json()
+        mohit_line = next(line for line in response["timeline"] if line["instalmentId"] == str(mohit.pk))
+        self.assertEqual(mohit_line["sent"], [{"step": -7, "on": "2026-11-09", "language": "hi"}])
+        self.assertEqual(mohit_line["next"], {"step": -3, "on": "2026-11-12"})
+
+        payment = self.client.post("/api/counter_payment", {
+            "student": "STU-0219", "amount_paise": 12000000, "method": "cash",
+            "received_on": "2026-11-09", "note": "settle demo balance",
+        }, content_type="application/json", HTTP_X_INTERNAL_KEY="test-internal-key")
+        self.assertEqual(payment.status_code, 200)
+        response = self.get_ledger("STU-0219").json()
+        paid_line = next(line for line in response["timeline"] if line["instalmentId"] == str(mohit.pk))
+        self.assertEqual(paid_line["stopped"], "paid 9 Nov")
+
+    def test_timeline_shows_payment_review_stop_reason(self):
+        self.sign_in()
+        instalment = Instalment.objects.get(plan__student__code="STU-0219", seq=3)
+        UnmatchedPayment.objects.create(
+            reference=str(instalment.pk), amount_paise=100000, reason="amount_mismatch",
+            suggested_instalment=instalment, received_on=DEMO_TODAY,
+        )
+
+        response = self.get_ledger("STU-0219").json()
+        line = next(line for line in response["timeline"] if line["instalmentId"] == str(instalment.pk))
+        self.assertIsNone(line["next"])
+        self.assertEqual(line["stopped"], "payment being checked")
 
     def test_single_centre_accounts_and_role_scope(self):
         mlv = self.sign_in("accounts.mlv@demo.test")

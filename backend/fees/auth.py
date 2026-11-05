@@ -76,3 +76,19 @@ def api(*, role, form=None, methods=("POST",), consent=True):
         guarded.api_role = role
         return guarded
     return decorate
+
+
+def cron(view):
+    @wraps(view)
+    def guarded(request, *args, **kwargs):
+        secret = os.getenv("CRON_SECRET", "")
+        if not secret or not constant_time_compare(request.headers.get("Authorization", ""), f"Bearer {secret}"):
+            return error("unauthorized", "Cron authorization required.", 401)
+        if request.method != "GET":
+            response = error("method_not_allowed", "Method not allowed.", 405)
+            response["Allow"] = "GET"
+            return response
+        return view(request, *args, **kwargs)
+
+    guarded.cron_protected = True
+    return guarded

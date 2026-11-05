@@ -1,0 +1,8 @@
+{
+  "functions": { "config/wsgi.py": { "maxDuration": 60 } },
+  "crons": [
+    { "path": "/api/cron/reminders", "schedule": "0 5 * * *" },
+    { "path": "/api/cron/risk", "schedule": "30 5 * * *" },
+    { "path": "/api/cron/demo-reset", "schedule": "30 20 * * *" }
+  ]
+}
