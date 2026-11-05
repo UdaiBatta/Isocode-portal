@@ -2,7 +2,6 @@
 
 ## In progress now
 
-- **Codex T5.3 (2026-11-06):** safe call-brief generation, standard fallback and per-task cache. Files: backend/fees/services/risk.py, backend/fees/tests/test_risk_brief.py, docs/decisions.md, docs/progress.md. TEST LOCK: Codex 2026-11-06 04:59 IST — fake-provider/fallback/cache and full checks. SDK package approval remains pending; do not edit requirements/install packages or make a real provider call until approved. Provider imports will be lazy so the no-key fallback works with current dependencies.
 
 
 
@@ -55,7 +54,11 @@ Read this before editing. Each model lists its task and files here when it start
 
 - **T5.2 saved-data limitation / reset approval pending:** B10 Arjun must be Watch from fees only. The old seed paid his March instalment, leaving one overdue and an exact score of 30 (none). Fresh seeds now leave both old instalments overdue and score 40 (Watch); all exact B8.9 rules are unchanged. The existing application histories were not reset. The corrected scoped-reset approval card is pending. The risk cron has run on saved data and preserved every financial/reminder row; Arjun therefore still shows 30 there. SDK approval and Claude ADMIN.6 fix/merge are also pending. TEST LOCK RELEASED.
 
+- **T5.3 implementation ready / dependency approval pending (Codex):** call_model follows B8.9, with lazy provider imports; generate_brief allowlists six finite numeric feature keys, rejects bad output, logs categories only and falls back to the exact standard summary. ensure_call_brief applies role/centre checks and a row lock, caching either source once per task. anthropic and pydantic are not installed; requirements are unchanged while the package-approval card is pending. ANTHROPIC_API_KEY is not configured, so the real-call condition does not apply and the app uses the tested template. TEST LOCK RELEASED. No key or package values were exposed.
+
 ## Log
+
+- 2026-11-06 — T5.3 brief/cache implementation verified (Codex): B8.9 structured-provider call, strict numeric payload allowlist, prompt guards, refusal/timeout/error/None/overlength/currency fallback, legacy reason wording and per-task persisted cache. Role/centre/inactive-student checks precede generation. Nine focused privacy/cache/isolation checks pass; npm run check passes 64 frontend / 154 Django tests, types, Ruff and Django checks, eight existing lint warnings. No provider key is configured; no external call was made. SDK installation remains blocked on the requested package approval, and no requirements file was changed. No financial mutation, reset, push or deploy. Next: T5.4 real counsellor reads/outcomes and sid adapters.
 
 - 2026-11-06 — T5.2 backend complete with saved-demo limitation (Codex): bulk current-date assessments, high/watch/insufficient flags, one open call task, 30-day false-flag suppression, frozen trigger facts in audit_log and bearer-protected cron. Latest valid eight teaching weeks and five tests are read in SQL; withdrawn/archived students are skipped. AST and complete-row fingerprints enforce no financial/reminder writes. Fresh-seed acceptance and seed/reset regressions pass (17 focused tests); npm run check passes 64 frontend / 147 Django tests, types, Ruff and Django checks, eight existing lint warnings. Full application cron: 2,597 scored / 178 flags / 57 new tasks in 1.721s; repeat 0 new tasks in 0.829s. Financial, student, receipt-counter, reminder, consent and gateway/review fingerprints stayed identical. Real saved Riya is High (72), Neha insufficient and Ishita none (17); Arjun remains none (30) until the newly requested corrected reset is approved. Only fresh Arjun seed data was corrected; no saved financial reset, model API call, push or deploy. Next: T5.3 brief fallback and cache; SDK package approval is pending.
 

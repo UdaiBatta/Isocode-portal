@@ -1,3 +1,7 @@
+import json
+import logging
+import math
+import os
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -9,6 +13,18 @@ from django.utils import timezone
 from fees import models as m
 from fees.auth import lock_subject
 from fees.domain.risk import RiskResult, score_risk, should_create_task
+
+logger = logging.getLogger(__name__)
+BRIEF_FEATURES = ("overdueInstalments", "oldestOverdueDays", "attendanceRecentPct", "attendancePriorPct", "testRecentPct", "testEarlierPct")
+SYSTEM = """You write a two-sentence note for a school counsellor about to phone a parent.
+Use only the facts provided. Do not say the student will drop out. Do not guess causes.
+Do not mention money or suggest any fee action. Suggest an open, supportive question to ask."""
+
+
+class RiskError(Exception):
+    def __init__(self, code, message, status=400):
+        super().__init__(message)
+        self.code, self.status = code, status
 
 
 @dataclass(frozen=True)
@@ -105,3 +121,89 @@ def run_risk_job(date):
     m.CounsellorTask.objects.bulk_create(new_tasks)
     m.AuditLog.objects.bulk_create(audits)
     return {"scored": len(assessments), "flags": len(flags), "tasksCreated": len(new_tasks)}
+
+
+def _safe_features(features):
+    return {key: features[key] for key in BRIEF_FEATURES if key in features and (
+        type(features[key]) is int or type(features[key]) is float and math.isfinite(features[key]))}
+
+
+def call_model(features):
+    # Optional provider dependencies must not prevent the no-key application from starting.
+    import anthropic
+    from pydantic import BaseModel
+
+    class Brief(BaseModel):
+        brief: str
+
+    client = anthropic.Anthropic()
+    response = client.with_options(timeout=15.0, max_retries=1).messages.parse(
+        model=os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5"), max_tokens=2000, system=SYSTEM,
+        messages=[{"role": "user", "content": json.dumps(_safe_features(features))}],
+        output_format=Brief, output_config={"effort": "low"},
+    )
+    if response.stop_reason != "end_turn":
+        return None
+    return response.parsed_output.brief if response.parsed_output else None
+
+
+def plain_reasons(reasons):
+    legacy = {"attendance_drop": "Attendance decreased", "test_drop": "Test scores decreased", "fees_overdue": "Instalments were overdue"}
+    return [legacy.get(reason, reason) for reason in reasons]
+
+
+def standard_brief(reasons):
+    reasons = plain_reasons(reasons)
+    return f"Flagged because: {'; '.join(reasons) if reasons else 'several signals changed'}. Ask how things are going; this call is about support, not fees."
+
+
+def generate_brief(features, call=call_model, *, reasons=()):
+    fallback = {"brief": standard_brief(reasons), "briefSource": "template"}
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        logger.info("risk_brief: missing_key")
+        return fallback
+    payload = _safe_features(features)
+    if not payload:
+        logger.warning("risk_brief: missing_numeric_features")
+        return fallback
+    try:
+        text = call(payload)
+    except Exception:
+        logger.warning("risk_brief: provider_error")
+        return fallback
+    if text is None:
+        logger.warning("risk_brief: empty_or_refused")
+        return fallback
+    if not isinstance(text, str) or not text.strip() or len(text) > 400 or "₹" in text:
+        logger.warning("risk_brief: invalid_text")
+        return fallback
+    return {"brief": text.strip(), "briefSource": "llm"}
+
+
+def _task(task_id, actor, *, lock=False):
+    if actor.role != "counsellor" or actor.archived_at:
+        raise RiskError("forbidden", "A counsellor account is required.", 403)
+    query = m.CounsellorTask.objects.filter(pk=task_id)
+    if lock:
+        query = query.select_for_update()
+    row = query.first()
+    if not row:
+        raise RiskError("not_found", "Call task not found.", 404)
+    row = m.CounsellorTask.objects.select_related("student__batch__centre", "flag").get(pk=row.pk)
+    if actor.centre_id and row.student.batch.centre_id != actor.centre_id:
+        raise RiskError("forbidden", "This student is outside your centre.", 403)
+    if row.status == "open" and (row.student.status != "active" or row.student.archived_at):
+        raise RiskError("inactive", "This student is no longer active. The call history is retained.", 409)
+    return row
+
+
+@transaction.atomic
+def ensure_call_brief(*, task_id, actor):
+    task = _task(task_id, actor, lock=True)
+    if task.brief:
+        return {"brief": task.brief, "briefSource": task.brief_source}
+    facts = task_facts(task)
+    result = generate_brief(facts["features"], call=call_model, reasons=facts["reasons"])
+    task.brief, task.brief_source = result["brief"], result["briefSource"]
+    task.save(update_fields=["brief", "brief_source"])
+    return result
