@@ -6,13 +6,14 @@ from unittest.mock import patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db.models import Q, Sum
+from django.db.models import Sum
 from django.test import SimpleTestCase, TestCase
 
 from fees import models as m
 from fees.domain.ledger import instalment_view, over60_metric
 from fees.seed import at_day, database_over60_metric, seed_named
 from fees.seed_data import DEMO_TODAY, NAMED_CODES, build_fleet, build_named
+from fees.services.demo import reset_demo
 
 
 class SeedRowsTests(SimpleTestCase):
@@ -153,21 +154,7 @@ class SeedDatabaseTests(TestCase):
         m.Student.objects.filter(code__in=codes).update(status="withdrawn", withdrawn_on=date(2026, 11, 1))
         m.FeePlan.objects.filter(student=ishita).update(gross_paise=12100000, net_paise=12100000)
         m.Instalment.objects.filter(plan__student=ishita, seq=3).update(amount_paise=3100000)
-        queue_ids = list(m.UnmatchedPayment.objects.values_list("pk", flat=True))
-        # Event FKs protect payments and queue rows, so reset clears these dependent records first.
-        m.PaymentEvent.objects.filter(Q(payment__student__code__in=codes) | Q(unmatched_id__in=queue_ids)).delete()
-        m.UnmatchedPayment.objects.filter(pk__in=queue_ids).delete()
-        m.CounsellorTask.objects.filter(student__code__in=codes).delete()
-        m.RiskFlag.objects.filter(student__code__in=codes).delete()
-        m.Refund.objects.filter(student__code__in=codes).delete()
-        m.Allocation.objects.filter(payment__student__code__in=codes).delete()
-        m.Receipt.objects.filter(payment__student__code__in=codes).delete()
-        m.Payment.objects.filter(student__code__in=codes).delete()
-        # Empty test-table statistics can turn a joined DELETE into a quadratic semi-join on PostgreSQL 18.
-        reminder_ids = list(m.ReminderLog.objects.filter(instalment__plan__student__code__in=codes).values_list("pk", flat=True))
-        m.ReminderLog.objects.filter(pk__in=reminder_ids).delete()
-        m.Consent.objects.filter(student__code__in=codes).delete()
-        seed_named()
+        reset_demo()
         self.assertEqual({model: set(model.objects.values_list("pk", flat=True)) for model in masters}, ids_before)
         self.assertTrue(audit_ids.issubset(set(m.AuditLog.objects.values_list("pk", flat=True))))
         for row in rows:

@@ -111,3 +111,16 @@ The production staff export previously requested a ledger per student, causing r
 ## 2026-11-05 — T2.4 gateway payment method
 
 ASSUMPTION for the TDD: B7 lists `gateway` as a payment method, while T2.4 requires the selected `upi`, `card` or `netbanking` method to be saved and shown on results and receipts. Keep `gateway` for existing records and add those three values for new mock gateway payments; cash, cheque and bank remain unchanged. For balances of ₹1,000 or less, the wrong-amount test uses balance + 1 paisa because subtracting ₹1,000 would produce a zero or negative payment rather than an amount the gateway could transfer. The webhook still applies the existing exact-match rules and queues every mismatch without allocating it.
+
+
+## 2026-11-06 — T3.4 and Phase 3 backend security review
+
+Reviewed webhook raw-body HMAC and event idempotency, bearer cron authorization, OTP generation/rate limits/single use, internal-key handling, session roles, guardian consent and centre scope. The decorators use constant-time secret comparison, read the role from database records, and validate input with Django forms. Existing tests and the 105-test backend suite pass. No unresolved backend security finding remains in these paths.
+
+The review found that real page contexts still formatted dates against the prototype clock. GET /api/me now returns today from fees/clock.py, and real staff and parent contexts use it. Prototype previews keep their existing date until T5.6.
+
+Operational assumption for the TDD: the demo date and named-example reset affect a shared organisation-wide data set, so set_demo_date, run_reminders_now and reset_demo require an accounts user with centre=null. Centre-restricted accounts are refused and receive demo=false; the cron reset has its own bearer secret. All refuse outside DEMO_MODE=true. This tightens the accounts-only B9 rule without granting cross-centre access.
+
+Reset uses a transaction and non-waiting row locks, clears only named-example financial/reminder/consent/risk history and associated gateway/queue records, preserves unrelated records and existing audit history, and never rewinds receipt counters. Tests prove rollback, preservation, replay idempotency and role/mode/cron boundaries. CSRF middleware remains intentionally off: Next.js server actions check Origin/Host, browser sid is sameSite=lax, and Django APIs require X-Internal-Key. The webhook and cron routes use their separate secrets. State this boundary in the TDD.
+
+The Phase 3 browser exit remains open. The real reset confirmation must explain that it restores shared database records; the current browser-only wording is a frontend finding. No reset of the application database has been executed; the human requires approval before that action.

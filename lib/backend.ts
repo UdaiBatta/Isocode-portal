@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 export type BackendResult<T extends object> = ({ ok: true } & T) | { ok: false; code: string; message: string };
 export interface SessionInfo {
+  today: string;
   role: "parent" | "accounts" | "counsellor" | "admin";
   phone: string | null;
   centreId: string | null;

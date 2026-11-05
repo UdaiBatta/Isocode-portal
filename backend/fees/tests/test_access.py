@@ -10,12 +10,13 @@ from django.urls import URLResolver, get_resolver
 from django.utils import timezone
 
 from fees.auth import api
-from fees.models import Guardian, LoginAttempt, StaffUser
+from fees.models import AppSetting, Guardian, LoginAttempt, StaffUser
 
 
 class AccessTests(TestCase):
     @classmethod
     def setUpTestData(cls):
+        AppSetting.objects.create(key="demo_today", value="2026-11-02")
         password_hash = make_password("test-staff-password")
         cls.staff = {}
         for role in ["accounts", "counsellor", "admin"]:

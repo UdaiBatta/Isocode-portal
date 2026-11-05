@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.crypto import constant_time_compare, salted_hmac
 
 from fees.auth import api, error, has_parent_consent, lock_subject
+from fees.clock import today
 from fees.forms import LanguageForm, PhoneForm, StaffLoginForm, VerifyOtpForm
 from fees.models import Guardian, GuardianStudent, LoginAttempt, OtpChallenge, StaffUser
 
@@ -120,10 +121,11 @@ def set_language(request):
 
 @api(role="any", methods=("GET",))
 def me(request):
+    date = today().isoformat()
     if request.role == "parent":
-        return JsonResponse({"ok": True, "role": "parent", "centreId": None,
+        return JsonResponse({"ok": True, "role": "parent", "centreId": None, "today": date,
                              **parent_state(request.subject, request.session.get("consent_declined", False))})
     staff = request.subject
-    return JsonResponse({"ok": True, "role": staff.role,
+    return JsonResponse({"ok": True, "role": staff.role, "today": date,
                          "centreId": staff.centre.code if staff.centre_id else None,
                          "phone": None, "consent": False, "declined": False, "children": []})

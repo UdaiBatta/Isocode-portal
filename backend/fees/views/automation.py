@@ -222,7 +222,7 @@ def automation(request):
 
     payload = {
         "ok": True, "today": current_date.isoformat(),
-        "demo": os.getenv("DEMO_MODE", "false").lower() == "true",
+        "demo": os.getenv("DEMO_MODE", "false").lower() == "true" and request.subject.centre_id is None,
         "list": list_name, "page": page, "pageSize": PAGE_SIZE,
         "total": total, "totalPages": total_pages,
         **_counts(request, current_date),
