@@ -13,6 +13,7 @@ import { getPayDetails, getPaymentResult } from "@/lib/data/payments";
 import { getReceipt } from "@/lib/data/receipts";
 import { getDues } from "@/lib/data/dues";
 import { getProgress } from "@/lib/data/progress";
+import { getLedger } from "@/lib/data/ledger";
 
 beforeEach(() => { jar.clear(); vi.clearAllMocks(); vi.stubGlobal("fetch", fetcher); vi.stubEnv("NEXT_PUBLIC_PROTO", "1"); vi.stubEnv("DEMO_MODE", "true"); vi.stubEnv("BACKEND_URL", "http://localhost:8000"); vi.stubEnv("INTERNAL_API_SECRET", "test-internal-key"); vi.stubEnv("APP_URL", "http://localhost:3000"); });
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
@@ -140,6 +141,22 @@ it("completes a public payment action and recorded result with stale sid without
   expect(await getPaymentResult("STU-0587-3", paid.eventId)).toMatchObject({ result: "paid", amount: 1500000, parentCanAccess: false, canViewReceipt: false });
   await expect(getReceipt(paid.receiptId!)).rejects.toThrow("redirect:/login");
   await expect(recordCounterPayment({ studentId: "STU-0587", amountPaise: 100, method: "cash", receivedOn: "2026-11-02" })).rejects.toThrow("redirect:/login");
+});
+
+it("loads a real staff ledger through Django and sends stale sessions to staff sign-in", async () => {
+  jar.set("sid", "staff-session");
+  const ledger = {
+    student: { id: "student-id", code: "STU-0412", name: "Aarav Meena", batch: "JEE 2027 Morning", centre: "Malviya Nagar", status: "active" },
+    plan: { gross: 12000000, discount: 0, discountReason: null, net: 12000000, paid: 9000000, balance: 3000000 },
+    instalments: [], payments: [], timeline: [], refund: null, guardianPhone: "+919000000412",
+  };
+  fetcher.mockResolvedValueOnce(response({ ok: true, ...ledger }));
+  expect(await getLedger("STU-0412")).toMatchObject({ student: { code: "STU-0412" }, plan: { paid: 9000000 } });
+  expect(fetcher.mock.calls[0][0]).toBe("http://localhost:8000/api/ledger?student=STU-0412");
+  expect(fetcher.mock.calls[0][1].headers.Cookie).toBe("sid=staff-session");
+
+  fetcher.mockResolvedValueOnce(response({ ok: false, code: "unauthenticated", message: "Sign in." }, 401));
+  await expect(getLedger("STU-0412")).rejects.toThrow("redirect:/staff/login");
 });
 
 it("keeps public preview mutations mode-gated and bounded by the existing cookie cap", async () => {
