@@ -39,7 +39,7 @@ export async function saveCentre(input: unknown) {
 
 export async function saveBatch(input: unknown) {
   return mutateProto("admin", async (state) => {
-    const value = save({ name: z.string().regex(/^(JEE|NEET) 20d{2} (Morning|Evening)$/), centreId: id, stream: z.enum(["JEE", "NEET"]), sessionStart: dateSchema, sessionEnd: dateSchema }).parse(input);
+    const value = save({ name: z.string().regex(/^(JEE|NEET) 20\d{2} (Morning|Evening)$/), centreId: id, stream: z.enum(["JEE", "NEET"]), sessionStart: dateSchema, sessionEnd: dateSchema }).parse(input);
     const { centres, batches, world } = await rows(state);
     const current = batches.find((row) => row.id === value.id);
     if (value.id && !current?.actions.canEdit) fail("not_found", "Batch not found or archived.");

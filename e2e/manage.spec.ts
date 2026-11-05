@@ -11,7 +11,7 @@ async function healthy(page: Page) {
   expect((await new AxeBuilder({ page }).analyze()).violations.filter((item) => item.impact === "serious" || item.impact === "critical")).toEqual([]);
 }
 async function pickDay(page: Page, field: string, day: string) {
-  await page.getByRole("dialog", { name: /Add batch/ }).getByText(field).locator("..").getByRole("button").click();
+  await page.getByRole("dialog", { name: /Add batch/ }).getByRole("group", { name: field }).getByRole("button").click();
   const calendar = page.getByRole("dialog", { name: field });
   await calendar.getByRole("gridcell").filter({ hasText: new RegExp(`^${day}$`) }).first().click();
   await calendar.getByRole("button", { name: "Apply" }).click();
@@ -55,7 +55,7 @@ test("a batch with students cannot be archived, and an empty one can be archived
   await expect(dialog.getByRole("button", { name: "Archive" })).toHaveCount(0);
   await dialog.getByRole("button", { name: "Cancel" }).click();
 
-  await page.getByRole("button", { name: "Add batch" }).click();
+  await page.getByRole("main").getByRole("button", { name: "Add batch" }).click();
   const form = page.getByRole("dialog", { name: /Add batch/ });
   await form.getByRole("button", { name: /Centre/ }).click();
   await page.getByRole("option", { name: "Malviya Nagar" }).click();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useId, useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { parseDate } from "@internationalized/date";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -132,7 +132,7 @@ function toInput(section: ManageSection, data: FormData, row: AnyRow | null) {
   const value = Object.fromEntries([...data.entries()].map(([key, item]) => [key, String(item).trim()])) as Record<string, string>;
   const input: Record<string, unknown> = { ...value, id: row?.id };
   if (section === "students" && !row) Object.assign(input, { gross: paise(value.gross), discount: paise(value.discount ?? ""), discountReason: value.discountReason || undefined });
-  if (section === "batches" && !/^20d{2}$/.test(value.examYear)) throw new Error("Enter the exam year as 4 digits, for example 2028.");
+  if (section === "batches" && !/^20\d{2}$/.test(value.examYear)) throw new Error("Enter the exam year as 4 digits, for example 2028.");
   if (section === "batches") { input.name = `${value.stream} ${value.examYear} ${value.timing}`; delete input.examYear; delete input.timing; }
   if (section === "centres" && row) input.code = (row as AdminCentreVM).code;
   if (section === "centres") input.code = String(input.code).toUpperCase();
@@ -141,11 +141,12 @@ function toInput(section: ManageSection, data: FormData, row: AnyRow | null) {
 }
 
 function FormField({ field, value, disabled }: { field: Field; value?: string; disabled: boolean }) {
+  const labelId = useId();
   const [date, setDate] = useState(() => field.kind === "date" && value ? parseDate(value) : null);
   if (field.kind === "select") return <Select label={field.label} name={field.name} defaultSelectedKey={value ?? null} isRequired={!field.optional} isDisabled={disabled} placeholder="Choose" className="w-full" triggerClassName="w-full">
     {(field.options ?? []).map(([id, label]) => <SelectItem id={id} key={id}>{label}</SelectItem>)}
   </Select>;
-  if (field.kind === "date") return <div className="flex flex-col gap-1.5"><p className="text-body-medium">{field.label}</p>
+  if (field.kind === "date") return <div role="group" aria-labelledby={labelId} className="flex flex-col gap-1.5"><p id={labelId} className="text-body-medium">{field.label}</p>
     <DatePicker aria-label={field.label} value={date} onChange={setDate} isDisabled={disabled} /><input type="hidden" name={field.name} value={date?.toString() ?? ""} /></div>;
   return <Input label={field.label} name={field.name} hint={field.hint} defaultValue={value} isRequired={!field.optional} isDisabled={disabled}
     type={field.kind === "money" ? "text" : field.kind ?? "text"} inputMode={field.kind === "money" ? "decimal" : undefined} inputDir={field.kind === "tel" || field.kind === "email" ? "ltr" : undefined}
@@ -163,7 +164,9 @@ export function ManageWorkspace({ section, view, directory, filters }: { section
   const router = useRouter();
   const config = configs(directory, view.today)[section];
   const [query, setQuery] = useState(filters.q ?? "");
+  // The record stays set while the dialog animates closed, so its contents do not flip to the add form.
   const [editing, setEditing] = useState<AnyRow | "new" | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -180,7 +183,7 @@ export function ManageWorkspace({ section, view, directory, filters }: { section
     try {
       const result = await action();
       if (!result.ok) { setError(result.message); return false; }
-      toast.success(done); setEditing(null); router.refresh(); return true;
+      toast.success(done); setDialogOpen(false); router.refresh(); return true;
     } catch { setError("Could not save. Check the values and try again."); return false; }
     finally { setPending(false); }
   }
@@ -193,7 +196,7 @@ export function ManageWorkspace({ section, view, directory, filters }: { section
     try { input = toInput(section, data, row); } catch (problem) { setError(problem instanceof Error ? problem.message : "Check the values."); return; }
     void run(() => config.save(input), row ? "Changes saved" : `${config.noun[0].toUpperCase()}${config.noun.slice(1)} added`);
   }
-  const open = (item: AnyRow) => { setError(""); setEditing(item); };
+  const open = (item: AnyRow | "new") => { setError(""); setEditing(item); setDialogOpen(true); };
   const name = (item: AnyRow) => "fullName" in item ? item.fullName : item.name;
   const columns: ColumnDef<AnyRow>[] = [
     ...config.columns,
@@ -204,7 +207,7 @@ export function ManageWorkspace({ section, view, directory, filters }: { section
 
   return <>
     <StaffPageHeader title={config.title} description={config.description}>
-      <Button leadingIcon={RiAddLine} onClick={() => { setError(""); setEditing("new"); }}>Add {config.noun}</Button>
+      <Button leadingIcon={RiAddLine} onClick={() => open("new")}>Add {config.noun}</Button>
     </StaffPageHeader>
     <StaffFrame><section>
       <div className="flex flex-wrap items-end gap-4">
@@ -224,17 +227,17 @@ export function ManageWorkspace({ section, view, directory, filters }: { section
       {view.pages > 1 ? <Pagination page={view.page} totalPages={view.pages} onChange={(page) => navigate({ page })} aria-label={`${config.title} pages`} /> : null}
     </section></StaffFrame>
 
-    <Modal size="lg" isOpen={editing !== null} onOpenChange={(isOpen) => { if (!isOpen) setEditing(null); }}>
+    <Modal size="lg" isOpen={dialogOpen} onOpenChange={setDialogOpen}>
       <form onSubmit={submit} className="contents">
         <ModalHeader title={row ? name(row) : `Add ${config.noun}`} description={row && "code" in row ? row.code : undefined} />
         <ModalBody className="flex flex-col gap-4">
           {config.fields.filter((field) => !row || !field.createOnly).map((field) => <FormField key={`${row?.id ?? "new"}-${field.name}`} field={field} value={row ? config.values(row)[field.name] : undefined} disabled={pending || (!!row && !row.actions.canEdit)} />)}
           {row && section === "students" ? <FeePanel student={row as AdminStudentVM} onSave={(input) => run(() => changeFee(input), "Fee changed")} pending={pending} /> : null}
-          {row ? <Lifecycle actions={row.actions} entity={config.entity} id={row.id} onPick={(kind) => { setEditing(null); setConfirm({ kind, row }); }} /> : null}
+          {row ? <Lifecycle actions={row.actions} entity={config.entity} id={row.id} onPick={(kind) => { setDialogOpen(false); setConfirm({ kind, row }); }} /> : null}
           {error ? <p role="alert" className="text-body-regular text-text-error-primary">{error}</p> : null}
         </ModalBody>
         <ModalFooter>
-          <Button variant="secondary" type="button" onClick={() => setEditing(null)}>{row && !row.actions.canEdit ? "Close" : "Cancel"}</Button>
+          <Button variant="secondary" type="button" onClick={() => setDialogOpen(false)}>{row && !row.actions.canEdit ? "Close" : "Cancel"}</Button>
           {!row || row.actions.canEdit ? <Button type="submit" disabled={pending}>{row ? "Save changes" : `Add ${config.noun}`}</Button> : null}
         </ModalFooter>
       </form>
