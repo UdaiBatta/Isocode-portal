@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T3.4 preservation follow-up (2026-11-06):** backend/fees/services/demo.py, backend/fees/tests/test_demo.py; preserve a seeded queue item and its payment event when it has been matched to a non-named student. Test lock remains with Codex for this focused correction, authorized local replay and then release to Claude. The isolated refund-policy rerun passed 1/1 in 27.1s; original full counts remain 235 passed, 3 skipped, 2 failed.
+
 - **Codex T3.4 backend ready (2026-11-06):** date/run/reset endpoints, sid adapters and backend clock are committed; shared files released. Backend replay, scope, rollback and preservation checks pass. Phase 3 exit remains open for the real-session browser proof, corrected reset confirmation from Claude. The human approved the scoped named-example reset for the replay on 2026-11-06. Full baseline browser suite and its isolated timeout recheck are still under the Codex test lock.
 
 - TEST LOCK: Codex 2026-11-06 01:37 IST (production browser suite; baseline check passed).
