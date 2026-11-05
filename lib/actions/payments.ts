@@ -1,14 +1,19 @@
 "use server";
 
 import { z } from "zod";
+import { createHmac, randomUUID } from "node:crypto";
 import { codeSchema, dateSchema, moneySchema, mutateProto, mutatePublicPreview, fail } from "@/lib/fixtures/state";
 import { ledgerFor, queueFor, receiptsFor } from "@/lib/fixtures/views";
 import { requireCentre } from "@/lib/data/scope";
 import { today } from "@/lib/clock";
+import { backendResponse, backendResult } from "@/lib/backend";
 
 export async function submitMockPayment(input: unknown) {
+  const parsed = z.object({ token: z.string().min(1).max(256), outcome: z.enum(["success", "failed", "wrong_amount"]), method: z.enum(["upi", "card", "netbanking"]).default("upi") }).safeParse(input);
+  if (!parsed.success) return { ok: false as const, code: "invalid", message: "Check the payment values." };
+  const { token, outcome, method } = parsed.data;
+  if (!/^STU-\d{4}-[1-4]$/.test(token)) return submitRealMockPayment(token, outcome, method);
   return mutatePublicPreview(async (state) => {
-    const { token, outcome, method } = z.object({ token: z.string().regex(/^STU-\d{4}-[1-4]$/), outcome: z.enum(["success", "failed", "wrong_amount"]), method: z.enum(["upi", "card", "netbanking"]).default("upi") }).parse(input);
     const code = token.slice(0, 8);
     requireCentre({}, code);
     const on = await today();
@@ -34,6 +39,40 @@ export async function submitMockPayment(input: unknown) {
     payments.push({ studentCode: code, amount: instalment.balance, on, method, instalmentId: token });
     return finish("paid", instalment.balance, `demo-receipt-${payments.length}`);
   });
+}
+
+async function submitRealMockPayment(token: string, outcome: "success" | "failed" | "wrong_amount", method: "upi" | "card" | "netbanking") {
+  const secret = process.env.PAYMENT_WEBHOOK_SECRET;
+  const base = process.env.BACKEND_URL;
+  if (!secret || !base) return { ok: false as const, code: "service_unavailable", message: "Payment service is not configured." };
+  try {
+    const detailsResponse = await backendResponse(`pay_details?token=${encodeURIComponent(token)}`);
+    const details = await backendResult<{ valid: boolean; reference: string; amount: number; today: string; paid: boolean }>(detailsResponse);
+    if (!details.ok) return details;
+    if (!details.valid) return { ok: false as const, code: "invalid_link", message: "This payment link is not valid." };
+    if (details.paid || details.amount <= 0) return { ok: false as const, code: "already_paid", message: "This instalment is already paid." };
+
+    const payload = {
+      event_id: randomUUID(), reference: details.reference,
+      amount_paise: outcome === "wrong_amount" ? (details.amount > 100000 ? details.amount - 100000 : details.amount + 1) : details.amount,
+      status: outcome === "failed" ? "failed" : "success", paid_on: details.today, method,
+    };
+    const body = JSON.stringify(payload);
+    const signature = createHmac("sha256", secret).update(body).digest("hex");
+    const response = await fetch(`${base.replace(/\/$/, "")}/api/webhooks/payment`, {
+      method: "POST", headers: { "Content-Type": "application/json", "X-Signature": signature },
+      body, cache: "no-store", signal: AbortSignal.timeout(10000),
+    });
+    const result = await backendResult<{ eventId: string; result: "allocated" | "queued" | "failed" | "pending" }>(response);
+    if (!result.ok) return result;
+    const paymentStatus = { allocated: "paid", queued: "checking", failed: "failed", pending: "checking" } as const;
+    return {
+      ok: true as const, eventId: result.eventId, receiptId: null,
+      result: paymentStatus[result.result],
+    };
+  } catch {
+    return { ok: false as const, code: "service_unavailable", message: "Payment could not be recorded. Try again." };
+  }
 }
 
 export async function recordCounterPayment(input: unknown) {

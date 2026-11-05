@@ -167,7 +167,7 @@ class Instalment(Record):
 class Payment(Record):
     student = models.ForeignKey(Student, on_delete=models.PROTECT)
     amount_paise = models.BigIntegerField()
-    method = models.CharField(max_length=16, choices=[(v, v) for v in ["gateway", "cash", "cheque", "bank"]])
+    method = models.CharField(max_length=16, choices=[(v, v) for v in ["gateway", "cash", "cheque", "bank", "upi", "card", "netbanking"]])
     event_id = models.CharField(max_length=200, null=True, blank=True)
     received_on = models.DateField()
     note = models.TextField(null=True, blank=True)
@@ -177,7 +177,7 @@ class Payment(Record):
         db_table = "payments"
         constraints = [
             models.CheckConstraint(condition=Q(amount_paise__gt=0), name="payment_amount_positive"),
-            models.CheckConstraint(condition=Q(method__in=["gateway", "cash", "cheque", "bank"]), name="payment_method_valid"),
+            models.CheckConstraint(condition=Q(method__in=["gateway", "cash", "cheque", "bank", "upi", "card", "netbanking"]), name="payment_method_valid"),
         ]
 
 

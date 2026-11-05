@@ -1,4 +1,7 @@
 import io
+import hashlib
+import hmac
+import json
 import os
 from unittest.mock import patch
 
@@ -6,7 +9,8 @@ from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase
 
 from fees.domain.matching import decide_payment
-from fees.models import Allocation, AuditLog, Instalment, InstalmentBalance, Payment, Receipt, UnmatchedPayment
+from fees.domain.pay_token import sign_pay_token
+from fees.models import Allocation, AuditLog, Instalment, InstalmentBalance, Payment, PaymentEvent, Receipt, UnmatchedPayment
 from fees.seed_data import DEMO_TODAY
 from fees.services.payments import process_payment_event
 
@@ -33,9 +37,24 @@ class PaymentServiceTests(TestCase):
         call_command("seed", small=True, stdout=io.StringIO())
 
     def setUp(self):
-        patcher = patch.dict(os.environ, {"DEMO_MODE": "true"})
+        patcher = patch.dict(os.environ, {
+            "DEMO_MODE": "true", "INTERNAL_API_SECRET": "test-internal-key",
+            "PAYMENT_WEBHOOK_SECRET": "test-webhook-secret",
+        })
         patcher.start()
         self.addCleanup(patcher.stop)
+
+    def post_event(self, payload, signature=None, raw=None):
+        body = raw if raw is not None else json.dumps(payload, separators=(",", ":")).encode()
+        signature = signature or hmac.new(b"test-webhook-secret", body, hashlib.sha256).hexdigest()
+        return self.client.post("/api/webhooks/payment", body, content_type="application/json", HTTP_X_SIGNATURE=signature)
+
+    def gateway_payload(self, instalment, event_id="gateway-event-1", amount=None):
+        return {
+            "event_id": event_id, "reference": str(instalment.pk),
+            "amount_paise": amount if amount is not None else InstalmentBalance.objects.get(pk=instalment.pk).balance_paise,
+            "status": "success", "paid_on": DEMO_TODAY.isoformat(), "method": "upi",
+        }
 
     def event(self, event_id, reference, amount, status="success"):
         return process_payment_event(
@@ -100,3 +119,56 @@ class PaymentServiceTests(TestCase):
         receipts = Receipt.objects.filter(payment__event_id__startswith="sequence-event-")
         self.assertEqual(receipts.count(), 20)
         self.assertEqual(receipts.values("number").distinct().count(), 20)
+
+    def test_signed_checkout_allocates_once_and_returns_limited_result(self):
+        instalment = Instalment.objects.get(plan__student__code="STU-0587", seq=3)
+        token = sign_pay_token(instalment.pk)
+        details = self.client.get("/api/pay_details", {"token": token}, HTTP_X_INTERNAL_KEY="test-internal-key")
+        self.assertEqual((details.status_code, details.json()["amount"], details.json()["paid"]), (200, 1500000, False))
+        self.assertEqual(self.client.get("/api/pay_details", {"token": token + "x"}, HTTP_X_INTERNAL_KEY="test-internal-key").json()["valid"], False)
+
+        payload = self.gateway_payload(instalment)
+        first = self.post_event(payload)
+        self.assertEqual((first.status_code, first.json()["result"]), (200, "allocated"))
+        counts = (PaymentEvent.objects.count(), Payment.objects.count(), Allocation.objects.count(), Receipt.objects.count())
+        replay = self.post_event(payload)
+        self.assertEqual((replay.status_code, replay.json()["eventId"]), (200, payload["event_id"]))
+        self.assertEqual((PaymentEvent.objects.count(), Payment.objects.count(), Allocation.objects.count(), Receipt.objects.count()), counts)
+        self.assertEqual(Payment.objects.get(event_id=payload["event_id"]).method, "upi")
+
+        result = self.client.get("/api/payment_result", {"token": token, "eventId": payload["event_id"]}, HTTP_X_INTERNAL_KEY="test-internal-key")
+        self.assertEqual((result.status_code, result.json()["result"], result.json()["firstName"], result.json()["method"]), (200, "paid", "Ishita", "upi"))
+        self.assertEqual(result.json()["studentCode"], "STU-0587")
+        self.assertFalse(result.json()["parentCanAccess"])
+        self.assertNotIn("fullName", result.json())
+        self.assertFalse(self.client.get("/api/payment_result", {"token": token + "x", "eventId": payload["event_id"]}, HTTP_X_INTERNAL_KEY="test-internal-key").json()["found"])
+        updated = self.client.get("/api/pay_details", {"token": token}, HTTP_X_INTERNAL_KEY="test-internal-key").json()
+        self.assertEqual((updated["amount"], updated["paid"], updated["payUrl"]), (0, True, None))
+
+    def test_wrong_amount_is_queued_without_changing_the_balance(self):
+        instalment = Instalment.objects.get(plan__student__code="STU-0587", seq=3)
+        payload = self.gateway_payload(instalment, event_id="gateway-mismatch", amount=1400000)
+        response = self.post_event(payload)
+        self.assertEqual((response.status_code, response.json()["result"]), (200, "queued"))
+        self.assertEqual(InstalmentBalance.objects.get(pk=instalment.pk).balance_paise, 1500000)
+        self.assertFalse(Payment.objects.filter(event_id=payload["event_id"]).exists())
+        self.assertFalse(Allocation.objects.filter(payment__event_id=payload["event_id"]).exists())
+        self.assertFalse(Receipt.objects.filter(payment__event_id=payload["event_id"]).exists())
+        unmatched = UnmatchedPayment.objects.get(event_id=payload["event_id"])
+        self.assertEqual((unmatched.reason, unmatched.status), ("amount_mismatch", "open"))
+        token = sign_pay_token(instalment.pk)
+        result = self.client.get("/api/payment_result", {"token": token, "eventId": payload["event_id"]}, HTTP_X_INTERNAL_KEY="test-internal-key")
+        self.assertEqual((result.json()["result"], result.json()["amount"]), ("checking", 1400000))
+
+    def test_webhook_checks_raw_signature_and_validates_the_payload(self):
+        instalment = Instalment.objects.get(plan__student__code="STU-0587", seq=3)
+        payload = self.gateway_payload(instalment, event_id="gateway-invalid")
+        raw = json.dumps(payload, separators=(",", ":")).encode()
+        valid_signature = hmac.new(b"test-webhook-secret", raw, hashlib.sha256).hexdigest()
+        self.assertEqual(self.post_event(payload, signature="0" * 64).status_code, 401)
+        self.assertEqual(self.post_event(payload, signature=valid_signature, raw=raw + b" ").status_code, 401)
+        del payload["method"]
+        self.assertEqual(self.post_event(payload).status_code, 400)
+        with patch.dict(os.environ, {"PAYMENT_WEBHOOK_SECRET": ""}):
+            self.assertEqual(self.post_event(payload).status_code, 401)
+        self.assertFalse(PaymentEvent.objects.filter(event_id="gateway-invalid").exists())

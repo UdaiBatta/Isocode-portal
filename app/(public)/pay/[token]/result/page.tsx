@@ -53,7 +53,7 @@ export default async function PaymentResult({ params, searchParams }: { params: 
     <div className="flex flex-col gap-3">
       {receiptHref ? <ButtonLink href={receiptHref} className="w-full text-headline-medium">{t(language, "pay.viewReceipt")}</ButtonLink> : null}
       {view.result === "failed" ? <ButtonLink href={`/mock-gateway/${token}`} className="w-full text-headline-medium">{t(language, "common.retry")}</ButtonLink> : null}
-      <ButtonLink href={view.parentCanAccess ? `/dues?student=${encodeURIComponent(token.slice(0, 8))}` : "/login"} variant="secondary" className="w-full">{t(language, "pay.backToDues")}</ButtonLink>
+      <ButtonLink href={view.parentCanAccess ? `/dues?student=${encodeURIComponent(view.studentCode)}` : "/login"} variant="secondary" className="w-full">{t(language, "pay.backToDues")}</ButtonLink>
     </div>
     <p className="text-center text-body-2-regular text-text-secondary">{ct(language, "result.testNote")}</p>
   </PageShell>;

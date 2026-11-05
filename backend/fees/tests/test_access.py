@@ -40,6 +40,9 @@ class AccessTests(TestCase):
                 if isinstance(pattern, URLResolver):
                     walk(pattern.url_patterns)
                 else:
+                    if str(pattern.pattern) == "webhooks/payment":
+                        self.assertFalse(hasattr(pattern.callback, "api_role"), str(pattern.pattern))
+                        continue
                     self.assertTrue(hasattr(pattern.callback, "api_role"), str(pattern.pattern))
         walk(get_resolver().url_patterns)
 

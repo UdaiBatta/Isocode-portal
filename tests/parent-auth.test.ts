@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { createHmac } from "node:crypto";
 const { jar, writeCookie, fetcher } = vi.hoisted(() => ({ jar: new Map<string, string>(), writeCookie: vi.fn(), fetcher: vi.fn() }));
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: (key: string) => jar.has(key) ? { value: jar.get(key)! } : undefined, set: (key: string, value: string, options?: { maxAge?: number }) => { writeCookie(key, value, options); if (options?.maxAge === 0) jar.delete(key); else jar.set(key, value); }, delete: (key: string) => jar.delete(key) }) }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -141,6 +142,34 @@ it("completes a public payment action and recorded result with stale sid without
   expect(await getPaymentResult("STU-0587-3", paid.eventId)).toMatchObject({ result: "paid", amount: 1500000, parentCanAccess: false, canViewReceipt: false });
   await expect(getReceipt(paid.receiptId!)).rejects.toThrow("redirect:/login");
   await expect(recordCounterPayment({ studentId: "STU-0587", amountPaise: 100, method: "cash", receivedOn: "2026-11-02" })).rejects.toThrow("redirect:/login");
+});
+
+it("loads signed payment details and results through Django", async () => {
+  const token = "signed-token.value";
+  fetcher.mockResolvedValueOnce(response({ ok: true, valid: true, firstName: "Ishita", seq: 3, amount: 1500000, dueDate: "2026-10-10", paid: false, payUrl: `/mock-gateway/${token}` }));
+  expect(await getPayDetails(token)).toMatchObject({ firstName: "Ishita", amount: 1500000, paid: false });
+  expect(fetcher.mock.calls[0][0]).toBe(`http://localhost:8000/api/pay_details?token=${encodeURIComponent(token)}`);
+  expect(fetcher.mock.calls[0][1].headers["X-Internal-Key"]).toBe("test-internal-key");
+
+  fetcher.mockResolvedValueOnce(response({ ok: true, found: true, result: "paid", receiptId: "receipt-1", firstName: "Ishita", studentCode: "STU-0587", seq: 3, amount: 1500000, method: "upi", on: "2026-11-02", reference: "TXN-1", receiptNumber: "MLV/2026-27/000001", parentCanAccess: false, canViewReceipt: false }));
+  expect(await getPaymentResult(token, "gateway-event-1")).toMatchObject({ result: "paid", method: "upi", studentCode: "STU-0587", canViewReceipt: false });
+  expect(fetcher.mock.calls[1][0]).toContain("/api/payment_result?token=");
+  expect(fetcher.mock.calls[1][0]).toContain("eventId=gateway-event-1");
+});
+
+it("signs a mock gateway payload from authoritative Django payment details", async () => {
+  const token = "signed-token.value";
+  const secret = "test-webhook-secret";
+  vi.stubEnv("PAYMENT_WEBHOOK_SECRET", secret);
+  fetcher.mockResolvedValueOnce(response({ ok: true, valid: true, reference: "instalment-1", amount: 1500000, today: "2026-11-02", paid: false }));
+  fetcher.mockResolvedValueOnce(response({ ok: true, eventId: "gateway-event-1", result: "queued" }));
+  expect(await submitMockPayment({ token, outcome: "wrong_amount", method: "netbanking" })).toMatchObject({ ok: true, eventId: "gateway-event-1", result: "checking" });
+  const [url, options] = fetcher.mock.calls[1];
+  expect(url).toBe("http://localhost:8000/api/webhooks/payment");
+  const payload = JSON.parse(options.body);
+  expect(payload).toMatchObject({ reference: "instalment-1", amount_paise: 1400000, status: "success", paid_on: "2026-11-02", method: "netbanking" });
+  expect(options.headers).toEqual({ "Content-Type": "application/json", "X-Signature": createHmac("sha256", secret).update(options.body).digest("hex") });
+  expect(options.headers).not.toHaveProperty("X-Internal-Key");
 });
 
 it("loads a real staff ledger through Django and sends stale sessions to staff sign-in", async () => {

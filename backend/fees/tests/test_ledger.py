@@ -6,6 +6,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from fees.domain.ledger import instalment_view
+from fees.domain.pay_token import unsign_pay_token
 from fees.models import StaffUser, Student
 from fees.seed_data import DEMO_TODAY, build_named
 
@@ -62,6 +63,8 @@ class LedgerTests(TestCase):
                          view.balance, view.status, view.part_paid, view.days_overdue, view.due_in_days),
                     )
                     self.assertEqual(bool(actual["payUrl"]), bool(view.balance and data["student"]["status"] == "active"))
+                    if actual["payUrl"]:
+                        self.assertEqual(unsign_pay_token(actual["payUrl"].removeprefix("/pay/")), actual["id"])
                 self.assertEqual(sum(payment["amount"] for payment in data["payments"]), paid)
                 self.assertTrue(all(payment["receiptId"] for payment in data["payments"]))
                 self.assertEqual(data["timeline"], [])

@@ -97,3 +97,8 @@ Playwright loads local environment values with the already-installed @next/env; 
 The local production build uses `.next-e2e`, so test builds do not overwrite the development build on port 3000. The complete suite passes at mobile and desktop widths: 237 passed, 3 skipped, 0 failed. The family-isolation test initially failed because its strict text locator matched two visible copies of the child's name in the shell. The test now selects the first visible match; the focused test passed at both widths and the full rerun passed. `npm run check` passes 39 frontend and 52 Django tests, TypeScript, Ruff and Django checks, with eight existing lint warnings.
 
 The production staff export previously requested a ledger per student, causing repeated authentication requests. It now reads one authenticated, centre-scoped directory and one preview snapshot before calculating the rows. The prototype language action also updates the fixture language used by Student info after Django accepts the change. No seed reset or deployment was performed.
+
+
+## 2026-11-05 — T2.4 gateway payment method
+
+ASSUMPTION for the TDD: B7 lists `gateway` as a payment method, while T2.4 requires the selected `upi`, `card` or `netbanking` method to be saved and shown on results and receipts. Keep `gateway` for existing records and add those three values for new mock gateway payments; cash, cheque and bank remain unchanged. For balances of ₹1,000 or less, the wrong-amount test uses balance + 1 paisa because subtracting ₹1,000 would produce a zero or negative payment rather than an amount the gateway could transfer. The webhook still applies the existing exact-match rules and queues every mismatch without allocating it.

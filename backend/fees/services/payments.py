@@ -58,7 +58,7 @@ def process_payment_event(*, event_id, reference, amount_paise, status, paid_on,
         raise ValueError("Payment event identity and amount must be valid.")
     if not isinstance(paid_on, date):
         raise ValueError("Payment date must be a date.")
-    if method not in {"gateway", "cash", "cheque", "bank"}:
+    if method not in {"gateway", "cash", "cheque", "bank", "upi", "card", "netbanking"}:
         raise ValueError("Payment method is invalid.")
 
     payload = {"event_id": event_id, "reference": reference, "amount_paise": amount_paise,

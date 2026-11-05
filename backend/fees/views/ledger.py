@@ -4,6 +4,7 @@ from fees.auth import api, error
 from fees.clock import today
 from fees.domain.ledger import instalment_view
 from fees.forms import LedgerQueryForm
+from fees.domain.pay_token import sign_pay_token
 from fees.models import FeePlan, GuardianStudent, InstalmentBalance, Payment, Receipt, Refund, Student
 
 
@@ -27,8 +28,7 @@ def ledger(request):
             "amount": row.amount_paise, "paid": row.paid_paise, "balance": view.balance,
             "status": view.status, "partPaid": view.part_paid,
             "daysOverdue": view.days_overdue, "dueInDays": view.due_in_days,
-            # LIMIT: unsigned pay URLs become signed links in T2.4.
-            "payUrl": f"/pay/{row.pk}" if view.balance and student.status == "active" else None,
+            "payUrl": f"/pay/{sign_pay_token(row.pk)}" if view.balance and student.status == "active" else None,
         })
 
     plan = FeePlan.objects.get(student=student)

@@ -7,6 +7,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
 
+from fees.domain.pay_token import unsign_pay_token
 from fees.models import Consent, Guardian, GuardianStudent, Instalment, OtpChallenge, Refund, UnmatchedPayment
 
 
@@ -55,6 +56,7 @@ class DuesTests(TestCase):
                                   current["daysOverdue"], current["dueInDays"], current["dueDate"]),
                                  (amount, paid, balance, status, overdue, due_in, due_date))
                 self.assertTrue(current["payUrl"].startswith("/mock-gateway/"))
+                self.assertEqual(unsign_pay_token(current["payUrl"].removeprefix("/mock-gateway/")), current["id"])
 
         self.sign_in("+919000000412")
         aarav = self.get_dues().json()

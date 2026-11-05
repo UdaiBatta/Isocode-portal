@@ -49,3 +49,23 @@ class DuesQueryForm(forms.Form):
 
 class LedgerQueryForm(forms.Form):
     student = forms.RegexField(r"^STU-[0-9]{4}$", max_length=32)
+
+
+class PayTokenQueryForm(forms.Form):
+    token = forms.CharField(max_length=256)
+
+
+class PaymentResultQueryForm(PayTokenQueryForm):
+    eventId = forms.CharField(max_length=200)
+
+
+class PaymentWebhookForm(forms.Form):
+    event_id = forms.CharField(max_length=200)
+    reference = forms.CharField(required=False, max_length=200)
+    amount_paise = forms.IntegerField(min_value=1)
+    status = forms.ChoiceField(choices=[("success", "success"), ("failed", "failed"), ("pending", "pending")])
+    paid_on = forms.DateField(input_formats=["%Y-%m-%d"])
+    method = forms.ChoiceField(choices=[("upi", "upi"), ("card", "card"), ("netbanking", "netbanking")])
+
+    def clean_reference(self):
+        return self.cleaned_data["reference"] or None

@@ -4,6 +4,7 @@ from fees.auth import api, error
 from fees.clock import today
 from fees.domain.ledger import instalment_view
 from fees.forms import DuesQueryForm
+from fees.domain.pay_token import sign_pay_token
 from fees.models import GuardianStudent, InstalmentBalance, Refund, UnmatchedPayment
 
 
@@ -30,8 +31,7 @@ def dues(request):
             "amount": row.amount_paise, "paid": row.paid_paise, "balance": view.balance,
             "status": view.status, "partPaid": view.part_paid,
             "daysOverdue": view.days_overdue, "dueInDays": view.due_in_days,
-            # LIMIT: T2.1 links use the internal ID until T2.4 adds signed pay tokens.
-            "payUrl": f"/mock-gateway/{row.pk}" if view.balance and selected.status == "active" else None,
+            "payUrl": f"/mock-gateway/{sign_pay_token(row.pk)}" if view.balance and selected.status == "active" else None,
         })
 
     current = next((row for row in instalments if row["balance"] > 0), None)
