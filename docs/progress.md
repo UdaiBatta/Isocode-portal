@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T5.3 (2026-11-06):** safe call-brief generation, standard fallback and per-task cache. Files: backend/fees/services/risk.py, backend/fees/tests/test_risk_brief.py, docs/decisions.md, docs/progress.md. TEST LOCK: Codex 2026-11-06 04:59 IST — fake-provider/fallback/cache and full checks. SDK package approval remains pending; do not edit requirements/install packages or make a real provider call until approved. Provider imports will be lazy so the no-key fallback works with current dependencies.
+
 
 
 
