@@ -10,7 +10,8 @@ export function safeParentNext(value: unknown) {
 }
 
 export async function getParentPageContext(next?: unknown) {
-  return { ...await getAuthState(), language: await getLanguage(), today: await today(), next: safeParentNext(next), demo: process.env.DEMO_MODE === "true" };
+  const state = await getAuthState();
+  return { ...state, language: await getLanguage(), today: "today" in state && state.today ? state.today : await today(), next: safeParentNext(next), demo: process.env.DEMO_MODE === "true" };
 }
 
 export async function getAuthState() {

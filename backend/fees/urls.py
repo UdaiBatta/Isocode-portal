@@ -1,6 +1,6 @@
 from django.urls import path
 
-from fees.views import auth, automation, consent, cron, dues, ledger, payment, receipts, students
+from fees.views import auth, automation, consent, cron, demo, dues, ledger, payment, receipts, students
 
 urlpatterns = [
     path("request_otp", auth.request_otp),
@@ -21,6 +21,10 @@ urlpatterns = [
     path("counter_payment", payment.counter_payment),
     path("webhooks/payment", payment.webhook),
     path("cron/reminders", cron.reminders),
+    path("cron/demo-reset", cron.demo_reset),
+    path("set_demo_date", demo.set_demo_date),
+    path("run_reminders_now", demo.run_reminders_now),
+    path("reset_demo", demo.reset_demo),
     path("automation", automation.automation),
     path("automation_counts", automation.automation_counts),
     path("resolve_unmatched", automation.resolve_unmatched),

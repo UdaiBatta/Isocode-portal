@@ -6,13 +6,14 @@ from django.contrib.sessions.models import Session
 from django.test import TestCase
 from django.utils import timezone
 
-from fees.models import Guardian, OtpChallenge
+from fees.models import AppSetting, Guardian, OtpChallenge
 from fees.views.auth import otp_hash
 
 
 class OtpTests(TestCase):
     @classmethod
     def setUpTestData(cls):
+        AppSetting.objects.create(key="demo_today", value="2026-11-02")
         cls.guardian = Guardian.objects.create(phone="+919000000587", full_name="Demo guardian", language="en")
 
     def setUp(self):

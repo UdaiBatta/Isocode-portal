@@ -10,7 +10,7 @@ export async function getStaffPageContext() {
   const me = await getMe();
   if (!me && (await cookies()).get("sid")?.value) redirect("/staff/login");
   const state = me ?? await readProto();
-  return { role: state.role ?? null, today: await today(), demo: process.env.DEMO_MODE === "true" };
+  return { role: state.role ?? null, today: me?.today ?? await today(), demo: process.env.DEMO_MODE === "true" };
 }
 
 export async function getStaffDirectory() {
