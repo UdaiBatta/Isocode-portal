@@ -5,7 +5,7 @@ from django.db.models import BigIntegerField, Case, CharField, Count, Exists, F,
 from django.db.models.functions import Coalesce
 
 from fees.domain.reminders import next_scheduled_step
-from fees.models import Allocation, Batch, Centre, InstalmentBalance, Payment, Refund, ReminderLog, Student, UnmatchedPayment
+from fees.models import Allocation, Batch, Centre, Instalment, InstalmentBalance, Payment, Refund, ReminderLog, Student, UnmatchedPayment
 
 
 def scoped_students(actor, filters):
@@ -122,7 +122,7 @@ def dashboard(actor, filters, date):
         for key in keys:
             centre[key] += row[key]
     # The historical metric includes late allocations even after an instalment is cleared.
-    past = InstalmentBalance.objects.filter(student__in=students, due_date__lt=date)
+    past = Instalment.objects.filter(plan__student__in=students, due_date__lt=date)
     denominator = past.aggregate(total=Sum("amount_paise"))["total"] or 0
     old = past.filter(due_date__lt=date - timedelta(days=60))
     old_amount = old.aggregate(total=Sum("amount_paise"))["total"] or 0

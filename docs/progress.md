@@ -2,7 +2,8 @@
 
 ## In progress now
 
-- **Codex T4.3 query follow-up (2026-11-06):** backend/fees/services/reporting.py, docs/progress.md. The SDK full check exposed a historical late-allocation query spending over two minutes in a semi-join through aggregate instalment_balances. Replace that historical ID source with base instalments, retaining student/centre/date scope. Existing hand-counted 52-percent, future-payment and empty-scope tests cover semantics. Shares the existing Codex TEST LOCK; SDK verification resumes after this diagnosed blocker is fixed. No financial writes or schema changes.
+- 2026-11-06 — T4.3 historical-query follow-up complete (Codex): historical overdue percentages now select base instalments instead of semi-joining the aggregate balance view. Student/centre/date filters and late-payment/future-receipt semantics are unchanged; existing hand-counted metric and empty-scope checks pass. The first SDK check was stopped after the diagnosed test query ran over two minutes; only its exact test-database query/process was cancelled. Fresh full check passes: 68 frontend / 170 Django tests (264.685s), types, Ruff and Django checks; eight existing lint warnings. Real accounts dashboard reads on 2,600 students: empty centre 0.065s, MLV 0.132s, all 0.117s. No data/schema change. The remaining Codex test lock belongs to SDK completion; next Admin auth and backend handoff.
+
 
 - **Codex T5.3 approved SDK completion (2026-11-06):** files backend/requirements.txt, docs/decisions.md, docs/progress.md. Human approved adding/installing anthropic; pin the installed release, verify its actual structured-output interface and dependency health, then run full checks. No API key is configured and no provider call will run. TEST LOCK: Codex 2026-11-06 08:38 UTC — SDK verification/full check.
 
