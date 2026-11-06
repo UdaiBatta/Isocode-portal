@@ -4,16 +4,14 @@ const { jar, writeCookie, fetcher } = vi.hoisted(() => ({ jar: new Map<string, s
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: (key: string) => jar.has(key) ? { value: jar.get(key)! } : undefined, set: (key: string, value: string, options?: { maxAge?: number }) => { writeCookie(key, value, options); if (options?.maxAge === 0) jar.delete(key); else jar.set(key, value); }, delete: (key: string) => jar.delete(key) }) }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: (path: string) => { throw new Error(`redirect:${path}`); } }));
-import { requestOtp, verifyOtp, staffLogin, grantConsent, declineConsent, setLanguage, logout } from "@/lib/actions/auth";
+import { requestOtp, verifyOtp, staffLogin, setLanguage, logout } from "@/lib/actions/auth";
 import { getAuthState, getParentPageContext, safeParentNext } from "@/lib/data/auth";
 import { getStaffPageContext } from "@/lib/data/staff";
-import { readProto, mutatePublicPreview } from "@/lib/fixtures/state";
 import { backend } from "@/lib/backend";
 import { submitMockPayment, recordCounterPayment } from "@/lib/actions/payments";
 import { getPayDetails, getPaymentResult } from "@/lib/data/payments";
 import { getInvoices, getReceipt, getReceipts } from "@/lib/data/receipts";
 import { getDues } from "@/lib/data/dues";
-import { getProgress } from "@/lib/data/progress";
 import { getLedger } from "@/lib/data/ledger";
 
 beforeEach(() => { jar.clear(); vi.clearAllMocks(); vi.stubGlobal("fetch", fetcher); vi.stubEnv("NEXT_PUBLIC_PROTO", "1"); vi.stubEnv("DEMO_MODE", "true"); vi.stubEnv("BACKEND_URL", "http://localhost:8000"); vi.stubEnv("INTERNAL_API_SECRET", "test-internal-key"); vi.stubEnv("APP_URL", "http://localhost:3000"); });
@@ -52,11 +50,11 @@ it("keeps invalid credentials as an action error and clears sid on logout", asyn
   fetcher.mockResolvedValueOnce(response({ ok: false, code: "credentials", message: "Incorrect credentials." }, 401));
   expect(await staffLogin({ email: "accounts@demo.test", password: "wrong" })).toMatchObject({ ok: false, code: "credentials" });
   expect(writeCookie).not.toHaveBeenCalled();
-  jar.set("sid", "staff-session"); jar.set("proto", JSON.stringify({ role: "accounts" }));
+  jar.set("sid", "staff-session")
   fetcher.mockResolvedValueOnce(response({ ok: true, next: "/login" }, 200, "sid=; Max-Age=0; HttpOnly"));
   expect(await logout()).toEqual({ ok: true, next: "/login" });
   expect(fetcher.mock.calls[1][1].headers.Cookie).toBe("sid=staff-session");
-  expect(jar.has("sid")).toBe(false); expect(jar.has("proto")).toBe(false);
+  expect(jar.has("sid")).toBe(false);
   expect(writeCookie).toHaveBeenLastCalledWith("sid", "", expect.objectContaining({ httpOnly: true, sameSite: "lax", maxAge: 0, secure: false }));
 });
 
@@ -92,89 +90,23 @@ it("records counter payments through the accounts API with integer paise", async
   });
 });
 
-it("uses Django identity and children over a forged prototype cookie whenever sid exists", async () => {
-  jar.set("sid", "parent-session"); jar.set("proto", JSON.stringify({ role: "accounts", phone, centreId: "RJP", consent: true }));
+it("uses the current Django identity and children", async () => {
+  jar.set("sid", "parent-session")
   const me = { ok: true, role: "parent", phone: "+919876543210", centreId: null, consent: false, declined: false, children: [{ id: "STU-2222", name: "Demo child" }] };
   fetcher.mockImplementation(async () => response(me));
   expect(await getAuthState()).toMatchObject(me);
-  await expect(readProto()).rejects.toThrow("redirect:/consent");
   me.consent = true;
-  expect(await readProto()).toMatchObject({ role: "parent", phone: me.phone, consent: true });
-  expect((await readProto()).centreId).toBeUndefined();
   expect(writeCookie).not.toHaveBeenCalled();
 });
 
 it("renders login context signed out for stale sid while protected reads still redirect", async () => {
-  jar.set("sid", "expired"); jar.set("proto", JSON.stringify({ role: "accounts" }));
-  fetcher.mockImplementation(async () => response({ ok: false, code: "unauthenticated", message: "Sign in." }, 401));
+  jar.set("sid", "expired")
+  fetcher.mockImplementation(async (url: string) => url.endsWith("/public_context") ? response({ ok: true, today: "2026-11-02", demo: true }) : response({ ok: false, code: "unauthenticated", message: "Sign in." }, 401));
   expect(await getParentPageContext()).toMatchObject({ role: null, phone: null, consent: false, children: [], today: "2026-11-02" });
-  await expect(readProto()).rejects.toThrow("redirect:/login");
   await expect(getDues()).rejects.toThrow("redirect:/login");
   await expect(getStaffPageContext()).rejects.toThrow("redirect:/staff/login");
   fetcher.mockResolvedValueOnce(response({ ok: false, code: "consent_required", message: "Consent required." }, 403));
   await expect(backend("dues")).rejects.toThrow("redirect:/consent");
-});
-
-it("keeps no-sid fixture previews and consent simulation isolated from real sessions", async () => {
-  jar.set("proto", JSON.stringify({ role: "parent", phone, otp: { attempts: 0, sends: 1, verified: true } }));
-  expect(await getAuthState()).toMatchObject({ role: "parent", phone });
-  await declineConsent(); expect(JSON.parse(jar.get("proto")!).declined).toBe(true);
-  await grantConsent({ studentIds: ["STU-0587"], wordingVersion: "v1" });
-  expect(JSON.parse(jar.get("proto")!).consent).toBe(true);
-  expect(fetcher).not.toHaveBeenCalled();
-  jar.set("sid", "real-session");
-  jar.set("lang", "en");
-  const preview = jar.get("proto");
-  fetcher.mockResolvedValueOnce(response({ ok: true, next: "/dashboard" }, 200, "sid=real-session; Max-Age=2592000"));
-  expect(await grantConsent({ studentIds: ["STU-0587"], wordingVersion: "v1", language: "hi" })).toMatchObject({ ok: true, next: "/dashboard" });
-  expect(fetcher.mock.calls[0][0]).toBe("http://localhost:8000/api/grant_consent");
-  expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ studentIds: ["STU-0587"], wordingVersion: "v1", language: "en" });
-  expect(jar.get("proto")).toBe(preview);
-  fetcher.mockResolvedValueOnce(response({ ok: true }));
-  expect(await declineConsent()).toEqual({ ok: true });
-  expect(fetcher.mock.calls[1][0]).toBe("http://localhost:8000/api/decline_consent");
-  expect(jar.get("proto")).toBe(preview);
-});
-
-it("gates real-session fee and progress reads until saved consent while payment links stay public", async () => {
-  jar.set("sid", "parent-session");
-  let consented = false;
-  let declined = false;
-  const dues = { children: [{ studentId: "STU-0587", fullName: "Ishita Sharma" }], selectedStudentId: "STU-0587", mode: "pay", current: { id: "installment", seq: 3, dueDate: "2026-10-10", amount: 3000000, paid: 1500000, balance: 1500000, status: "overdue", partPaid: true, daysOverdue: 23, dueInDays: 0, payUrl: "/mock-gateway/installment" }, next: { amount: 1500000, dueDate: "2026-10-10" }, moreUnpaid: 0, instalments: [], refund: null };
-  fetcher.mockImplementation(async (url: string) => {
-    if (url.endsWith("/grant_consent")) { consented = true; return response({ ok: true, next: "/dashboard" }); }
-    if (url.endsWith("/decline_consent")) { consented = false; declined = true; return response({ ok: true }); }
-    if (url.includes("/dues")) return consented && !declined ? response({ ok: true, ...dues }) : response({ ok: false, code: "consent_required", message: "Consent required." }, 403);
-    if (url.includes("/progress")) return consented && !declined ? response({ ok: true, attendance: [], tests: [{ testDate: "2026-10-31", testName: "Synthetic test", score: 75, maxScore: 100 }] }) : response({ ok: false, code: "consent_required", message: "Consent required." }, 403);
-    return response({ ok: true, role: "parent", phone, centreId: null, consent: consented, declined, children: [{ id: "STU-0587", name: "Ishita Sharma" }] });
-  });
-  expect(await getParentPageContext()).toMatchObject({ role: "parent", consent: false });
-  await expect(getDues()).rejects.toThrow("redirect:/consent");
-  await expect(getProgress()).rejects.toThrow("redirect:/consent");
-  expect(await getPayDetails("STU-0587-3")).toMatchObject({ firstName: "Ishita", amount: 1500000 });
-  expect(await grantConsent({ studentIds: ["STU-0587"], wordingVersion: "v1" })).toMatchObject({ ok: true });
-  expect((await getDues()).current?.balance).toBe(1500000);
-  expect((await getDues("STU-0587")).selectedStudentId).toBe("STU-0587");
-  expect(fetcher.mock.calls.find(([url]) => url === "http://localhost:8000/api/dues?student=STU-0587")).toBeTruthy();
-  expect((await getProgress()).tests.length).toBeGreaterThan(0);
-  await declineConsent();
-  expect(await getParentPageContext()).toMatchObject({ consent: false, declined: true });
-  await expect(getDues()).rejects.toThrow("redirect:/consent");
-  expect(await getPayDetails("STU-0587-3")).not.toBeNull();
-});
-
-it("completes a public payment action and recorded result with stale sid without private access", async () => {
-  jar.set("proto", JSON.stringify({ role: "accounts", phone, consent: true }));
-  jar.set("sid", "expired");
-  fetcher.mockImplementation(async () => response({ ok: false, code: "unauthenticated", message: "Sign in." }, 401));
-  expect(await getPayDetails("STU-0587-3")).toMatchObject({ firstName: "Ishita", paid: false, amount: 1500000 });
-  const paid = await submitMockPayment({ token: "STU-0587-3", outcome: "success" });
-  if (!paid.ok) throw new Error("Expected a recorded fixture payment");
-  expect(fetcher).not.toHaveBeenCalled();
-  expect(await getPayDetails("STU-0587-3")).toMatchObject({ firstName: "Ishita", paid: true, amount: 0 });
-  expect(await getPaymentResult("STU-0587-3", paid.eventId)).toMatchObject({ result: "paid", amount: 1500000, parentCanAccess: false, canViewReceipt: false });
-  await expect(getReceipt(paid.receiptId!)).rejects.toThrow("redirect:/login");
-  await expect(recordCounterPayment({ studentId: "STU-0587", amountPaise: 100, method: "cash", receivedOn: "2026-11-02" })).rejects.toThrow("redirect:/staff/login");
 });
 
 it("loads signed payment details and results through Django", async () => {
@@ -221,25 +153,12 @@ it("loads a real staff ledger through Django and sends stale sessions to staff s
   await expect(getLedger("STU-0412")).rejects.toThrow("redirect:/staff/login");
 });
 
-it("keeps public preview mutations mode-gated and bounded by the existing cookie cap", async () => {
-  vi.stubEnv("NEXT_PUBLIC_PROTO", "0");
-  expect(await submitMockPayment({ token: "STU-0587-3", outcome: "success" })).toMatchObject({ ok: false, code: "disabled" });
-  expect(writeCookie).not.toHaveBeenCalled();
-  vi.stubEnv("NEXT_PUBLIC_PROTO", "1");
-  jar.set("proto", JSON.stringify({ outcomes: { previous: { outcome: "called", note: "अ".repeat(300) } } }));
-  const before = jar.get("proto");
-  expect(await mutatePublicPreview((state) => { state.outcomes!.extra = { outcome: "called", note: "अ".repeat(300) }; return {}; })).toMatchObject({ ok: false, code: "demo_full" });
-  expect(jar.get("proto")).toBe(before);
-  expect(fetcher).not.toHaveBeenCalled();
-});
-
 it("sets language through Django even when prototype mode is disabled", async () => {
   vi.stubEnv("NEXT_PUBLIC_PROTO", "0");
   fetcher.mockResolvedValueOnce(response({ ok: true, language: "hi" }));
   expect(await setLanguage({ language: "hi" })).toEqual({ ok: true, language: "hi" });
   expect(fetcher.mock.calls[0][0]).toBe("http://localhost:8000/api/set_language");
   expect(jar.get("lang")).toBe("hi");
-  expect(jar.has("proto")).toBe(false);
   expect(writeCookie).toHaveBeenLastCalledWith("lang", "hi", expect.objectContaining({ secure: false }));
   vi.stubEnv("APP_URL", "https://demo.example");
   fetcher.mockResolvedValueOnce(response({ ok: true, language: "en" }));

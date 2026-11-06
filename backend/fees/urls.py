@@ -3,6 +3,7 @@ from django.urls import path
 from fees.views import admin, auth, automation, consent, counsellor, cron, dashboard, demo, dues, exports, ledger, payment, receipts, refunds, students
 
 urlpatterns = [
+    path("public_context", auth.public_context),
     path("counsellor", counsellor.counsellor),
     path("ensure_call_brief", counsellor.ensure_brief),
     path("close_task", counsellor.close_task),

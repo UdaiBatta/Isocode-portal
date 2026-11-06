@@ -38,6 +38,11 @@ def parent_state(guardian, declined=False):
             "declined": declined, "children": [{"id": child["student__code"], "name": child["student__full_name"]} for child in children]}
 
 
+@api(role="public", methods=("GET",))
+def public_context(request):
+    return JsonResponse({"ok": True, "today": today().isoformat(), "demo": os.getenv("DEMO_MODE", "false").lower() == "true"})
+
+
 @api(role="public", form=PhoneForm)
 @transaction.atomic
 def request_otp(request):

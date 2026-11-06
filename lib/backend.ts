@@ -51,3 +51,5 @@ export const getMe = cache(async () => {
   if (!result.ok) throw new Error(result.message);
   return result;
 });
+
+export const getPublicContext = cache(async () => backend<{ today: string; demo: boolean }>("public_context"));

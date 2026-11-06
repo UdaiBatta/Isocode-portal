@@ -70,6 +70,13 @@ class AccessTests(TestCase):
         self.assertEqual(self.post("staff_login", {"email": "invalid", "password": "x"}).status_code, 400)
         self.assertEqual(self.post("set_language", {"language": "xx"}).status_code, 400)
 
+    def test_anonymous_context_uses_backend_date_and_exposes_no_identity(self):
+        with patch.dict(os.environ, {"DEMO_MODE": "true"}):
+            response = self.client.get("/api/public_context", HTTP_X_INTERNAL_KEY="test-internal-key")
+        self.assertEqual(response.json(), {"ok": True, "today": "2026-11-02", "demo": True})
+        self.assertEqual(self.client.get("/api/public_context").status_code, 403)
+        self.assertEqual(self.post("public_context").status_code, 405)
+
     def test_language_is_public_and_only_updates_the_signed_in_guardian(self):
         self.assertEqual(self.post("set_language", {"language": "en"}).json(), {"ok": True, "language": "en"})
         other = Guardian.objects.create(phone="+919000000412", full_name="Other demo guardian", language="hi")
