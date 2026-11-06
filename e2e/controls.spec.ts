@@ -30,13 +30,13 @@ test("calendar Cancel, Escape and outside dismissal preserve the committed date"
   await page.goto("/staff/automation");
   const calendar = page.getByRole("dialog", { name: "Demo date", exact: true });
   for (const dismissal of ["cancel", "escape", "outside"]) {
-    await page.getByRole("button", { name: "Nov 2, 2026", exact: true }).click();
-    await calendar.getByRole("button", { name: "Monday, November 9, 2026", exact: true }).click();
+    await page.getByRole("button", { name: "2 Nov 2026", exact: true }).click();
+    await calendar.getByRole("button", { name: "Monday, 9 November 2026", exact: true }).click();
     if (dismissal === "cancel") await calendar.getByRole("button", { name: "Cancel", exact: true }).click();
     else if (dismissal === "escape") await page.keyboard.press("Escape");
     else await page.mouse.click(2, 2);
     await expect(calendar).not.toBeVisible();
-    await expect(page.getByRole("button", { name: "Nov 2, 2026", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "2 Nov 2026", exact: true })).toBeVisible();
   }
 });
 
@@ -73,14 +73,14 @@ test("counter date validation, bank method, excess queue and receipt link work",
   await modal.getByRole("textbox", { name: "Amount in ₹", exact: true }).fill("50000");
   await modal.getByRole("button", { name: /Method$/ }).click();
   await page.getByRole("option", { name: "Bank transfer", exact: true }).click();
-  await modal.getByRole("button", { name: "Nov 2, 2026", exact: true }).click();
+  await modal.getByRole("button", { name: "2 Nov 2026", exact: true }).click();
   const calendar = page.getByRole("dialog", { name: "Received on", exact: true });
-  await calendar.getByRole("button", { name: /Tuesday, November 3, 2026/ }).click();
+  await calendar.getByRole("button", { name: /Tuesday, 3 November 2026/ }).click();
   await calendar.getByRole("button", { name: "Apply", exact: true }).click();
   await modal.getByRole("button", { name: "Save payment", exact: true }).click();
   await expect(modal.getByRole("alert")).toHaveText("Payment date cannot be after today.");
-  await modal.getByRole("button", { name: "Nov 3, 2026", exact: true }).click();
-  await calendar.getByRole("button", { name: /Monday, November 2, 2026/ }).click();
+  await modal.getByRole("button", { name: "3 Nov 2026", exact: true }).click();
+  await calendar.getByRole("button", { name: /Monday, 2 November 2026/ }).click();
   await calendar.getByRole("button", { name: "Apply", exact: true }).click();
   await modal.getByRole("textbox", { name: "Note", exact: true }).fill("Verified fictional bank payment.");
   await modal.getByRole("button", { name: "Save payment", exact: true }).click();
@@ -108,11 +108,11 @@ test("paid reminders stop, demo replay sends Mohit's Hindi message, and reset re
   await page.goto("/staff/automation");
   await page.getByRole("radio", { name: "Stopped", exact: true }).click();
   await expect(page.getByText("Stopped: Paid 2026-11-02", { exact: true }).filter({ visible: true })).toBeVisible();
-  await page.getByRole("button", { name: "Nov 2, 2026", exact: true }).click();
+  await page.getByRole("button", { name: "2 Nov 2026", exact: true }).click();
   const calendar = page.getByRole("dialog", { name: "Demo date", exact: true });
-  await calendar.getByRole("button", { name: "Monday, November 9, 2026", exact: true }).click();
+  await calendar.getByRole("button", { name: "Monday, 9 November 2026", exact: true }).click();
   await calendar.getByRole("button", { name: "Apply", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Nov 9, 2026", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "9 Nov 2026", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Run today's reminders", exact: true }).click();
   await expect(page.getByRole("radio", { name: "Sent", exact: true })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("button", { name: /Mohit Gurjar/ }).click();
@@ -128,7 +128,7 @@ test("paid reminders stop, demo replay sends Mohit's Hindi message, and reset re
   await page.getByRole("radio", { name: "Upcoming", exact: true }).click();
   await page.getByRole("button", { name: "Reset demo", exact: true }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Reset demo", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Nov 2, 2026", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "2 Nov 2026", exact: true })).toBeVisible();
 });
 
 test("queue student search, partial matching and rejection work", async ({ page, context }) => {

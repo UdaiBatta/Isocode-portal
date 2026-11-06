@@ -37,42 +37,6 @@
 .pt-pulse { animation: pt-pulse 1.2s ease-in-out infinite; }
 @keyframes pt-pulse { from { transform: translateX(0); opacity: 0; } 20%, 80% { opacity: 1; } to { transform: translateX(96px); opacity: 0; } }
 
-/* Parent portal: Vintage Paper tokens with a forest action colour. Values and sources are in docs/design-tokens.md. On <html> so portalled menus inherit them. */
-html:has(.parent-surface, .paper-surface) {
-  --color-background-full: oklch(0.9582 0.0152 90.2357);
-  --color-background-primary-default: oklch(0.9914 0.0098 87.4695);
-  --color-background-secondary-default: oklch(0.9239 0.019 83.0636);
-  --color-background-secondary-hover: oklch(0.8846 0.0302 85.5655);
-  --color-separator-border: oklch(0.8606 0.0321 84.5881);
-  --color-border-button-default: oklch(0.8606 0.0321 84.5881);
-  --color-text-primary: oklch(0.3 0.0225 64.3);
-  --color-text-secondary: oklch(0.44 0.0387 71.2);
-  --color-text-tertiary: oklch(0.44 0.0387 71.2);
-  --color-accent-50: #EFF4EE; --color-accent-100: #DCE8DB; --color-accent-200: #BCD2BB; --color-accent-300: #93B592; --color-accent-400: #68936A; --color-accent-500: #44754A;
-  --color-accent-600: #2F5F38; --color-accent-700: #25502E; --color-accent-800: #1D4025; --color-accent-900: #16321D; --color-accent-950: #0D1F12;
-}
-
-/* Staff workspace: BoardUI's dark tokens (see theme.css) with graphite panels and a lime action colour. */
-html:has(.staff-surface) {
-  color-scheme: dark;
-  --color-background-full: #0C0D0D;
-  --color-background-primary-default: #1C1E1D;
-  --color-background-secondary-default: #282B29;
-  --color-background-secondary-hover: #343936;
-  --color-separator-border: #343936;
-  --color-border-button-default: #343936;
-  --color-text-primary: #F5F5F0;
-  --color-text-secondary: #A5ADA6;
-  --color-text-tertiary: #A5ADA6;
-  --color-text-placeholder: #A5ADA6;
-  --color-text-white: #0C0D0D;
-  --color-status-rose-text: #FF7A95;
-  --color-tab-count-selected-background: #2A3A16;
-  --color-accent-50: #1F2A12; --color-accent-100: #2A3A16; --color-accent-200: #3D5420; --color-accent-300: #5C7D2E; --color-accent-400: #8FC23C; --color-accent-500: #B8F84B;
-  --color-accent-600: #B8F84B; --color-accent-700: #B8F84B; --color-accent-800: #A6E63C; --color-accent-900: #94D02F; --color-accent-950: #7FB526;
-  --color-chart-1: #B8F84B; --color-chart-2: #FF9E25; --color-chart-3: #A5ADA6; --color-chart-4: #F5F5F0; --color-chart-5: #5C7D2E;
-}
-
 html:has(.parent-surface, .paper-surface, .staff-surface) body { background: var(--color-background-full); }
 
 @media print {
@@ -1120,18 +1084,7 @@ input[type="search"]::-webkit-search-cancel-button {
 .staff-surface :is(button, a) { min-height: 44px; }
 
 /* ===== The ledger: the look of a bahi-khata, an Indian account book. See docs/design-tokens.md. =====
-   Cloth binding and foil on the spine, ruled pages with a red margin, rubber stamps for status. */
-html:has(.parent-surface, .paper-surface) {
-  --ledger-cloth: #1B3A26; --ledger-cloth-deep: #142C1C; --ledger-foil: #E3CF9A; --ledger-on-cloth: #EFE6CF;
-  --ledger-rule: oklch(0.9 0.018 230 / 0.28); --ledger-margin: #C9483B; --ledger-ink: #A32A1F; --ledger-ink-paid: #25502E;
-  --ledger-heat: #C9483B;
-}
-html:has(.staff-surface) {
-  --ledger-cloth: #131514; --ledger-cloth-deep: #0F1110; --ledger-foil: #B8F84B; --ledger-on-cloth: #C9CFC8;
-  --ledger-rule: #232624; --ledger-margin: #5C7D2E; --ledger-ink: #FF7A95; --ledger-ink-paid: #B8F84B;
-  --ledger-heat: #FF7A95;
-}
-
+   Cloth binding and foil on the spine, ruled pages with a red margin, rubber stamps for status. Its palette lives in theme.css. */
 .ledger-type { font-family: var(--font-ledger), var(--font-devanagari), Georgia, serif; font-weight: 400; }
 :is(.parent-surface, .paper-surface, .staff-surface) :is(h1, h2) { font-family: var(--font-ledger), var(--font-devanagari), Georgia, serif; font-weight: 400; }
 .parent-surface h1, .staff-surface h1 { font-size: 2rem; line-height: 2.5rem; }

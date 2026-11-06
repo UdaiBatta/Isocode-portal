@@ -10,8 +10,12 @@ export const moneySchema = z.number().int().positive().max(Number.MAX_SAFE_INTEG
 const noteSchema = z.string().max(300);
 const paymentSchema = z.object({ studentCode: codeSchema, amount: moneySchema, on: dateSchema, method: z.enum(["upi", "card", "netbanking", "gateway", "cash", "cheque", "bank"]), instalmentId: z.string().max(50).optional() });
 const refundSchema = z.object({ withdrawalDate: dateSchema, reason: z.enum(["Personal", "Moved city", "Changed course", "Health", "Other"]), status: z.enum(["draft", "approved", "paid"]) });
+const fieldValue = z.union([z.string().max(120), z.number().int().safe(), z.null()]);
+const adminChangeSchema = z.object({ id: z.string().max(20), at: z.iso.datetime(), entity: z.enum(["student", "batch", "centre", "staff"]), entityId: z.string().max(20),
+  action: z.enum(["create", "update", "fee", "archive", "restore", "delete"]), patch: z.record(z.string().max(20), fieldValue), reason: z.string().max(200).optional() });
 const stateSchema = z.object({
-  role: z.enum(["parent", "accounts", "counsellor"]).optional(),
+  role: z.enum(["parent", "accounts", "counsellor", "admin"]).optional(),
+  admin: z.array(adminChangeSchema).max(8).optional(),
   phone: z.string().regex(/^\+91[6-9]\d{9}$/).optional(),
   centreId: z.enum(["MLV", "VSH", "MSR", "RJP"]).optional(),
   consent: z.boolean().optional(),
@@ -30,6 +34,8 @@ const stateSchema = z.object({
 });
 
 export type ProtoState = z.infer<typeof stateSchema>;
+type ProtoRole = NonNullable<ProtoState["role"]>;
+export type AdminChange = z.infer<typeof adminChangeSchema>;
 export type ProtoPayment = z.infer<typeof paymentSchema>;
 export type ActionResult<T extends object = object> = ({ ok: true } & T) | { ok: false; code: string; message: string };
 
@@ -66,11 +72,11 @@ export function fail(code: string, message: string): never {
   throw new PrototypeError(code, message);
 }
 
-export function requirePrototypeRole(state: ProtoState, role: "parent" | "accounts" | "counsellor") {
+export function requirePrototypeRole(state: ProtoState, role: ProtoRole) {
   if (state.role && state.role !== role) fail("forbidden", "This prototype view belongs to another role.");
 }
 
-async function mutatePreview<T extends object>(role: "parent" | "accounts" | "counsellor" | null, change: (state: ProtoState) => T | Promise<T>, readState: () => Promise<ProtoState>): Promise<ActionResult<T>> {
+async function mutatePreview<T extends object>(role: ProtoRole | null, change: (state: ProtoState) => T | Promise<T>, readState: () => Promise<ProtoState>): Promise<ActionResult<T>> {
   if (process.env.NEXT_PUBLIC_PROTO !== "1") return { ok: false, code: "disabled", message: "Prototype mode is disabled." };
   try {
     const state = await readState();
@@ -89,7 +95,7 @@ async function mutatePreview<T extends object>(role: "parent" | "accounts" | "co
   }
 }
 
-export async function mutateProto<T extends object>(role: "parent" | "accounts" | "counsellor" | null, change: (state: ProtoState) => T | Promise<T>): Promise<ActionResult<T>> {
+export async function mutateProto<T extends object>(role: ProtoRole | null, change: (state: ProtoState) => T | Promise<T>): Promise<ActionResult<T>> {
   return mutatePreview(role, change, readProto);
 }
 
