@@ -95,7 +95,8 @@ class AccessTests(TestCase):
         self.assertEqual(self.client.get("/api/me", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 401)
 
     def test_staff_session_roles_expiry_logout_and_archival(self):
-        for role, next_path in [("accounts", "/staff/dashboard"), ("counsellor", "/counsellor/tasks")]:
+        for role, next_path in [("accounts", "/staff/dashboard"), ("counsellor", "/counsellor/tasks"),
+                                ("admin", "/staff/manage/students")]:
             with self.subTest(role=role):
                 self.assertEqual(self.login(role).json()["next"], next_path)
                 self.assertEqual(self.client.session.get_expiry_age(), 43200)
@@ -110,10 +111,14 @@ class AccessTests(TestCase):
         StaffUser.objects.filter(pk=self.staff["accounts"].pk).update(archived_at=timezone.now())
         self.assertEqual(self.client.get("/api/me", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 401)
 
-    def test_admin_sign_in_waits_for_manage_workspace(self):
-        response = self.login("admin")
-        self.assertEqual((response.status_code, response.json()["code"]), (403, "role_unavailable"))
-        self.assertNotIn("sid", self.client.cookies)
+    def test_admin_manage_access_and_database_role_revocation(self):
+        self.assertEqual(self.login("admin").json(), {"ok": True, "next": "/staff/manage/students"})
+        self.assertEqual(self.client.get("/api/admin_directory", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 200)
+        for path in ("dashboard", "counsellor", "progress"):
+            self.assertEqual(self.client.get(f"/api/{path}", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 403)
+        StaffUser.objects.filter(pk=self.staff["admin"].pk).update(role="accounts")
+        self.assertEqual(self.client.get("/api/admin_directory", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 403)
+        self.assertEqual(self.client.get("/api/me", HTTP_X_INTERNAL_KEY="test-internal-key").json()["role"], "accounts")
 
     def test_staff_failure_limit_and_window(self):
         for _ in range(10):

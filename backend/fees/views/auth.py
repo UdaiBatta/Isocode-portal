@@ -93,11 +93,10 @@ def staff_login(request):
     if not staff or not valid:
         LoginAttempt.objects.create(email=email, at=now)
         return error("credentials", "The email or password is incorrect.", 401)
-    if staff.role == "admin":
-        return error("role_unavailable", "Admin sign-in is unavailable until the Manage workspace is ready.", 403)
     LoginAttempt.objects.filter(email=email).delete()
     sign_in(request, "staff", staff.pk, 12 * 60 * 60)
-    return JsonResponse({"ok": True, "next": "/counsellor/tasks" if staff.role == "counsellor" else "/staff/dashboard"})
+    destinations = {"admin": "/staff/manage/students", "counsellor": "/counsellor/tasks", "accounts": "/staff/dashboard"}
+    return JsonResponse({"ok": True, "next": destinations[staff.role]})
 
 
 @api(role="any")
