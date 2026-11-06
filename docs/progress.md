@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T5.4 verification follow-up:** claim backend/fees/tests/test_counsellor.py and docs/progress.md. The names full check passed 53 frontend checks but found an existing midnight-IST test assertion: a stored UTC datetime.date() was compared with the business day. Service suppression already uses timezone.localtime().date(). Correct the assertion to timezone.localdate and force the existing outcome test through 01:00 IST. No service logic or B8 expected value changes. Uses the current human-approved Codex test lock; source name task remains pending its verified checkpoint.
+
 - TEST LOCK: Codex 2026-11-07 — human explicitly approved taking over the lock after Claude m8 finished (33 passed / 7 failed). No concurrent Claude test runs until this name/order check and backfill finish. Codex will release promptly; the m8 screen-spec failures remain Claude-owned.
 
 - **TEST LOCK HANDOFF REQUEST — Claude:** the human has now prioritized fictional student names and a mixed All roster. Codex implementation and pure seed-preservation checks are ready, but database/full verification and the name-only application backfill are waiting on your lock. Please finish the current m8 browser batch, release the lock before starting the long layout sweep, and update the StudentRoster subtitle as noted below. Codex will take one focused/full check, backfill names only, then release promptly. Do not run the full layout sweep concurrently with that verification.
