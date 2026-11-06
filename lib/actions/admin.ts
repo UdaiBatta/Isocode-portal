@@ -23,6 +23,9 @@ async function rows(state: ProtoState) {
   return { world, centres: centreVMs(world), batches: batchVMs(world), staff: staffVMs(world), students: studentVMs(world, state, await today()) };
 }
 
+// New IDs are never reused, even after a delete: the replay keys records by ID (Codex ADMIN.6).
+const freshId = (state: ProtoState, prefix: string) => `${prefix}-${nowMs().toString(36).toUpperCase()}${state.admin?.length ?? 0}`;
+
 const save = <T extends z.ZodRawShape>(shape: T) => z.object({ id: id.optional(), ...shape });
 
 export async function saveCentre(input: unknown) {
@@ -49,14 +52,14 @@ export async function saveBatch(input: unknown) {
     if (value.sessionEnd <= value.sessionStart) fail("invalid_dates", "The session must end after it starts.");
     if (current && current.centreId !== value.centreId && world.students.some((row) => row.batchId === current.id)) fail("has_students", "Move the students out before changing the centre.");
     const patch = { name: value.name, centreId: value.centreId, stream: value.stream, sessionStart: value.sessionStart, sessionEnd: value.sessionEnd };
-    return await record(state, { entity: "batch", entityId: current?.id ?? `B-${world.batches.length + 1}`, action: current ? "update" : "create", patch });
+    return await record(state, { entity: "batch", entityId: current?.id ?? freshId(state, "B"), action: current ? "update" : "create", patch });
   });
 }
 
 export async function saveStaff(input: unknown) {
   return mutateProto("admin", async (state) => {
     const value = save({ fullName: name, email: z.email().max(120), role: z.enum(["accounts", "counsellor", "admin"]), centreId: id.nullable(), password: z.string().min(12).max(128).optional() }).parse(input);
-    const { centres, staff, world } = await rows(state);
+    const { centres, staff } = await rows(state);
     const current = staff.find((row) => row.id === value.id);
     if (value.id && !current?.actions.canEdit) fail("not_found", "Staff account not found or archived.");
     if (!current && !value.password) fail("password_required", "Set a temporary password of at least 12 characters.");
@@ -64,7 +67,7 @@ export async function saveStaff(input: unknown) {
     if (staff.some((row) => row.email.toLowerCase() === value.email.toLowerCase() && row.id !== current?.id)) fail("duplicate", "Another account already uses this email.");
     if (current?.id === PROTO_ADMIN.id && value.role !== "admin") fail("self", "You cannot change your own role.");
     // The password is checked and dropped: the prototype never stores one.
-    return await record(state, { entity: "staff", entityId: current?.id ?? `STF-${String(world.staff.length + 1).padStart(2, "0")}`, action: current ? "update" : "create",
+    return await record(state, { entity: "staff", entityId: current?.id ?? freshId(state, "STF"), action: current ? "update" : "create",
       patch: { fullName: value.fullName, email: value.email, role: value.role, centreId: value.centreId } });
   });
 }
@@ -84,7 +87,8 @@ export async function saveStudent(input: unknown) {
     if (!value.gross) fail("fee_required", "Enter the course fee.");
     if (discount >= value.gross) fail("invalid_fee", "The discount must be less than the fee.");
     if (discount && !value.discountReason) fail("reason_required", "Give a reason for the discount.");
-    const code = `STU-${Math.max(...world.students.map((row) => Number(String(row.code).slice(4)))) + 1}`;
+    const used = [...world.students.map((row) => String(row.code)), ...(state.admin ?? []).filter((change) => change.entity === "student").map((change) => change.entityId)];
+    const code = `STU-${Math.max(...used.map((item) => Number(item.slice(4)) || 0)) + 1}`;
     return await record(state, { entity: "student", entityId: code, action: "create", patch: { ...patch, code, gross: value.gross, discount, discountReason: value.discountReason ?? null } });
   });
 }
