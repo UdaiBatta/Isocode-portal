@@ -2,10 +2,11 @@
 
 ## In progress now
 
+- **T5.4 midnight-IST test correction complete (Codex):** the false-flag test now forces 01:00 IST, checks its prior UTC date, and compares the business date with timezone.localdate. Its expected 2 Nov date and service/suppression logic are unchanged. This fixes the after-midnight assertion exposed by the first roster full run; the final complete check passes 53 frontend / 173 Django tests. No application outcome or financial data was changed by this test-only correction. The names task retains the approved test lock until its final checkpoint.
+
 - **SEED.PERF complete (Codex):** the seed command ANALYZEs the seven bulk financial/master tables before reporting its metric. EXPLAIN diagnosed one-row nested-loop estimates on transactional test seed data; refreshing statistics avoids that stale planner state without changing records, schema, expected results or planner switches. The stopped prior check left an orphan query, which was cancelled only in test_coaching_fees to unblock the replacement run. Full check now passes 53 frontend / 173 Django tests (366.092s including that wait), types, Ruff and Django checks; eight existing UI lint warnings. Names/clock-test checkpoints follow under the same approved lock.
 
 
-- **Codex T5.4 verification follow-up:** claim backend/fees/tests/test_counsellor.py and docs/progress.md. The names full check passed 53 frontend checks but found an existing midnight-IST test assertion: a stored UTC datetime.date() was compared with the business day. Service suppression already uses timezone.localtime().date(). Correct the assertion to timezone.localdate and force the existing outcome test through 01:00 IST. No service logic or B8 expected value changes. Uses the current human-approved Codex test lock; source name task remains pending its verified checkpoint.
 
 - TEST LOCK: Codex 2026-11-07 — human explicitly approved taking over the lock after Claude m8 finished (33 passed / 7 failed). No concurrent Claude test runs until this name/order check and backfill finish. Codex will release promptly; the m8 screen-spec failures remain Claude-owned.
 
