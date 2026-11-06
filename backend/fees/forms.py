@@ -233,3 +233,12 @@ class AdminFeeForm(forms.Form):
 class AdminTargetForm(forms.Form):
     entity = forms.ChoiceField(choices=[(value, value) for value in ("student", "batch", "centre", "staff")])
     id = forms.UUIDField()
+
+
+class TaskForm(forms.Form):
+    taskId = forms.UUIDField()
+
+
+class CloseTaskForm(TaskForm):
+    outcome = forms.ChoiceField(choices=[("called", "called"), ("false_flag", "false_flag")])
+    note = forms.CharField(required=False, max_length=300)

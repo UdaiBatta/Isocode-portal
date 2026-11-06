@@ -4,6 +4,8 @@ import math
 import os
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from django.db import transaction
 from django.db.models import F, Window
@@ -12,6 +14,7 @@ from django.utils import timezone
 
 from fees import models as m
 from fees.auth import lock_subject
+from fees.clock import today
 from fees.domain.risk import RiskResult, score_risk, should_create_task
 
 logger = logging.getLogger(__name__)
@@ -207,3 +210,70 @@ def ensure_call_brief(*, task_id, actor):
     task.brief, task.brief_source = result["brief"], result["briefSource"]
     task.save(update_fields=["brief", "brief_source"])
     return result
+
+
+def counsellor_view(actor):
+    date = today()
+    tasks = m.CounsellorTask.objects.select_related("student__batch", "flag")
+    if actor.centre_id:
+        tasks = tasks.filter(student__batch__centre_id=actor.centre_id)
+    opened = list(tasks.filter(status="open", student__status="active", student__archived_at__isnull=True).order_by(
+        "-score", "created_on", "student__code"))
+    closed = list(tasks.exclude(status="open").order_by("-closed_at", "-created_on", "student__code"))
+    all_tasks = opened + closed
+    snapshots = dict(m.AuditLog.objects.filter(
+        entity="counsellor_task", action="risk_task_created", entity_id__in=[row.pk for row in all_tasks],
+    ).order_by("entity_id", "created_at", "pk").distinct("entity_id").values_list("entity_id", "after"))
+    phones = {}
+    for pk, phone in m.GuardianStudent.objects.filter(student_id__in={row.student_id for row in all_tasks}).order_by(
+        "-is_primary", "created_at", "pk").values_list("student_id", "guardian__phone"):
+        phones.setdefault(pk, phone)
+
+    def task_row(task):
+        facts = snapshots.get(task.pk, {"score": task.score, "reasons": task.flag.reasons})
+        reasons = plain_reasons(facts["reasons"])
+        return {"id": str(task.pk), "studentCode": task.student.code, "studentName": task.student.full_name,
+                "batch": task.student.batch.name, "guardianPhone": phones.get(task.student_id, ""),
+                "score": facts["score"], "band": "high", "reasons": reasons,
+                "brief": task.brief or standard_brief(reasons), "briefSource": task.brief_source,
+                "createdOn": task.created_on.isoformat(), "status": task.status, "note": task.note}
+
+    open_ids = {row.student_id for row in opened}
+    watch, unknown = [], []
+    for row in assess_students(date, actor.centre_id):
+        if row.student.pk in open_ids:
+            continue
+        identity = {"studentCode": row.student.code, "studentName": row.student.full_name, "batch": row.student.batch.name}
+        if row.result.band == "watch":
+            watch.append({**identity, "score": row.result.score, "reasons": list(row.result.reasons)})
+        elif row.result.band == "insufficient":
+            missing = []
+            if row.attendance_weeks < 4:
+                missing.append(f"{row.attendance_weeks} attendance weeks; need at least 4")
+            if row.test_count < 3:
+                missing.append(f"{row.test_count} test results; need at least 3")
+            unknown.append({**identity, "missing": "; ".join(missing)})
+    return {"accuracy": {"genuine": sum(row.status == "called" for row in closed), "total": len(closed)},
+            "open": [task_row(row) for row in opened], "closed": [task_row(row) for row in closed],
+            "watch": sorted(watch, key=lambda row: (-row["score"], row["studentCode"])),
+            "unknown": sorted(unknown, key=lambda row: row["studentCode"])}
+
+
+@transaction.atomic
+def close_task(*, task_id, outcome, note, actor):
+    lock_subject("risk", "job")
+    task = _task(task_id, actor, lock=True)
+    if task.status != "open":
+        raise RiskError("closed", "This task is already closed.", 409)
+    if outcome not in {"called", "false_flag"} or (outcome == "false_flag" and not note.strip()):
+        raise RiskError("note_required", "Explain why this was a false flag.")
+    before = {"status": task.status, "note": task.note}
+    task.status, task.note, task.closed_by = outcome, note.strip() or None, actor
+    # Suppression uses the business date; the audit timestamp still records actual wall time.
+    task.closed_at = datetime.combine(today(), timezone.localtime().time(), tzinfo=ZoneInfo("Asia/Kolkata"))
+    task.save(update_fields=["status", "note", "closed_by", "closed_at"])
+    m.AuditLog.objects.create(actor_type="staff", actor_id=actor.pk, action="risk_task_closed",
+                             entity="counsellor_task", entity_id=task.pk, before=before,
+                             after={"status": task.status, "note": task.note, "score": task.score,
+                                    "closedOn": task.closed_at.date().isoformat()})
+    return {"taskId": str(task.pk)}

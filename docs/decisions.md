@@ -170,3 +170,12 @@ Verification: 64 frontend and 147 Django tests pass. Full saved-data cron runs s
 The model request is restricted to the six B8.9 numeric feature keys, with finite-number checks and no names, phones, codes, amounts, notes or extra fields. The configured/default model, 15-second timeout, one retry, structured Brief output and low effort follow B8.9. Provider imports are lazy so an absent optional SDK/key cannot break Django startup. Generated text over 400 characters, empty/non-string text or text containing the rupee symbol is refused; errors/refusals/None return the standard summary. Logs contain only a fixed failure category. A database row lock stores either model text or fallback once per task, including failures; later key availability does not silently retry a cached task.
 
 Verification uses fake provider modules/calls and checks both request privacy and persisted caching. Full check passes 64 frontend / 154 Django tests. No provider key is configured, so the plan requires no real call. The anthropic SDK package change is awaiting human approval; neither anthropic nor pydantic is installed and requirements remain unchanged. Real SDK integration is therefore not claimed as verified.
+
+
+## 2026-11-06 — T5.4 counsellor integration
+
+Only the counsellor role may read S5, generate/cache a brief or close a call. Centre scope is loaded from the database; no fee amounts or internal feature objects are returned. Open call rows use their trigger audit snapshot, while Watch/insufficient rows use current assessments; an open call takes precedence over those lists. Closed outcomes remain in the accuracy history. The existing CounsellorVM and screen remain unchanged, and real sid adapters forward UUIDs before prototype validation.
+
+Closing a task stores closed_at using the backend business date and current Asia/Kolkata time. This is necessary for frozen demo dates to start the specified 30-day suppression on the business day; the audit's created_at still records actual wall time. Job and outcome writes share the risk transaction lock. The brief HTTP timeout is 35 seconds to cover B8.9's 15-second request and one retry; other backend requests retain ten seconds.
+
+Verification: 66 frontend / 160 Django tests pass, including role, scope, no-amount, accuracy, suppression, invalid-input and live-Watch regression checks. A real local counsellor login, S5 read, cached Standard summary and logout passed; Riya was left open and no model call or financial write occurred. Browser acceptance and frontend polishing remain unclaimed.

@@ -23,7 +23,7 @@ export async function backendResponse(name: string, input?: unknown) {
     headers: { "X-Internal-Key": secret, ...(input === undefined ? {} : { "Content-Type": "application/json" }), ...(sid ? { Cookie: `sid=${sid}` } : {}) },
     body: input === undefined ? undefined : JSON.stringify(input),
     cache: "no-store",
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(name === "ensure_call_brief" ? 35000 : 10000),
   });
 }
 
