@@ -2,7 +2,8 @@
 
 ## In progress now
 
-- **Codex ADMIN.B4 real-session adapters:** claim lib/data/admin.ts, lib/actions/admin.ts, tests/backend-admin.test.ts and docs/progress.md. Connect all six reads and eight writes through lib/backend.ts, forwarding UUIDs before prototype validators; Django retains validation/roles. Revalidate Manage on successful writes. TEST LOCK: Codex 2026-11-06 — transport/full checks; Claude remains paused. No screen or fixture changes in this task.
+- **ADMIN.B4 complete / claims and test lock released (Codex):** six Admin getters and eight writes now use Django for sid sessions, forwarding UUIDs before fixture validation and refreshing Manage on successful writes. Tests cover endpoint/filter mapping, encoded search, role/expiry refusal and failed-write preservation. npm run check passes 75 frontend / 170 Django tests (123.646s), types, Ruff and Django checks; eight existing lint warnings. NEXT_DIST_DIR=.next-e2e production build passes. A real Admin session rendered students, batches, centres, staff and history with current Django data on all five pages; temporary verification session/server cleaned up. An extra anonymous-redirect smoke assertion failed because the intentionally retained no-sid prototype branch still serves fixtures; verify denial after T5.6, not claim it now. Django on 8000 restarted hidden after prior browser testing stopped it. Claude pause is confirmed; next T5.6 fixture/cookie removal alone, then return browser-test migrations to Claude. No business-data write/reset or push.
+
 
 - **Frontend review/merge verified (Codex):** f2b727d merged --no-ff as 431beaf after e8daf24 with a clean tree. Post-merge npm run check passes 72 frontend / 170 Django tests (161.867s), types, Ruff and Django checks; eight existing lint warnings. Claude explicitly confirmed paused in c1b91da. TEST LOCK RELEASED for the completed merge review; Codex claims the Admin adapter task next, then T5.6 alone. No push.
 

@@ -5,8 +5,16 @@ import { dateSchema, fail, moneySchema, mutateProto, type ProtoState } from "@/l
 import { batchVMs, centreVMs, manageWorld, PROTO_ADMIN, staffVMs, studentVMs, type AdminChange } from "@/lib/fixtures/admin";
 import { nowMs, today } from "@/lib/clock";
 import type { ManageEntity, RecordActions } from "@/lib/types";
+import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
+import { backendResponse, backendResult } from "@/lib/backend";
 
-// Fixture paths only: every action replays and records changes in the prototype cookie. Django replaces these with the admin APIs on docs/progress.md.
+async function realAction(name: string, input: unknown) {
+  const result = await backendResult<{ id: string }>(await backendResponse(name, input));
+  if (result.ok) revalidatePath("/staff/manage", "layout");
+  return result;
+}
+
 const id = z.string().regex(/^[A-Za-z0-9-]{2,20}$/);
 const name = z.string().trim().min(2).max(80);
 const reason = z.string().trim().min(5).max(200);
@@ -29,6 +37,7 @@ const freshId = (state: ProtoState, prefix: string) => `${prefix}-${nowMs().toSt
 const save = <T extends z.ZodRawShape>(shape: T) => z.object({ id: id.optional(), ...shape });
 
 export async function saveCentre(input: unknown) {
+  if ((await cookies()).get("sid")?.value) return realAction("admin_save_centre", input);
   return mutateProto("admin", async (state) => {
     const value = save({ code: z.string().regex(/^[A-Z]{3}$/), name }).parse(input);
     const { centres } = await rows(state);
@@ -41,6 +50,7 @@ export async function saveCentre(input: unknown) {
 }
 
 export async function saveBatch(input: unknown) {
+  if ((await cookies()).get("sid")?.value) return realAction("admin_save_batch", input);
   return mutateProto("admin", async (state) => {
     const value = save({ name: z.string().regex(/^(JEE|NEET) 20\d{2} (Morning|Evening)$/), centreId: id, stream: z.enum(["JEE", "NEET"]), sessionStart: dateSchema, sessionEnd: dateSchema }).parse(input);
     const { centres, batches, world } = await rows(state);
@@ -57,6 +67,7 @@ export async function saveBatch(input: unknown) {
 }
 
 export async function saveStaff(input: unknown) {
+  if ((await cookies()).get("sid")?.value) return realAction("admin_save_staff", input);
   return mutateProto("admin", async (state) => {
     const value = save({ fullName: name, email: z.email().max(120), role: z.enum(["accounts", "counsellor", "admin"]), centreId: id.nullable(), password: z.string().min(12).max(128).optional() }).parse(input);
     const { centres, staff } = await rows(state);
@@ -73,6 +84,7 @@ export async function saveStaff(input: unknown) {
 }
 
 export async function saveStudent(input: unknown) {
+  if ((await cookies()).get("sid")?.value) return realAction("admin_save_student", input);
   return mutateProto("admin", async (state) => {
     const value = save({ fullName: name, batchId: id, enrolledOn: dateSchema, guardianName: name, guardianPhone: z.string().regex(/^\+91[6-9]\d{9}$/), guardianLanguage: z.enum(["hi", "en"]),
       gross: moneySchema.optional(), discount: z.number().int().min(0).safe().optional(), discountReason: reason.optional() }).parse(input);
@@ -95,6 +107,7 @@ export async function saveStudent(input: unknown) {
 
 // Changes the fee or discount on the unpaid part only, never below what is already paid.
 export async function changeFee(input: unknown) {
+  if ((await cookies()).get("sid")?.value) return realAction("admin_change_fee", input);
   return mutateProto("admin", async (state) => {
     const value = z.object({ studentId: id, gross: moneySchema, discount: z.number().int().min(0).safe(), reason }).parse(input);
     const student = (await rows(state)).students.find((row) => row.id === value.studentId);
@@ -110,6 +123,7 @@ export async function changeFee(input: unknown) {
 const target = z.object({ entity: z.enum(["student", "batch", "centre", "staff"]), id });
 
 async function lifecycle(input: unknown, action: "archive" | "restore" | "delete", allowed: keyof RecordActions) {
+  if ((await cookies()).get("sid")?.value) return realAction(`admin_${action}`, input);
   return mutateProto("admin", async (state) => {
     const value = target.parse(input);
     const all = await rows(state);
