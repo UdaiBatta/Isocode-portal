@@ -2,7 +2,8 @@
 
 ## In progress now
 
-- **Codex SEED.PERF verification blocker:** claim backend/fees/management/commands/seed.py and docs/progress.md. The rerun stalled in the existing dues-export aggregate; read-only EXPLAIN showed one-row nested-loop estimates and bulk financial tables with zero live estimates/no ANALYZE. Refresh statistics for the seven bulk financial/master tables after the seed command inserts records, before its metric read. This is PostgreSQL ANALYZE only, not a reset, deletion, schema change or disabled planner feature. The current test query will be cancelled and its owned test process stopped; rerun the full suite on the diagnosed repair. Uses the approved Codex test lock.
+- **SEED.PERF complete (Codex):** the seed command ANALYZEs the seven bulk financial/master tables before reporting its metric. EXPLAIN diagnosed one-row nested-loop estimates on transactional test seed data; refreshing statistics avoids that stale planner state without changing records, schema, expected results or planner switches. The stopped prior check left an orphan query, which was cancelled only in test_coaching_fees to unblock the replacement run. Full check now passes 53 frontend / 173 Django tests (366.092s including that wait), types, Ruff and Django checks; eight existing UI lint warnings. Names/clock-test checkpoints follow under the same approved lock.
+
 
 - **Codex T5.4 verification follow-up:** claim backend/fees/tests/test_counsellor.py and docs/progress.md. The names full check passed 53 frontend checks but found an existing midnight-IST test assertion: a stored UTC datetime.date() was compared with the business day. Service suppression already uses timezone.localtime().date(). Correct the assertion to timezone.localdate and force the existing outcome test through 01:00 IST. No service logic or B8 expected value changes. Uses the current human-approved Codex test lock; source name task remains pending its verified checkpoint.
 
