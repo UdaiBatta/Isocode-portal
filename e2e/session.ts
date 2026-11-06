@@ -83,3 +83,16 @@ export async function latestReceiptId(who: Who = "parent:+919000000587") {
   if (!first) throw new Error(`No receipts for ${who}.`);
   return first.id;
 }
+
+/** Moves the shared demo date (accounts, no centre). Restore it with setDemoDate("2026-11-02") or sharedReset(). */
+export async function setDemoDate(date: string) {
+  const result = await api("set_demo_date", { date }, await sessionFor("accounts"));
+  if (!result.json.ok) throw new Error(`Demo date failed: ${String(result.json.message)}`);
+}
+
+/** Open unmatched payments as Django lists them (accounts, first page), for opening real queue items by ID. */
+export async function openUnmatched() {
+  const result = await api("automation?list=unmatched&page=1", undefined, await sessionFor("accounts"));
+  return ((result.json.unmatched as { id: string; amount: number; reason: string; status: string; suggested: { studentName: string } | null }[] | undefined) ?? [])
+    .filter((item) => item.status === "open");
+}
