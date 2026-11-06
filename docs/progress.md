@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T5.3 approved SDK completion (2026-11-06):** files backend/requirements.txt, docs/decisions.md, docs/progress.md. Human approved adding/installing anthropic; pin the installed release, verify its actual structured-output interface and dependency health, then run full checks. No API key is configured and no provider call will run. TEST LOCK: Codex 2026-11-06 08:38 UTC — SDK verification/full check.
+
 - 2026-11-06 — T6.1 parent read backend complete (Codex): family, personal/course info and academic progress now use Django for real sid sessions. Shared serializers preserve StudentInfoVM/ProgressVM; parents receive only linked, non-archived children, their own guardian contact and enrolment/withdrawal-bounded history, with consent checked in Django. No risk or comparison data is returned. Full check passes: 68 frontend / 170 Django tests, types, Ruff and Django checks; eight existing lint warnings. A real OTP session for a fleet child outside the fixture catalogue passed all three endpoints (8 attendance weeks / 5 tests) and logged out. Existing consent transport mock updated for the new endpoint. No screen, fixture, money or saved consent edits. Frontend bilingual/state browser acceptance remains with Claude; fixture removal still waits for merge and explicit pause. Next: approved Anthropic SDK installation, Admin auth completion, backend handoff and frontend blocker documentation.
 
 
