@@ -145,6 +145,7 @@ it("gates real-session fee and progress reads until saved consent while payment 
     if (url.endsWith("/grant_consent")) { consented = true; return response({ ok: true, next: "/dashboard" }); }
     if (url.endsWith("/decline_consent")) { consented = false; declined = true; return response({ ok: true }); }
     if (url.includes("/dues")) return consented && !declined ? response({ ok: true, ...dues }) : response({ ok: false, code: "consent_required", message: "Consent required." }, 403);
+    if (url.includes("/progress")) return consented && !declined ? response({ ok: true, attendance: [], tests: [{ testDate: "2026-10-31", testName: "Synthetic test", score: 75, maxScore: 100 }] }) : response({ ok: false, code: "consent_required", message: "Consent required." }, 403);
     return response({ ok: true, role: "parent", phone, centreId: null, consent: consented, declined, children: [{ id: "STU-0587", name: "Ishita Sharma" }] });
   });
   expect(await getParentPageContext()).toMatchObject({ role: "parent", consent: false });
