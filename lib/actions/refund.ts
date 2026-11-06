@@ -6,8 +6,24 @@ import { refundFor } from "@/lib/fixtures/views";
 import { refundSnapshots } from "@/lib/fixtures/operations";
 import { requireCentre } from "@/lib/data/scope";
 import { today } from "@/lib/clock";
+import { cookies } from "next/headers";
+import { backendResponse, backendResult } from "@/lib/backend";
+import type { RefundVM } from "@/lib/types";
+
+export async function previewRefund(input: unknown) {
+  const parsed = z.object({ studentId: codeSchema, withdrawalDate: dateSchema }).safeParse(input);
+  if (!parsed.success) return { ok: false as const, code: "invalid", message: "Choose a student and withdrawal date." };
+  if ((await cookies()).get("sid")?.value) {
+    const { studentId, withdrawalDate } = parsed.data;
+    return backendResult<RefundVM>(await backendResponse(`refund?student=${encodeURIComponent(studentId)}&withdrawalDate=${encodeURIComponent(withdrawalDate)}`));
+  }
+  return { ok: false as const, code: "demo_date", message: "Use the supplied date for this prototype refund example." };
+}
 
 export async function saveRefundDraft(input: unknown) {
+  if ((await cookies()).get("sid")?.value) {
+    return backendResult<{ refundId: string }>(await backendResponse("save_refund_draft", input));
+  }
   return mutateProto("accounts", async (state) => {
     const value = z.object({ studentId: codeSchema, withdrawalDate: dateSchema, reason: z.enum(["Personal", "Moved city", "Changed course", "Health", "Other"]) }).parse(input);
     const student = requireCentre(state, value.studentId);
@@ -23,6 +39,9 @@ export async function saveRefundDraft(input: unknown) {
 }
 
 export async function approveRefund(input: unknown) {
+  if ((await cookies()).get("sid")?.value) {
+    return backendResult<{ refundId: string }>(await backendResponse("approve_refund", input));
+  }
   return mutateProto("accounts", async (state) => {
     const { refundId } = z.object({ refundId: codeSchema }).parse(input);
     requireCentre(state, refundId);
@@ -36,6 +55,9 @@ export async function approveRefund(input: unknown) {
 }
 
 export async function markRefundPaid(input: unknown) {
+  if ((await cookies()).get("sid")?.value) {
+    return backendResult<{ refundId: string; paidOn: string }>(await backendResponse("mark_refund_paid", input));
+  }
   return mutateProto("accounts", async (state) => {
     const { refundId } = z.object({ refundId: codeSchema }).parse(input);
     requireCentre(state, refundId);

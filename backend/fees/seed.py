@@ -46,6 +46,7 @@ def seed_organisation():
         ("accounts@demo.test", "Demo Accounts", "accounts", None),
         ("accounts.mlv@demo.test", "Demo MLV Accounts", "accounts", m.Centre.objects.get(code="MLV")),
         ("counsellor@demo.test", "Demo Counsellor", "counsellor", None),
+        ("admin@demo.test", "Demo Admin", "admin", None),
     ]:
         if not m.StaffUser.objects.filter(email=email).exists():
             m.StaffUser.objects.create(id=seed_id(email), email=email, full_name=name, role=role,
@@ -176,7 +177,7 @@ def insert_students(rows, *, named=False, restore=False):
             gst = gst_split(amount)
             refund_id = seed_id(f"{row.code}/refund")
             refunds.append(m.Refund(id=refund_id, student_id=student_id, policy=policy,
-                                     withdrawal_date=row.withdrawal_date, reason="Fictional demo withdrawal",
+                                     withdrawal_date=row.withdrawal_date, reason="Other",
                                      net_paise=net, paid_paise=paid, total_days=total_days, elapsed_days=elapsed,
                                      earned_paise=earned, refund_paise=amount, still_payable_paise=max(0, earned - paid),
                                      taxable_paise=gst.taxable, cgst_paise=gst.cgst, sgst_paise=gst.sgst,
@@ -216,9 +217,10 @@ def seed_fleet(small=False):
 def seed_named():
     rows = build_named()
     codes = [row.code for row in rows]
-    students = m.Student.objects.filter(code__in=codes)
+    # Reuse the twelve IDs rather than nesting a student subquery in each history lookup.
+    students = list(m.Student.objects.filter(code__in=codes).values_list("pk", flat=True))
     # Reset demo retains master rows and clears history; an ordinary rerun preserves mutations.
-    restore = students.count() == len(rows) and not any([
+    restore = len(students) == len(rows) and not any([
         m.Payment.objects.filter(student__in=students).exists(),
         m.ReminderLog.objects.filter(instalment__plan__student__in=students).exists(),
         m.Consent.objects.filter(student__in=students).exists(),

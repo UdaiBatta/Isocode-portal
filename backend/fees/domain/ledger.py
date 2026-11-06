@@ -40,8 +40,8 @@ def split_net(net: int, count: int) -> list[int]:
 
 
 def instalment_view(amount: int, paid: int, due_date: date, today: date) -> InstalmentView:
-    if amount <= 0 or not 0 <= paid <= amount:
-        raise ValueError("Paid amount must be between zero and the positive instalment amount.")
+    if amount < 0 or not 0 <= paid <= amount:
+        raise ValueError("Paid amount must be between zero and the nonnegative instalment amount.")
     balance = amount - paid
     days = diff_days(today, due_date)
     status = "paid" if not balance else "overdue" if days > 0 else "due_today" if days == 0 else "upcoming"

@@ -100,7 +100,7 @@ def counter_payment(request):
             note=request.data["note"], recorded_by=request.subject,
         )
     except CounterPaymentError as exc:
-        return error(exc.code, str(exc), 409 if exc.code == "withdrawn" else 400)
+        return error(exc.code, str(exc), {"withdrawn": 409, "forbidden": 403, "not_found": 404}.get(exc.code, 400))
     except ValueError as exc:
         return error("invalid", str(exc))
     return JsonResponse({

@@ -45,6 +45,13 @@ class SchemaTests(TestCase):
                 with self.assertRaises(IntegrityError), transaction.atomic():
                     FeePlan.objects.filter(pk=self.plan.pk).update(**values)
 
+    def test_instalments_allow_zero_but_not_negative_amounts(self):
+        Instalment.objects.filter(pk=self.instalment.pk).update(amount_paise=0)
+        balance = InstalmentBalance.objects.get(pk=self.instalment.pk)
+        self.assertEqual((balance.amount_paise, balance.paid_paise, balance.balance_paise), (0, 0, 0))
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Instalment.objects.filter(pk=self.instalment.pk).update(amount_paise=-1)
+
     def test_duplicate_reminder_key_rejected_by_database(self):
         values = dict(
             instalment=self.instalment, step=7, language="hi",
