@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex SEED.PERF verification blocker:** claim backend/fees/management/commands/seed.py and docs/progress.md. The rerun stalled in the existing dues-export aggregate; read-only EXPLAIN showed one-row nested-loop estimates and bulk financial tables with zero live estimates/no ANALYZE. Refresh statistics for the seven bulk financial/master tables after the seed command inserts records, before its metric read. This is PostgreSQL ANALYZE only, not a reset, deletion, schema change or disabled planner feature. The current test query will be cancelled and its owned test process stopped; rerun the full suite on the diagnosed repair. Uses the approved Codex test lock.
+
 - **Codex T5.4 verification follow-up:** claim backend/fees/tests/test_counsellor.py and docs/progress.md. The names full check passed 53 frontend checks but found an existing midnight-IST test assertion: a stored UTC datetime.date() was compared with the business day. Service suppression already uses timezone.localtime().date(). Correct the assertion to timezone.localdate and force the existing outcome test through 01:00 IST. No service logic or B8 expected value changes. Uses the current human-approved Codex test lock; source name task remains pending its verified checkpoint.
 
 - TEST LOCK: Codex 2026-11-07 — human explicitly approved taking over the lock after Claude m8 finished (33 passed / 7 failed). No concurrent Claude test runs until this name/order check and backfill finish. Codex will release promptly; the m8 screen-spec failures remain Claude-owned.
