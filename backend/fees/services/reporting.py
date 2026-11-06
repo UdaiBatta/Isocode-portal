@@ -55,9 +55,10 @@ def student_roster(actor, filters, date):
     # Future due dates all have zero days overdue, so balance decides their order.
     rows = rows.annotate(sort_due=Case(When(oldest_due__lt=date, then=F("oldest_due")), default=Value(date)))
     latest = Payment.objects.filter(student=OuterRef("pk")).order_by("-received_on", "-created_at", "-pk")
+    ordering = ("sort_due", "-balance", "code") if filters.get("status") else ("full_name", "code")
     rows = list(rows.annotate(last_on=Subquery(latest.values("received_on")[:1]),
                               last_method=Subquery(latest.values("method")[:1])).select_related("batch__centre").order_by(
-        "sort_due", "-balance", "code",
+        *ordering,
     )[(page - 1) * 25:page * 25])
     ids = [row.pk for row in rows]
     first_unpaid = {}
