@@ -1,8 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { signIn } from "./session";
 
-const signInAs = (context: BrowserContext, role: "accounts" | "counsellor") =>
-  context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role })), url: "http://127.0.0.1:3001" }]);
+const signInAs = (context: BrowserContext, role: "accounts" | "counsellor") => signIn(context, role);
 const ground = (page: Page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 
 // The theme is set on <html> from the surface inside it, so a parent frame anywhere would repaint the whole page.
@@ -115,7 +115,8 @@ test("the staff and parent spines stay in place while the page scrolls", async (
   await page.evaluate(() => scrollTo(0, 600));
   await expect.poll(() => page.locator(".staff-spine").boundingBox().then((box) => [box!.y, box!.height])).toEqual([0, 800]);
   await context.clearCookies();
-  await context.addCookies([{ name: "lang", value: "en", url: "http://127.0.0.1:3001" }, { name: "proto", value: encodeURIComponent(JSON.stringify({ role: "parent", phone: "+919000000587", consent: true })), url: "http://127.0.0.1:3001" }]);
+  await context.addCookies([{ name: "lang", value: "en", url: "http://127.0.0.1:3001" }]);
+  await signIn(context, "parent:+919000000587");
   await page.goto("/dashboard");
   await page.evaluate(() => scrollTo(0, 200));
   await expect.poll(() => page.locator(".ledger-spine").boundingBox().then((box) => [box!.y, box!.height])).toEqual([0, 800]);

@@ -1,8 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { payPath, sharedReset, signIn } from "./session";
 
 test.beforeEach(async ({ context }) => {
-  await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "accounts" })), url: "http://127.0.0.1:3001" }]);
+  await signIn(context, "accounts");
 });
 
 test("the roster filters by status, batch and search, and opens a ledger", async ({ page }) => {
@@ -26,12 +27,14 @@ test("the roster filters by status, batch and search, and opens a ledger", async
 test("paying moves a student out of Overdue, and shows the method used", async ({ page }) => {
   await page.goto("/staff/students?q=STU-0587");
   await expect(page.getByText("Overdue", { exact: true }).filter({ visible: true }).last()).toBeVisible();
-  await page.goto("/mock-gateway/STU-0587-3");
+  try {
+  await page.goto((await payPath()).replace("/pay/", "/mock-gateway/"));
   await page.getByRole("radio", { name: /Card|कार्ड/ }).check({ force: true });
   await page.getByRole("button", { name: /^(Pay ₹15,000|₹15,000 का भुगतान करें)$/ }).click();
   await expect(page).toHaveURL(/\/result\?e=/);
   await page.goto("/staff/students?q=STU-0587");
   await expect(page.getByText(/Card/).filter({ visible: true }).first()).toBeVisible();
+  } finally { await sharedReset(); }
 });
 
 test("the whole row opens a student, whose record holds dues, funds, marks and personal details", async ({ page }, info) => {

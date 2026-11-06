@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { sharedReset, signIn } from "./session";
 
 test("counsellor records a false flag without fee data", async ({ page, context }) => {
-  await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "counsellor" })), url: "http://127.0.0.1:3001" }]);
+  await signIn(context, "counsellor");
   await page.goto("/counsellor/tasks");
+  try {
   await expect(page.getByText("73%", { exact: true })).toBeVisible();
   await expect(page.locator("main")).not.toContainText("₹");
   await page.getByRole("button", { name: /Riya/ }).click();
@@ -14,12 +16,13 @@ test("counsellor records a false flag without fee data", async ({ page, context 
   await drawer.getByRole("button", { name: "Save outcome", exact: true }).click();
   await expect(drawer).not.toBeVisible();
   await expect(page.getByText("8 of 12 genuine", { exact: true })).toBeVisible();
-  await expect(page.getByText("No students in this view", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Riya/ })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  } finally { await sharedReset(); }
 });
 
 test("accounts cannot open counsellor flags", async ({ page, context }) => {
-  await context.addCookies([{ name: "proto", value: encodeURIComponent(JSON.stringify({ role: "accounts" })), url: "http://127.0.0.1:3001" }]);
+  await signIn(context, "accounts");
   await page.goto("/counsellor/tasks");
   await expect(page).toHaveURL(/\/staff\/login$/);
   await expect(page.getByText("Riya Verma", { exact: true })).toHaveCount(0);
