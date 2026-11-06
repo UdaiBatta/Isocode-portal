@@ -35,6 +35,8 @@ export function StudentRoster({ view, directory, filters }: { view: StudentsVM; 
     for (const [key, value] of Object.entries({ ...filters, page: undefined, ...patch })) if (value) params.set(key, String(value));
     router.push(`/staff/students?${params}`);
   }
+  // Mirrors Django: All is A to Z by name; a status filter puts the earliest due date first.
+  const order = status === "all" ? "A to Z by name" : status === "overdue" || status === "over60" ? "most overdue first" : "earliest due date first";
   const nextStep = (row: StudentRowVM) => row.next ? `Reminder ${dateLabel(row.next, "en", view.today)}` : row.stopped ?? (row.daysOverdue > 30 ? "Needs a call" : "None");
   const lastPayment = (row: StudentRowVM) => row.lastPayment ? <div className="flex flex-col"><span className="whitespace-nowrap">{dateLabel(row.lastPayment.on, "en", view.today)}</span><span className="text-body-2-regular whitespace-nowrap text-text-secondary">{methodLabel("en", row.lastPayment.method)}</span></div> : "None yet";
   const student = (row: StudentRowVM) => <div className="flex min-w-36 items-center gap-3">
@@ -53,7 +55,7 @@ export function StudentRoster({ view, directory, filters }: { view: StudentsVM; 
   ];
   const batches = directory.batches.filter((batch) => !filters.centre || batch.centreId === filters.centre);
   return <>
-    <StaffPageHeader title="Students" description={`${view.counts.all} students, most overdue first · ${dateLabel(view.today, "en", view.today)}`}><ExportButtons filters={{ centre: filters.centre, batch: filters.batch }} /></StaffPageHeader>
+    <StaffPageHeader title="Students" description={`${view.counts.all} students, ${order} · ${dateLabel(view.today, "en", view.today)}`}><ExportButtons filters={{ centre: filters.centre, batch: filters.batch }} /></StaffPageHeader>
     <StaffFrame>
     <section className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-4 md:p-5">
       <div className="flex flex-wrap items-end gap-4">
