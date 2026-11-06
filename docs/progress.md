@@ -2,7 +2,7 @@
 
 ## In progress now
 
-- **Codex T5.2 reset snapshot fix (2026-11-06):** prevent a new demo call task from reading an older preserved audit snapshot when deterministic task IDs are reused. Files: backend/fees/services/risk.py, backend/fees/tests/test_risk_job.py, docs/decisions.md, docs/progress.md. TEST LOCK: Codex 2026-11-06 07:34 UTC — reset/audit regression and full check. After checks, execute the already-approved corrected twelve-student reset and verify outside histories, IDs, existing audits and counters. No new reset approval is needed.
+- **Codex T5.2 reset snapshot fix (2026-11-06):** prevent a new demo call task from reading an older preserved audit snapshot when deterministic task IDs are reused. Files: backend/fees/services/risk.py, backend/fees/tests/test_risk_job.py, backend/fees/views/automation.py (sent-history query), docs/decisions.md, docs/progress.md. TEST LOCK: Codex 2026-11-06 07:34 UTC — reset/audit regression and full check. The first full check was interrupted after diagnosing an eight-minute, non-locking sent-reminder query: a historical log page unnecessarily semi-joined the aggregate balance view. Replace it with the same direct archived-student/centre scope; existing pagination tests cover it. After checks, execute the already-approved corrected twelve-student reset and verify outside histories, IDs, existing audits and counters. No new reset approval is needed.
 
 
 
