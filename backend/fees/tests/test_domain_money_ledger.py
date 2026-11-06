@@ -88,3 +88,9 @@ class MoneyLedgerTests(SimpleTestCase):
             with self.subTest(function=function.__name__):
                 with self.assertRaises(ValueError):
                     function(*args)
+
+    def test_zero_instalment_is_settled_without_a_payment(self):
+        value = instalment_view(0, 0, date(2027, 1, 10), date(2026, 11, 2))
+        self.assertEqual((value.status, value.balance, value.part_paid, value.days_overdue, value.due_in_days), ("paid", 0, False, 0, 0))
+        with self.assertRaises(ValueError):
+            instalment_view(-1, 0, date(2026, 11, 2), date(2026, 11, 2))

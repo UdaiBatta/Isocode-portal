@@ -179,3 +179,10 @@ Only the counsellor role may read S5, generate/cache a brief or close a call. Ce
 Closing a task stores closed_at using the backend business date and current Asia/Kolkata time. This is necessary for frozen demo dates to start the specified 30-day suppression on the business day; the audit's created_at still records actual wall time. Job and outcome writes share the risk transaction lock. The brief HTTP timeout is 35 seconds to cover B8.9's 15-second request and one retry; other backend requests retain ten seconds.
 
 Verification: 66 frontend / 160 Django tests pass, including role, scope, no-amount, accuracy, suppression, invalid-input and live-Watch regression checks. A real local counsellor login, S5 read, cached Standard summary and logout passed; Riya was left open and no model call or financial write occurred. Browser acceptance and frontend polishing remain unclaimed.
+
+
+## 2026-11-06 — ADMIN.B2, human-approved zero-value instalments
+
+The human explicitly approved audited zero-value instalments, overriding B7's original positive-only condition. Migration 0004 changes only that constraint to amount_paise >= 0. New enrolments still require a positive net fee, and payment/allocation amounts remain strictly positive. A reasoned fee reduction may lower unpaid scheduled amounts to their already allocated amount, including zero, while leaving paid instalments, payments, allocations, receipts and reminder/consent/review histories intact. The full before/after schedule remains in the fee audit.
+
+A zero instalment has paid=0, balance=0, existing status=paid (settled), no overdue days and no pay URL. It creates no fictional payment or receipt. This preserves the current VM and consumer contract. Twenty-six focused tests and the full check pass (66 frontend, 163 Django tests). The local constraint migration preserved every checked financial/history/master-student row; 9,103 instalments remained and no saved student's fee was changed. This approval supersedes the earlier zero_instalment limitation; the corrected scoped reset remains separately approved and queued.

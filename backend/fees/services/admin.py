@@ -372,9 +372,6 @@ def change_fee(data, actor):
     if gross == plan.gross_paise and discount == plan.discount_paise:
         raise AdminError("unchanged", "Change the fee or discount first.")
     amounts = [balances[row.pk].paid_paise + value for row, value in zip(unpaid, split_net(net - paid, len(unpaid)))]
-    # shortcut: B7 requires positive instalments; zero-value reductions await the human's policy decision.
-    if any(amount == 0 for amount in amounts):
-        raise AdminError("zero_instalment", "This reduction leaves an empty instalment. A positive remaining amount is required.", 409)
     before = {**_snapshot("student", student), "_instalments": {str(row.pk): row.amount_paise for row in instalments}}
     for row, amount in zip(unpaid, amounts):
         row.amount_paise = amount

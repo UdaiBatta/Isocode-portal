@@ -160,7 +160,7 @@ class Instalment(Record):
         db_table = "instalments"
         constraints = [
             models.UniqueConstraint(fields=["plan", "seq"], name="instalment_plan_seq_unique"),
-            models.CheckConstraint(condition=Q(amount_paise__gt=0), name="instalment_amount_positive"),
+            models.CheckConstraint(condition=Q(amount_paise__gte=0), name="instalment_amount_nonnegative"),
         ]
 
 

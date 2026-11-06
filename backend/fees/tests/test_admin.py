@@ -14,6 +14,7 @@ from fees import models as m
 from fees.services import admin
 from fees.services.payments import CounterPaymentError, UnmatchedPaymentError, process_payment_event, record_counter_payment, resolve_unmatched_payment
 from fees.services.refunds import RefundError, save_refund_draft
+from fees.domain.pay_token import sign_pay_token
 
 
 class AdminTests(TestCase):
@@ -220,7 +221,6 @@ class AdminTests(TestCase):
         receipts = list(m.Receipt.objects.filter(payment__student=student).values_list("pk", "total_paise"))
         values = {"studentId": str(student.pk), "gross": 12000000, "discount": 2000000, "reason": "Synthetic scholarship review"}
         self.assertEqual(self.post("admin_change_fee", {**values, "discount": 4000000}).json()["code"], "below_paid")
-        self.assertEqual(self.post("admin_change_fee", {**values, "discount": 3000000}).json()["code"], "zero_instalment")
         self.assertEqual(self.post("admin_change_fee", {**values, "reason": ""}).status_code, 400)
         self.assertEqual(self.post("admin_change_fee", values).status_code, 200)
         after = list(m.Instalment.objects.filter(plan__student=student).order_by("seq").values_list("pk", "amount_paise"))
@@ -235,3 +235,27 @@ class AdminTests(TestCase):
         audit = m.AuditLog.objects.get(entity_id=student.pk, action="admin_fee")
         self.assertEqual(len(audit.before["_instalments"]), 4)
         self.assertEqual(self.post("admin_change_fee", values).json()["code"], "unchanged")
+
+    def test_audited_zero_value_reduction_retains_history_and_clears_dues(self):
+        student = m.Student.objects.get(code="STU-0587")
+        models = (m.Payment, m.Allocation, m.Receipt, m.ReminderLog, m.UnmatchedPayment, m.Consent)
+        before = {model: list(model.objects.order_by("pk").values()) for model in models}
+        response = self.post("admin_change_fee", {"studentId": str(student.pk), "gross": 12000000,
+                                                   "discount": 4500000, "reason": "Approved synthetic fee reduction"})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(before, {model: list(model.objects.order_by("pk").values()) for model in models})
+        amounts = list(m.Instalment.objects.filter(plan__student=student).order_by("seq").values_list("amount_paise", flat=True))
+        self.assertEqual(amounts, [3000000, 3000000, 1500000, 0])
+        self.assertEqual(m.InstalmentBalance.objects.filter(student=student).aggregate(total=Sum("balance_paise"))["total"], 0)
+        row = self.get("admin_students?q=STU-0587").json()["rows"][0]
+        self.assertFalse(row["fee"]["editable"])
+        self.assertTrue(row["actions"]["canArchive"])
+        audit = m.AuditLog.objects.get(entity_id=student.pk, action="admin_fee")
+        self.assertIn(0, audit.after["_instalments"].values())
+        zero = m.Instalment.objects.get(plan__student=student, amount_paise=0)
+        details = self.get(f"pay_details?token={sign_pay_token(zero.pk)}").json()
+        self.assertEqual((details["paid"], details["amount"], details["payUrl"]), (True, 0, None))
+        self.sign_in("accounts@demo.test")
+        ledger = self.get("ledger?student=STU-0587").json()
+        self.assertEqual(ledger["plan"]["balance"], 0)
+        self.assertEqual(ledger["instalments"][-1]["status"], "paid")
