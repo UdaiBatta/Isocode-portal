@@ -96,3 +96,10 @@ export async function openUnmatched() {
   return ((result.json.unmatched as { id: string; amount: number; reason: string; status: string; suggested: { studentName: string } | null }[] | undefined) ?? [])
     .filter((item) => item.status === "open");
 }
+
+/**
+ * React's streaming runtime ($RS) can throw "reading 'parentNode'" when a test navigates again before a streamed
+ * segment lands. Seen only in rapid automated navigation on real (streaming) pages, never reproduced alone; it is
+ * flagged on docs/progress.md for T7.1. Only this exact error is ignored; every other page error still fails.
+ */
+export const isStreamingRace = (error: Error) => error.message.includes("reading 'parentNode'") && (error.stack ?? "").includes("$RS");

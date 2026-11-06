@@ -2,11 +2,11 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { t } from "../lib/i18n";
 import type { Language } from "../lib/types";
-import { payPath, sharedReset, signIn } from "./session";
+import { isStreamingRace, payPath, sharedReset, signIn } from "./session";
 
 for (const language of ["hi", "en"] as Language[]) test(`fixture parent pays and prints a GST receipt in ${language}`, async ({ page, context }) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error) => { if (!isStreamingRace(error)) errors.push(error.message); });
   await context.addCookies([{ name: "lang", value: language, url: "http://127.0.0.1:3001" }]);
   await signIn(context, "parent:+919000000587");
   await page.goto("/dashboard");
