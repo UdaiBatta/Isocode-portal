@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex ADMIN.B2 (2026-11-06):** implement the human-approved audited zero-value instalment rule, overriding B7 positive-only for fee reductions. Files: backend/fees/models.py, backend/fees/migrations/0004_audited_zero_instalments.py, backend/fees/domain/ledger.py, backend/fees/services/admin.py, backend/fees/tests/test_admin.py, backend/fees/tests/test_domain_money_ledger.py, backend/fees/tests/test_schema.py, docs/decisions.md, docs/progress.md. TEST LOCK: Codex 2026-11-06 07:22 UTC — schema/domain/financial-preservation checks and full check. No history deletion; payment/allocation amounts remain positive. No frontend shape change.
+
 
 
 
