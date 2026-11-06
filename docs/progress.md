@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **Codex T5.5 (2026-11-06):** fixed synthetic High-band evaluation and honest TDD results. Files: backend/fees/tests/test_risk_eval.py, docs/TDD.md, docs/progress.md. TEST LOCK: Codex 2026-11-06 08:06 UTC — synthetic evaluation and full check. Thirty developer-labelled cases; no real outcome data or model call. Full document/screenshots remain T7.4. SDK package and frontend resume responses remain pending.
+
 
 
 
