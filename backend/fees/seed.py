@@ -209,8 +209,25 @@ def insert_students(rows, *, named=False, restore=False):
     return 0 if restore else len(rows)
 
 
+@transaction.atomic
+def refresh_fleet_names(rows):
+    if os.getenv("DEMO_MODE", "false").lower() != "true":
+        raise CommandError("Fictional name updates require DEMO_MODE=true.")
+    expected = {seed_id(row.code): row for row in rows}
+    changed = []
+    for student in m.Student.objects.select_for_update().filter(pk__in=expected).order_by("pk"):
+        row = expected[student.pk]
+        if student.code == row.code and student.full_name == f"Demo Student {int(row.code[4:]):04d}":
+            student.full_name = row.name
+            changed.append(student)
+    m.Student.objects.bulk_update(changed, ["full_name"], batch_size=500)
+    return len(changed)
+
+
 def seed_fleet(small=False):
-    return insert_students(build_fleet(small))
+    rows = build_fleet(small)
+    refresh_fleet_names(rows)
+    return insert_students(rows)
 
 
 @transaction.atomic

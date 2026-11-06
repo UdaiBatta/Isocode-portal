@@ -114,13 +114,26 @@ class DashboardTests(TestCase):
             self.create_due(index, index)
         view = self.get("students?centre=ZZZ").json()
         self.assertEqual((len(view["rows"]), view["pages"], view["counts"]["all"], view["counts"]["overdue"]), (25, 2, 30, 29))
-        self.assertEqual([row["daysOverdue"] for row in view["rows"]], list(range(29, 4, -1)))
+        self.assertEqual([row["name"] for row in view["rows"]], sorted(f"Fictional example {index}" for index in range(30))[:25])
+        overdue = self.get("students?centre=ZZZ&status=overdue").json()
+        self.assertEqual([row["daysOverdue"] for row in overdue["rows"]], list(range(29, 4, -1)))
         page = self.get("students?centre=ZZZ&page=99").json()
         self.assertEqual((page["page"], len(page["rows"])), (2, 5))
         upcoming = self.get(f"students?batch={self.batch.pk}&status=upcoming").json()
         self.assertEqual((len(upcoming["rows"]), upcoming["counts"]), (1, view["counts"]))
         self.assertEqual(self.get("students?centre=ZZZ&q=stu-9000").json()["rows"][0]["code"], "STU-9000")
         self.assertEqual(self.get("students?centre=ZZZ&status=over60").json()["rows"], [])
+
+    def test_all_is_name_ordered_without_changing_actual_fee_statuses(self):
+        for index, (days, paid, name) in enumerate([(-10, 0, "A Upcoming"), (30, 10000, "B Paid"), (60, 0, "C Overdue")]):
+            student = self.create_due(index, days, paid)
+            m.Student.objects.filter(pk=student.pk).update(full_name=name)
+        view = self.get("students?centre=ZZZ").json()
+        self.assertEqual([(row["name"], row["status"]) for row in view["rows"]],
+                         [("A Upcoming", "upcoming"), ("B Paid", "clear"), ("C Overdue", "overdue")])
+        self.assertEqual((view["counts"]["upcoming"], view["counts"]["clear"], view["counts"]["overdue"]), (1, 1, 1))
+        overdue = self.get("students?centre=ZZZ&status=overdue").json()
+        self.assertEqual([row["name"] for row in overdue["rows"]], ["C Overdue"])
 
     def test_roles_and_invalid_filters_are_rejected(self):
         for query in ("students?status=bad", "students?page=0", "students?batch=bad", "dashboard?group=bad"):

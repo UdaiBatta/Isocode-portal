@@ -1,10 +1,12 @@
 import io
 import os
-from datetime import date
+from datetime import date, datetime
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 from django.core.management import call_command
 from django.test import TestCase
+from django.utils import timezone
 
 from fees import models as m
 from fees.services.risk import run_risk_job
@@ -68,9 +70,12 @@ class CounsellorTests(TestCase):
         values = {"taskId": str(task.pk), "outcome": "false_flag", "note": "   "}
         self.assertEqual(self.post("close_task", values).json()["code"], "note_required")
         values["note"] = "Synthetic review: the family confirmed continued study."
-        self.assertEqual(self.post("close_task", values).status_code, 200)
+        with patch("fees.services.risk.timezone.localtime", return_value=datetime(2026, 11, 2, 1, tzinfo=ZoneInfo("Asia/Kolkata"))):
+            self.assertEqual(self.post("close_task", values).status_code, 200)
         task.refresh_from_db()
-        self.assertEqual((task.status, task.closed_at.date(), task.closed_by.email), ("false_flag", date(2026, 11, 2), "counsellor@demo.test"))
+        self.assertEqual(task.closed_at.date(), date(2026, 11, 1))
+        self.assertEqual((task.status, timezone.localdate(task.closed_at), task.closed_by.email),
+                         ("false_flag", date(2026, 11, 2), "counsellor@demo.test"))
         self.assertEqual(self.get().json()["accuracy"], {"genuine": 8, "total": 12})
         self.assertEqual(self.post("close_task", values).status_code, 409)
         run_risk_job(date(2026, 11, 2))
