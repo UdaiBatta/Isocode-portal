@@ -195,3 +195,9 @@ Demo seed resets reuse deterministic task IDs while preserving audits. Snapshot 
 The full check also exposed an existing sent-reminder query with an unnecessary semi-join through aggregate instalment balances. Sent amounts are historical log facts; direct student/archive/centre scope is equivalent and avoids that aggregation. Existing scope and server-paging tests pass. A stale test query was cancelled only in the test database, then the fresh full check passed (66 frontend, 164 Django tests).
 
 The human-approved corrected twelve-student reset was executed via the real accounts API. Arjun is now Watch 40, with no open task. Compared outside financial, reminder, consent, risk, gateway and review records were identical; all existing audits and master/academic IDs survived; receipt counters did not rewind. The database remains at 2,600 students and business date 2026-11-02. This resolves the prior saved-demo limitation. No provider call or package change was made.
+
+## 2026-11-06 — T5.3 approved SDK dependency completed
+
+The human approved adding and installing the Python Anthropic SDK even without a key. anthropic==2.6.0 is pinned in backend/requirements.txt and installed in the local virtual environment, including its Pydantic dependency. pip check finds no broken requirements. An offline in-memory HTTP transport exercised the actual SDK structured parser, validated the schema/low-effort request and confirmed that only the six numeric features were sent. The existing fake-provider privacy, fallback and cache tests also pass in the full check (68 frontend / 170 Django).
+
+ANTHROPIC_API_KEY remains absent. No real provider request was attempted, as the plan requires one only when a key is configured. The app continues to use the tested Standard summary. This resolves the earlier package-approval/dependency limitation; it does not claim live provider wording has been evaluated.
