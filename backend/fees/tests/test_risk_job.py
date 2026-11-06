@@ -9,6 +9,7 @@ from django.test import TestCase
 from fees import models as m
 from fees.seed import at_day
 from fees.services.risk import assess_students, run_risk_job, task_facts
+from fees.services.demo import reset_demo
 
 
 class RiskJobTests(TestCase):
@@ -84,3 +85,26 @@ class RiskJobTests(TestCase):
         task.save(update_fields=["status", "closed_at"])
         run_risk_job(date_)
         self.assertTrue(m.CounsellorTask.objects.filter(student=task.student, status="open").exists())
+
+    def test_reset_reused_task_id_gets_new_facts_and_preserves_old_audit(self):
+        date_ = date(2026, 11, 2)
+        run_risk_job(date_)
+        task = m.CounsellorTask.objects.get(student__code="STU-0733", status="open")
+        old = m.AuditLog.objects.get(entity_id=task.pk, action="risk_task_created")
+        old.after = {"score": 90, "reasons": ["Historical trigger retained"], "features": {"oldestOverdueDays": 90}}
+        old.save(update_fields=["after"])
+        reset_demo(actor=m.StaffUser.objects.get(email="accounts@demo.test"))
+        fresh = m.CounsellorTask.objects.select_related("flag").get(student__code="STU-0733", status="open")
+        self.assertEqual(fresh.pk, task.pk)
+        self.assertGreater(fresh.created_at, old.created_at)
+        self.assertEqual(task_facts(fresh)["score"], 80)
+        run_risk_job(date_)
+        fresh.refresh_from_db()
+        current = task_facts(fresh)
+        self.assertEqual(current["score"], fresh.score)
+        self.assertNotEqual(current["score"], 90)
+        self.assertNotIn("Historical trigger retained", current["reasons"])
+        self.assertEqual(m.AuditLog.objects.filter(entity_id=fresh.pk, action="risk_task_created",
+                                                   created_at__gte=fresh.created_at).count(), 1)
+        old.refresh_from_db()
+        self.assertEqual(old.after["score"], 90)

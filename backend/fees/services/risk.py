@@ -71,10 +71,19 @@ def _facts(result):
     return {"score": result.score, "reasons": list(result.reasons), "features": result.features}
 
 
+def task_snapshots(tasks):
+    tasks = {task.pk: task for task in tasks}
+    snapshots = {}
+    for row in m.AuditLog.objects.filter(entity="counsellor_task", entity_id__in=tasks,
+                                         action="risk_task_created").order_by("created_at", "pk"):
+        # Demo reset reuses seed IDs while preserving old audits; only this task creation's facts belong to it.
+        if row.created_at >= tasks[row.entity_id].created_at:
+            snapshots.setdefault(row.entity_id, row.after)
+    return snapshots
+
+
 def task_facts(task):
-    snapshot = m.AuditLog.objects.filter(entity="counsellor_task", entity_id=task.pk,
-                                         action="risk_task_created").order_by("created_at", "pk").first()
-    return snapshot.after if snapshot else {"score": task.score, "reasons": task.flag.reasons, "features": task.flag.features}
+    return task_snapshots([task]).get(task.pk, {"score": task.score, "reasons": task.flag.reasons, "features": task.flag.features})
 
 
 @transaction.atomic
@@ -84,8 +93,7 @@ def run_risk_job(date):
     by_student = {row.student.pk: row for row in assessments}
     # Keep a task's trigger facts even when the same day's derived flag is refreshed.
     tasks = list(m.CounsellorTask.objects.filter(flag__computed_on=date).select_related("flag"))
-    captured = set(m.AuditLog.objects.filter(entity="counsellor_task", action="risk_task_created",
-                                             entity_id__in=[task.pk for task in tasks]).values_list("entity_id", flat=True))
+    captured = task_snapshots(tasks)
     audits = []
     for task in tasks:
         if task.pk in captured:
@@ -221,9 +229,7 @@ def counsellor_view(actor):
         "-score", "created_on", "student__code"))
     closed = list(tasks.exclude(status="open").order_by("-closed_at", "-created_on", "student__code"))
     all_tasks = opened + closed
-    snapshots = dict(m.AuditLog.objects.filter(
-        entity="counsellor_task", action="risk_task_created", entity_id__in=[row.pk for row in all_tasks],
-    ).order_by("entity_id", "created_at", "pk").distinct("entity_id").values_list("entity_id", "after"))
+    snapshots = task_snapshots(all_tasks)
     phones = {}
     for pk, phone in m.GuardianStudent.objects.filter(student_id__in={row.student_id for row in all_tasks}).order_by(
         "-is_primary", "created_at", "pk").values_list("student_id", "guardian__phone"):

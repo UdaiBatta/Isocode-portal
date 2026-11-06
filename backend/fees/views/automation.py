@@ -83,8 +83,10 @@ def _reminder_rows(request, list_name, current_date):
 
     if list_name == "sent":
         logs = ReminderLog.objects.select_related("instalment__plan__student").filter(
-            instalment_id__in=rows_query.values("id"),
+            instalment__plan__student__archived_at__isnull=True,
         )
+        if request.subject.centre_id:
+            logs = logs.filter(instalment__plan__student__batch__centre_id=request.subject.centre_id)
         total = logs.count()
         return total, lambda offset, page_size: [
             _row(log.instalment, step=log.step, on=log.sent_on, language=log.language,
