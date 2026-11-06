@@ -126,10 +126,13 @@ def dashboard(actor, filters, date):
     denominator = past.aggregate(total=Sum("amount_paise"))["total"] or 0
     old = past.filter(due_date__lt=date - timedelta(days=60))
     old_amount = old.aggregate(total=Sum("amount_paise"))["total"] or 0
-    received = Allocation.objects.filter(instalment_id__in=old.values("pk"), payment__received_on__lte=date).aggregate(
+    # Materialize scoped IDs to avoid deeply nested semi-joins on sparse-data query plans.
+    past_ids = list(past.values_list("pk", flat=True))
+    old_ids = list(old.values_list("pk", flat=True))
+    received = Allocation.objects.filter(instalment_id__in=old_ids, payment__received_on__lte=date).aggregate(
         total=Sum("amount_paise"))["total"] or 0
     late = Allocation.objects.filter(
-        instalment_id__in=past.values("pk"), payment__received_on__lte=date,
+        instalment_id__in=past_ids, payment__received_on__lte=date,
         payment__received_on__gt=F("instalment__due_date") + timedelta(days=60),
     ).aggregate(total=Sum("amount_paise"))["total"] or 0
     refunds = Refund.objects.filter(student__in=students, status="approved")
