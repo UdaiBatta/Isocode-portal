@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { StaffShell } from "@/components/app/StaffShell";
 import { AutomationWorkspace } from "@/components/app/AutomationWorkspace";
 import { StaffRouteLoading } from "@/components/app/StaffRouteLoading";
@@ -22,5 +23,5 @@ export default async function Automation({ searchParams }: { searchParams: Promi
     getAutomationPage(list, page, typeof query.item === "string" ? query.item : undefined),
     getPaymentCandidates(),
   ]);
-  return <StaffShell><AutomationWorkspace key={typeof query.item === "string" ? query.item : "no-item"} view={state === "empty" ? { ...view, sent: [], upcoming: [], stopped: [], needsCall: [], unmatched: [], unmatchedOpen: 0, total: 0, totalPages: 1 } : view} candidates={candidates} tab={tab} initialItem={typeof query.item === "string" ? query.item : undefined} initialFilter={filter} /></StaffShell>;
+  return <StaffShell><AutomationWorkspace shared={Boolean((await cookies()).get("sid")?.value)} key={typeof query.item === "string" ? query.item : "no-item"} view={state === "empty" ? { ...view, sent: [], upcoming: [], stopped: [], needsCall: [], unmatched: [], unmatchedOpen: 0, total: 0, totalPages: 1 } : view} candidates={candidates} tab={tab} initialItem={typeof query.item === "string" ? query.item : undefined} initialFilter={filter} /></StaffShell>;
 }
