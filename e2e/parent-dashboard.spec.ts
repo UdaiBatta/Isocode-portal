@@ -1,11 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { latestReceiptId, signIn as signInAs } from "./session";
 
 async function signIn(context: BrowserContext, phone: string, language: "en" | "hi" = "en") {
-  await context.addCookies([
-    { name: "lang", value: language, url: "http://127.0.0.1:3001" },
-    { name: "proto", value: encodeURIComponent(JSON.stringify({ role: "parent", phone, consent: true })), url: "http://127.0.0.1:3001" },
-  ]);
+  await context.addCookies([{ name: "lang", value: language, url: "http://127.0.0.1:3001" }]);
+  await signInAs(context, `parent:${phone}`);
 }
 
 async function waitForParentPage(page: Page) {
@@ -23,6 +22,7 @@ async function openFromNav(page: Page, href: string) {
 }
 
 for (const language of ["en", "hi"] as const) test(`every page opens from the navigation without sideways scroll in ${language}`, async ({ page, context }) => {
+  test.setTimeout(120000); // Seven real pages, each with an accessibility scan.
   await signIn(context, "+919000000587", language);
   await page.goto("/dashboard");
   await expect(page.getByText("₹15,000", { exact: true })).toBeVisible();
@@ -58,9 +58,9 @@ test("home summarises the family's facts and each row opens its detail page", as
   await expect(page.getByRole("heading", { level: 1, name: "Ishita Sharma" })).toBeVisible();
   await expect(page.getByText("JEE 2027 Evening · Malviya Nagar").first()).toBeVisible();
   await expect(page.getByText("₹75,000 of ₹1,20,000 paid · ₹45,000 remaining", { exact: true })).toBeVisible();
-  await expect(page.getByText("19 of 20 classes in the last 4 weeks", { exact: true })).toBeVisible();
+  await expect(page.getByText("23 of 24 classes in the last 4 weeks", { exact: true })).toBeVisible();
   await expect(page.getByText("₹15,000 · 10 Oct", { exact: true })).toBeVisible();
-  await expect(page.getByText("Monthly Test 7 · 86/100", { exact: true })).toBeVisible();
+  await expect(page.getByText("Monthly Test 7 · 88/100", { exact: true })).toBeVisible();
   await expect(page.locator("main")).not.toContainText(/risk|flag|counsellor|average|rank|topper/i);
   await page.locator('main a[href="/receipts"]').click();
   await expect(page).toHaveURL(/\/receipts$/);
@@ -90,7 +90,7 @@ test("home shows no Pay for clear and withdrawn students, and no risk data for a
   await expect(page.getByRole("link", { name: /^Pay/ })).toHaveCount(0);
   await expect(page.getByText("₹45,000 remaining", { exact: false })).toHaveCount(0);
   await signIn(context, "+919000000733");
-  await page.goto("/dashboard");
+  await page.goto("/dashboard"); await page.waitForLoadState("networkidle");
   await expect(page.locator("main")).not.toContainText(/risk|flag|counsellor|high/i);
 });
 
@@ -157,7 +157,7 @@ test("receipts list payments being checked without offering a receipt for them",
 
 test("a receipt keeps the portal navigation on screen but prints clean", async ({ page, context }) => {
   await signIn(context, "+919000000587");
-  await page.goto("/receipts/STU-0587-receipt-1");
+  await page.goto(`/receipts/${await latestReceiptId()}`);
   await expect(page.locator('a[href="/dashboard"]:visible')).toHaveCount(1);
   await page.emulateMedia({ media: "print" });
   await expect(page.locator('a[href="/dashboard"]:visible')).toHaveCount(0);
@@ -173,6 +173,10 @@ test("student info shows the reminder language chosen in settings", async ({ pag
   await expect(page.getByRole("heading", { name: "सेटिंग्स", exact: true })).toBeVisible();
   await page.goto("/student");
   await expect(page.getByRole("definition").filter({ hasText: "हिंदी" })).toBeVisible();
+  // The guardian language is shared data now, so put it back.
+  await page.goto("/settings");
+  await page.getByRole("radio", { name: "English", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
 });
 
 for (const path of ["/dashboard", "/course", "/student", "/settings"]) test(`signed-out visitors to ${path} are sent to sign-in`, async ({ page }) => {

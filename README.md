@@ -1,6 +1,6 @@
 # Coaching fees and parent portal
 
-Project: https://github.com/UdaiBatta/isocode-coaching_tracker
+Project: https://github.com/UdaiBatta/Isocode-portal
 
 A focused fee-tracking application for Company A, Jaipur. The core build covers parent dues and payment links, student ledgers, reminders that stop on payment, policy-based refunds, an accounts dashboard, and counsellor call tasks.
 

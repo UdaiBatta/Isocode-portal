@@ -14,7 +14,7 @@ const page = (value: unknown) => Math.max(1, Number(value) || 1);
 
 export default async function Manage({ params, searchParams }: { params: Promise<{ section: string }>; searchParams: Promise<SearchParams> }) {
   const [{ section }, query] = await Promise.all([params, searchParams]);
-  if (section !== "history" && !(section in loaders)) notFound();
+  if (section !== "history" && !Object.hasOwn(loaders, section)) notFound();
   const preview = previewState(query);
   const auth = await getAuthState();
   if (auth.role && auth.role !== "admin") redirect("/staff/login");

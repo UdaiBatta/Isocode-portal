@@ -50,7 +50,7 @@ export function DuesDashboard({ view, directory, filters, attention }: { view: D
   return <>
     <StaffPageHeader title="Dues dashboard" description={`Every centre and batch in one clear view, with what needs action first · ${dateLabel(view.today, "en", view.today)}`}><ExportButtons filters={filters} /><ButtonLink href="/staff/students">Open students</ButtonLink></StaffPageHeader>
     <StaffFrame>
-    <StatCards className="stat-tape" stats={[
+    <StatCards className="stat-tape grid-cols-1 sm:grid-cols-2" stats={[
       { icon: RiCoinsLine, label: "Total outstanding", value: <CountUp to={view.totals.outstanding} storageKey={`${counterKey}:outstanding`} />, delta: "Includes not due", deltaColor: "neutral" },
       { icon: RiTimeLine, label: "Overdue", value: <CountUp to={view.totals.overdue} storageKey={`${counterKey}:overdue`} />, delta: "Past due dates", deltaColor: "neutral" },
       { icon: RiPercentLine, label: "Over 60 days late", value: <CountUp to={view.totals.over60Pct} format="percent" storageKey={`${counterKey}:late`} />, delta: "Target 6%", deltaColor: "neutral" },

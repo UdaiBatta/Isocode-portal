@@ -212,6 +212,7 @@ The human chose to finish backend work and document frontend blockers while the 
 The final code check passes 68 frontend / 170 Django tests, types, Ruff and Django checks, with eight existing lint warnings. The all-ref/working-file secret review found no configured secret values or provider-key patterns; the broad password=/secret= matches were known test/blank-example/specification candidates. No .env.local or docs/inbox/ history was found. Backend architecture, the intentional CSRF boundary, Admin assumptions beyond the brief and current acceptance limits are now recorded in docs/TDD.md. Screenshots, final browser/golden review, the complete assumption register, PDF and fresh-clone handover remain pending.
 
 Claude's branch is still 7931ed7 with the posted ADMIN.6 create-delete-create collision. It must be fixed and reviewed before merge. T5.6 and T7.2 remain behind the explicit merge/pause gate; no fixture or prototype removal was performed. No frontend files were changed, no data reset/deletion was repeated, and nothing was pushed or deployed.
+- 2026-11-07 — The human chose https://github.com/UdaiBatta/Isocode-portal as the submission repository (the `origin` remote). README, TDD, PROMPTS and the home page link now point there. The earlier isocode-coaching_tracker repository holds the pre-rewrite history and is no longer the submission.
 
 ## 2026-11-08 - T7.1 stopped after three main-branch authentication failures
 
