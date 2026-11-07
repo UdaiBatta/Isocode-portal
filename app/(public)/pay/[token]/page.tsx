@@ -3,6 +3,7 @@ import { PageSkeleton } from "@/components/app/PageSkeleton";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Money } from "@/components/app/Money";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
+import { ORG } from "@/lib/config";
 import { ButtonLink } from "@/components/base/buttons/button";
 import { getPayDetails } from "@/lib/data/payments";
 import { getParentPageContext } from "@/lib/data/auth";
@@ -19,7 +20,7 @@ export default async function Pay({ params, searchParams }: { params: Promise<{ 
   const view = state === "empty" ? null : await getPayDetails(token);
   if (!view) return <PageShell><EmptyState title={t(language, "pay.invalid")} /></PageShell>;
   return <PageShell className="flex flex-col gap-8">
-    <div className="flex justify-end"><LanguageSwitcher language={language} /></div>
+    <div className="flex items-center justify-between gap-3"><p className="ledger-type text-title-2-medium">{ORG.name}</p><LanguageSwitcher language={language} /></div>
     <h1 className="text-title-1-medium">{t(language, "pay.title", { name: view.firstName })}</h1>
     {view.paid ? <p className="text-headline-regular">{t(language, "pay.alreadyPaid")}</p> : <>
       <Money paise={view.amount} prominent />

@@ -17,7 +17,10 @@ const fields: Record<string, string> = {
   sessionEnd: "Session ends", email: "Email", role: "Role", state: "Status",
 };
 const money = new Set(["gross", "discount"]);
-const shown = (field: string, value: string | number | null) => value === null || value === "" ? "none" : money.has(field) && typeof value === "number" ? inr(value) : String(value);
+// Money and dates read the same way here as on every other staff screen.
+const shown = (field: string, value: string | number | null, today: string) => value === null || value === "" ? "none"
+  : money.has(field) && typeof value === "number" ? inr(value)
+  : typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? dateLabel(value, "en", today) : String(value);
 const time = (at: string) => new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" }).format(new Date(at));
 
 export function ManageHistory({ view, filters }: { view: { today: string; rows: ChangeVM[]; page: number; pages: number }; filters: ChangeFilters }) {
@@ -43,7 +46,7 @@ export function ManageHistory({ view, filters }: { view: { today: string; rows: 
             <p className="text-body-2-regular text-text-secondary">{dateLabel(row.at.slice(0, 10), "en", view.today)}, {time(row.at)} · {row.actor}</p>
           </div>
           {row.changes.length ? <ul className="flex flex-col gap-1 text-body-2-regular">
-            {row.changes.filter((change) => row.action !== "fee" || change.field !== "discountReason").map((change) => <li key={change.field}><span className="text-text-secondary">{fields[change.field] ?? change.field}:</span> <span className="tabular-nums">{shown(change.field, change.before)} → {shown(change.field, change.after)}</span></li>)}
+            {row.changes.filter((change) => row.action !== "fee" || change.field !== "discountReason").map((change) => <li key={change.field}><span className="text-text-secondary">{fields[change.field] ?? change.field}:</span> <span className="tabular-nums">{shown(change.field, change.before, view.today)} → {shown(change.field, change.after, view.today)}</span></li>)}
           </ul> : null}
           {row.reason ? <p className="text-body-2-regular text-text-secondary">Reason: {row.reason}</p> : null}
         </li>)}
