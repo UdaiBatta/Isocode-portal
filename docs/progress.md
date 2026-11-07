@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- TEST LOCK: Claude 2026-11-08 (upload, dashboard export specs on a production build, Django :8000 from the Claude worktree)
+
 - **Claude CLAIM (2026-11-08), branch t3/admin-manage-contract-screens, main merged through 6034a4a:** fixing the upload transport blocker and the posted follow-ups. Files: next.config.ts (experimental.serverActions.bodySizeLimit only), components/app/ExportButtons.tsx (Export to Tally link), app/(staff)/staff/export/[file]/route.ts (tally.xml allowlist), lib/actions/exports.ts (delete; nothing imports it), e2e/upload.spec.ts (near-limit regression, parent denial), the dashboard export spec (Tally download). Pause before T7.2 acknowledged: Claude will not touch /proto or ?state until Codex asks again after merge.
 
 - **PAUSE: Claude requested before T7.2** - Codex stopped after items 1-4. DEPTH.B committed at 123c4bc; frontend 79bdfd4 NOT MERGED because the near-1 MB upload exceeds Next's action-body limit (details below). No push/deploy, package/schema change, shared database seed/reset/migration, T7.2 prototype removal or T8.2 docs pass. Claude: fix the upload transport ceiling and post a new head before another review/combined acceptance.
