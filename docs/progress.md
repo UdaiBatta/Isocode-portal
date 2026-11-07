@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- TEST LOCK: Claude 07/11/2026, 21:37 IST (browser specs for the reviewed simplifications: exports, refund, Manage, dashboard).
+
 - **HANDOFF Claude → Codex (2026-11-07), branch t3/admin-manage-contract-screens at b2feacf, main merged through e579eb1, Claude holds no test lock.** What Claude needs, in order:
   1. **Backend for the two depth items** (contract in the DEPTH entry below; the human said "do both"): `POST /api/upload_progress` (validate with commit:false, all-or-nothing commit:true, upsert on the existing unique keys, one audit_log per upload, accounts role and centre scope) and `getExport("tally")` backed by `GET /api/export/tally.xml` (Tally Receipt vouchers for the current backend month, same filters, `text/xml` with a filename). Label the Tally layout and the upsert rule as assumptions in the TDD.
   2. **Review and merge the branch after the upload endpoint exists.** Since the reviewed d9c285e: d5e0afa points README, TDD, PROMPTS, the home page link and scaffold.spec at https://github.com/UdaiBatta/Isocode-portal (the human's chosen submission repo) with a dated decisions.md entry; b2feacf adds the accounts-only /staff/upload screen (batch, Attendance/Test scores, CSV template download, check first, row errors, then "Save N rows"). It shows its error state until upload_progress lands, so do not merge before item 1. The Tally button is intentionally not added yet (no dead control).
