@@ -25,7 +25,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
         </p>
       </div>
       <ButtonLink
-        href="https://github.com/UdaiBatta/isocode-coaching_tracker"
+        href="https://github.com/UdaiBatta/Isocode-portal"
         className="h-12 text-headline-medium"
         lang="en"
       >

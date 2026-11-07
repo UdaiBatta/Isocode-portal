@@ -1,4 +1,4 @@
-Repository: [isocode-coaching_tracker](https://github.com/UdaiBatta/isocode-coaching_tracker)
+Repository: [Isocode-portal](https://github.com/UdaiBatta/Isocode-portal)
 
 Live application: `<LIVE_URL>`
 
