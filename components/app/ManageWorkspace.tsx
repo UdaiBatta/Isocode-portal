@@ -155,9 +155,9 @@ function FormField({ field, value, disabled }: { field: Field; value?: string; d
 
 type Confirm = { kind: "archive" | "restore" | "delete"; row: AnyRow } | null;
 const lifecycleCopy = {
-  archive: ["Archive", "It leaves the active lists but keeps every payment, receipt and change. You can restore it later."],
-  restore: ["Restore", "It returns to the active lists."],
-  delete: ["Delete", "This removes the record for good. Only records with no payments or receipts can be deleted."],
+  archive: ["Archive", "Archived", "It leaves the active lists but keeps every payment, receipt and change. You can restore it later."],
+  restore: ["Restore", "Restored", "It returns to the active lists."],
+  delete: ["Delete", "Deleted", "This removes the record for good. Only records with no payments or receipts can be deleted."],
 } as const;
 
 export function ManageWorkspace({ section, view, directory, filters }: { section: ManageSection; view: AdminListVM<AnyRow>; directory: AdminDirectoryVM; filters: AdminFilters }) {
@@ -244,14 +244,14 @@ export function ManageWorkspace({ section, view, directory, filters }: { section
     </Modal>
 
     <AlertDialog isOpen={confirm !== null} onOpenChange={(isOpen) => { if (!isOpen) setConfirm(null); }}
-      title={confirm ? `${lifecycleCopy[confirm.kind][0]} ${name(confirm.row)}?` : ""} description={confirm ? lifecycleCopy[confirm.kind][1] : ""}
+      title={confirm ? `${lifecycleCopy[confirm.kind][0]} ${name(confirm.row)}?` : ""} description={confirm ? lifecycleCopy[confirm.kind][2] : ""}
       variant={confirm?.kind === "delete" ? "danger" : "default"} confirmLabel={confirm ? lifecycleCopy[confirm.kind][0] : ""}
       onConfirm={async () => {
         if (!confirm) return;
         const action = { archive: archiveRecord, restore: restoreRecord, delete: deleteRecord }[confirm.kind];
         const result = await action({ entity: config.entity, id: confirm.row.id });
         if (!result.ok) { toast.error(result.message); throw new Error(result.message); }
-        toast.success(`${lifecycleCopy[confirm.kind][0].replace(/e$/, "")}ed ${name(confirm.row)}`); setConfirm(null); router.refresh();
+        toast.success(`${lifecycleCopy[confirm.kind][1]} ${name(confirm.row)}`); setConfirm(null); router.refresh();
       }} />
   </>;
 }

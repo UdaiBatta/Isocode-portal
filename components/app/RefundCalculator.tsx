@@ -28,8 +28,8 @@ export function RefundCalculator({ view, plan, today }: { view: RefundVM; plan: 
   const [pending, startTransition] = useTransition();
   const [dateChanged, setDateChanged] = useState(false);
   const frozen = view.status === "approved" || view.status === "paid";
-  // Django recalculates for each date; the browser never does refund maths. "demo" means the prototype only has the supplied date.
-  const [preview, setPreview] = useState<{ date: string | null; calc: RefundVM["calc"]; demo: boolean }>({ date: view.input.withdrawalDate, calc: view.calc, demo: false });
+  // Django recalculates for each date; the browser never does refund maths.
+  const [preview, setPreview] = useState<{ date: string | null; calc: RefundVM["calc"] }>({ date: view.input.withdrawalDate, calc: view.calc });
   const [previewing, setPreviewing] = useState(false);
   const latest = useRef(view.input.withdrawalDate ?? "");
   const calc = preview.date === (date?.toString() ?? null) ? preview.calc : null;
@@ -38,14 +38,14 @@ export function RefundCalculator({ view, plan, today }: { view: RefundVM; plan: 
     setDate(value); setDateChanged(true); setError("");
     const next = value?.toString() ?? "";
     latest.current = next;
-    if (!next || next === view.input.withdrawalDate) { setPreview({ date: next || null, calc: next ? view.calc : null, demo: false }); setPreviewing(false); return; }
-    if (next > today) { setPreview({ date: next, calc: null, demo: false }); setError("Choose a withdrawal date on or before today."); return; }
+    if (!next || next === view.input.withdrawalDate) { setPreview({ date: next || null, calc: next ? view.calc : null }); setPreviewing(false); return; }
+    if (next > today) { setPreview({ date: next, calc: null }); setError("Choose a withdrawal date on or before today."); return; }
     setPreviewing(true);
     try {
       const result = await previewRefund({ studentId: view.student.code, withdrawalDate: next });
       if (latest.current !== next) return;
-      if (result.ok) setPreview({ date: next, calc: result.calc, demo: false });
-      else { setPreview({ date: next, calc: null, demo: result.code === "demo_date" }); if (result.code !== "demo_date") setError(result.message); }
+      if (result.ok) setPreview({ date: next, calc: result.calc });
+      else { setPreview({ date: next, calc: null }); setError(result.message); }
     } catch { if (latest.current === next) setError("Could not work out the refund for this date. Please try again."); }
     finally { if (latest.current === next) setPreviewing(false); }
   }
@@ -75,14 +75,13 @@ export function RefundCalculator({ view, plan, today }: { view: RefundVM; plan: 
       <StaffFrame><div className="grid items-start gap-4 lg:grid-cols-[minmax(220px,1fr)_minmax(300px,1.4fr)]">
         <section className="flex flex-col items-start gap-6 rounded-3xl border border-border-button-default bg-background-primary-default p-4 md:p-5"><div><p className="mb-2 text-body-medium">Withdrawal date</p><DatePicker aria-label="Withdrawal date" value={date} onChange={(value) => { void changeDate(value); }} isDisabled={frozen} /></div>
           <Select label="Reason" selectedKey={reason || null} onSelectionChange={(key) => setReason(String(key))} isDisabled={frozen} placeholder="Choose a reason">{["Personal", "Moved city", "Changed course", "Health", "Other"].map((item) => <SelectItem id={item} key={item}>{item}</SelectItem>)}</Select>
-          {preview.demo && preview.date === date?.toString() ? <p role="status" className="text-body-regular text-text-secondary">This prototype uses the supplied {view.input.withdrawalDate} calculation. Restore that date to continue.</p> : null}
           {dirty && !previewing ? <p role="status" className="text-body-regular text-text-secondary">Not saved yet. Save the draft again before approving.</p> : null}
           {frozen ? <p className="text-body-regular text-text-secondary">The approved calculation is frozen.</p> : <Button variant={view.status === "draft" ? "secondary" : "primary"} disabled={pending || previewing || !calc} onClick={() => startTransition(async () => { await perform("save"); })}>Save draft</Button>}
           {view.status === "draft" ? <Button disabled={pending || previewing || !!view.blockedBy || dirty || !calc} onClick={() => setConfirm("approve")}>Approve refund</Button> : view.status === "approved" ? <Button onClick={() => setConfirm("paid")}>Mark as paid (mock)</Button> : null}
           {error ? <p role="alert" className="text-body-regular text-text-error-primary">{error}</p> : null}
           <LinkButton href="/refund-policy" variant="secondary">Refund policy</LinkButton>
         </section>
-        <section className="flex min-w-0 flex-col gap-5 rounded-3xl border border-border-button-default bg-background-primary-default p-4 md:p-5"><h2 className="text-headline-medium">Refund Policy {view.policy.version}</h2>{calc ? <Table key={date?.toString()} aria-label="Refund calculation" size="md" className={dateChanged ? "refund-lines" : undefined}><TableHeader><TableColumn id="step" isRowHeader><span className="text-text-primary">Calculation</span></TableColumn><TableColumn id="value"><span className="text-text-primary">Value</span></TableColumn></TableHeader><TableBody>{calculation.map(([label, value]) => <TableRow id={label} key={label}><TableCell><span className="text-body-regular">{label}</span></TableCell><TableCell><span className="block text-end text-body-medium tabular-nums">{value}</span></TableCell></TableRow>)}</TableBody></Table> : <EmptyState title={previewing ? "Working out the refund…" : preview.demo ? "Choose the supplied prototype date to see the calculation" : "Choose a withdrawal date to see the calculation"} />}</section>
+        <section className="flex min-w-0 flex-col gap-5 rounded-3xl border border-border-button-default bg-background-primary-default p-4 md:p-5"><h2 className="text-headline-medium">Refund Policy {view.policy.version}</h2>{calc ? <Table key={date?.toString()} aria-label="Refund calculation" size="md" className={dateChanged ? "refund-lines" : undefined}><TableHeader><TableColumn id="step" isRowHeader><span className="text-text-primary">Calculation</span></TableColumn><TableColumn id="value"><span className="text-text-primary">Value</span></TableColumn></TableHeader><TableBody>{calculation.map(([label, value]) => <TableRow id={label} key={label}><TableCell><span className="text-body-regular">{label}</span></TableCell><TableCell><span className="block text-end text-body-medium tabular-nums">{value}</span></TableCell></TableRow>)}</TableBody></Table> : <EmptyState title={previewing ? "Working out the refund…" : "Choose a withdrawal date to see the calculation"} />}</section>
       </div></StaffFrame>
     </>}
     <AlertDialog isOpen={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)} title={confirm === "approve" ? "Approve this refund?" : "Mark this refund as paid?"} description={confirm === "approve" ? "This freezes the calculation, withdraws the student and stops reminders." : "This records a mock refund payment."} confirmLabel={confirm === "approve" ? "Approve refund" : "Mark as paid"} variant="default" onConfirm={async () => { if (!await perform(confirm === "approve" ? "approve" : "paid")) throw new Error("Refund action failed"); setConfirm(null); }} />

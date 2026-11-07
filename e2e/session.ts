@@ -6,7 +6,7 @@ import type { BrowserContext } from "@playwright/test";
 // Real Django sessions for screen specs (fixtures were removed in T5.6). Sessions are cached between runs and
 // re-checked with /api/me, so parents rarely need a new OTP (Django allows 3 codes per phone per 10 minutes).
 export type Who = "accounts" | "accounts.mlv" | "counsellor" | "admin" | `parent:${string}`;
-export const APP = "http://127.0.0.1:3001";
+const APP = "http://127.0.0.1:3001";
 const CACHE = join(tmpdir(), "coaching-fees-e2e-sessions.json");
 
 function env(name: string) {
@@ -39,7 +39,7 @@ async function freshSession(who: Who): Promise<string> {
   return verified.sid;
 }
 
-export async function sessionFor(who: Who) {
+async function sessionFor(who: Who) {
   const cache: Record<string, string> = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, "utf8")) : {};
   if (!cache[who] || (await api("me", undefined, cache[who])).status !== 200) {
     cache[who] = await freshSession(who);

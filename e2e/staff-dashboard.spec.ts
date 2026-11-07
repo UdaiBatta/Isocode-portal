@@ -27,7 +27,7 @@ test("staff dashboard groups, searches, exports and provides phone navigation", 
   await expect(page.getByText("No matching students", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export dues CSV", exact: true }).click();
+  await page.getByRole("link", { name: "Export dues CSV", exact: true }).click();
   expect((await download).suggestedFilename()).toBe("dues-2026-11-02.csv");
   expect((await new AxeBuilder({ page }).analyze()).violations.filter((item) => item.impact === "serious" || item.impact === "critical")).toEqual([]);
   if (info.project.name === "mobile") {

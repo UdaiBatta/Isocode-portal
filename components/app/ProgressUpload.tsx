@@ -9,13 +9,10 @@ import { toast } from "@/components/base/toast/toast";
 import { StaffFrame, StaffPageHeader } from "./StaffPage";
 import { uploadProgress, type UploadKind, type UploadResult } from "@/lib/actions/uploads";
 
-const columns: Record<UploadKind, string> = {
-  attendance: "student_code,week_start,attended,held",
-  tests: "student_code,test_date,test_name,score,max_score",
-};
-const examples: Record<UploadKind, string> = {
-  attendance: "STU-0587,2026-10-26,5,6",
-  tests: "STU-0587,2026-10-28,Monthly Test 7,88,100",
+// Header row and one example row for each kind of file.
+const formats: Record<UploadKind, [string, string]> = {
+  attendance: ["student_code,week_start,attended,held", "STU-0587,2026-10-26,5,6"],
+  tests: ["student_code,test_date,test_name,score,max_score", "STU-0587,2026-10-28,Monthly Test 7,88,100"],
 };
 
 export function ProgressUpload({ batches }: { batches: { id: string; label: string }[] }) {
@@ -39,7 +36,7 @@ export function ProgressUpload({ batches }: { batches: { id: string; label: stri
       } catch { setError("Could not check the file. Please try again."); }
     });
   }
-  const template = `data:text/csv;charset=utf-8,${encodeURIComponent(`${columns[kind]}\n${examples[kind]}\n`)}`;
+  const template = `data:text/csv;charset=utf-8,${encodeURIComponent(`${formats[kind].join("\n")}\n`)}`;
 
   return <>
     <StaffPageHeader title="Upload results" description="Add a batch's weekly attendance or test scores from a CSV file. Nothing is saved until the whole file checks out." />
@@ -53,7 +50,7 @@ export function ProgressUpload({ batches }: { batches: { id: string; label: stri
           <SegmentedControlItem id="tests">Test scores</SegmentedControlItem>
         </SegmentedControl>
       </div>
-      <p className="text-body-regular text-text-secondary">Columns, in this order: <code className="text-body-2-regular">{columns[kind]}</code>. <a className="underline" href={template} download={`${kind}-template.csv`}>Download a template</a>.</p>
+      <p className="text-body-regular text-text-secondary">Columns, in this order: <code className="text-body-2-regular">{formats[kind][0]}</code>. <a className="underline" href={template} download={`${kind}-template.csv`}>Download a template</a>.</p>
       <FileUpload key={`${kind}-${batchId}`} allowedExtensions={["csv"]} maxBytes={1024 * 1024} onUploadComplete={async (chosen) => {
         reset(); const csv = await chosen.text(); setFile({ name: chosen.name, csv }); send(csv, false);
       }} />

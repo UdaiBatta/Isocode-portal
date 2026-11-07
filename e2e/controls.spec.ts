@@ -54,7 +54,7 @@ test("dashboard centre, expansion, student navigation, exports and pay-link copy
   await expect(page).toHaveURL(/batch=[0-9a-f-]{36}/);
   for (const kind of ["dues", "receipts"]) {
     const download = page.waitForEvent("download");
-    await page.getByRole("button", { name: `Export ${kind} CSV`, exact: true }).click();
+    await page.getByRole("link", { name: `Export ${kind} CSV`, exact: true }).click();
     expect((await download).suggestedFilename()).toMatch(new RegExp(`^${kind}-.*\\.csv$`));
   }
   await expect(page.locator('a[href^="/staff/students/STU-"]').filter({ visible: true }).first()).toBeVisible();

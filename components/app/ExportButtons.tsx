@@ -1,20 +1,11 @@
-"use client";
+import { ButtonLink } from "@/components/base/buttons/button";
 
-import { useState, useTransition } from "react";
-import { ButtonGroup, ButtonGroupItem } from "@/components/base/buttons/button-group";
-import { exportCsv } from "@/lib/actions/exports";
-
+// Plain download links: the browser saves the file the export route returns. Django rechecks role and centre scope.
 export function ExportButtons({ filters }: { filters: { centre?: string; batch?: string } }) {
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState(false);
-  function download(kind: "dues" | "receipts") {
-    startTransition(async () => {
-      setError(false);
-      try { const result = await exportCsv(kind, filters); const url = URL.createObjectURL(new Blob([result.text], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = result.filename; anchor.click(); URL.revokeObjectURL(url); } catch { setError(true); }
-    });
-  }
-  return <div className="flex flex-col items-start gap-2 md:items-end">
-    <ButtonGroup aria-label="Export accounts data"><ButtonGroupItem disabled={pending} onClick={() => download("dues")}>Export dues CSV</ButtonGroupItem><ButtonGroupItem disabled={pending} onClick={() => download("receipts")}>Export receipts CSV</ButtonGroupItem></ButtonGroup>
-    {error ? <p role="alert" className="text-body-regular text-text-error-primary">Export failed. Please try again.</p> : null}
+  const query = new URLSearchParams(Object.entries(filters).filter((entry): entry is [string, string] => Boolean(entry[1]))).toString();
+  const href = (file: string) => `/staff/export/${file}${query ? `?${query}` : ""}`;
+  return <div role="group" aria-label="Export accounts data" className="flex flex-wrap gap-2">
+    <ButtonLink variant="secondary" href={href("dues.csv")} download>Export dues CSV</ButtonLink>
+    <ButtonLink variant="secondary" href={href("receipts.csv")} download>Export receipts CSV</ButtonLink>
   </div>;
 }
