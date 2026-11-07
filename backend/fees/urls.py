@@ -1,6 +1,6 @@
 from django.urls import path
 
-from fees.views import admin, auth, automation, consent, counsellor, cron, dashboard, demo, dues, exports, ledger, payment, receipts, refunds, students
+from fees.views import admin, auth, automation, consent, counsellor, cron, dashboard, demo, dues, exports, ledger, payment, receipts, refunds, students, uploads
 
 urlpatterns = [
     path("public_context", auth.public_context),
@@ -36,6 +36,8 @@ urlpatterns = [
     path("staff_directory", dashboard.staff_directory),
     path("export/dues.csv", exports.dues),
     path("export/receipts.csv", exports.receipts),
+    path("export/tally.xml", exports.tally),
+    path("upload_progress", uploads.progress),
     path("student_record", students.student_record),
     path("family", students.family),
     path("student_info", students.info),

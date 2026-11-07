@@ -63,6 +63,25 @@ class DashboardQueryForm(forms.Form):
     batch = forms.UUIDField(required=False)
 
 
+class ProgressUploadForm(forms.Form):
+    batchId = forms.UUIDField()
+    kind = forms.ChoiceField(choices=[("attendance", "attendance"), ("tests", "tests")])
+    csv = forms.CharField(strip=False, max_length=1024 * 1024)
+    commit = forms.BooleanField(required=False)
+
+    def clean_csv(self):
+        value = self.data.get("csv")
+        if not isinstance(value, str) or len(value.encode("utf-8", errors="replace")) > 1024 * 1024:
+            raise forms.ValidationError("Upload CSV text of at most 1 MB.")
+        return value
+
+    def clean_commit(self):
+        value = self.data.get("commit")
+        if type(value) is not bool:
+            raise forms.ValidationError("Choose whether to apply the upload.")
+        return value
+
+
 class StudentsQueryForm(DashboardQueryForm):
     status = forms.ChoiceField(required=False, choices=[(value, value) for value in (
         "overdue", "upcoming", "clear", "checking", "withdrawn", "over60",
