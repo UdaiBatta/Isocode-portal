@@ -39,6 +39,12 @@ For new students, an existing batch fee schedule supplies due dates. An empty ba
 
 The human separately approved zero-value instalments for audited fee reductions. A reduction cannot take net fees below payments already allocated. A zero instalment is settled, has no payment link and creates no fictional payment or receipt. The audit retains the full before/after schedule and reason.
 
+## Depth feature assumptions
+
+Bulk academic CSV uploads update existing attendance by student and week_start, and tests by student, test_date and test_name. These upsert keys are an assumption matching the existing database uniqueness rules; if a file repeats a key, its last row wins. Validation never writes. A successful save applies every row and one upload audit entry in one transaction. Accounts access and the batch's centre scope are checked in Django; withdrawn, archived and out-of-batch students are rejected. Files are limited to 1 MB of UTF-8 text and 5,000 data rows.
+
+The Tally layout is an assumption: an ENVELOPE import contains one Receipt voucher per receipt issued in the current backend month, including archived students' history. The student code and name identify the party ledger; the matching debit ledger is Cash for cash receipts and Bank for other methods. Amounts have two decimal places derived from integer paise; narration records taxable value, CGST and SGST. Those ledger names must exist in the receiving company. The XML is not tested on a real Tally install.
+
 ## Remaining acceptance limits
 
 Claude's ADMIN.6 create-delete-create ID collision finding blocks the frontend merge. The real-session Admin adapters must be connected after that merge, using UUIDs before prototype ID validation. Refund date-preview/no-plan/dirty-draft wiring, CSV GET forwarding routes and the shared-demo reset confirmation/browser proof remain frontend work. Current backend read shapes are unchanged. Historical dashboard aggregates materialize scoped instalment IDs to avoid nested PostgreSQL semi-joins; memory use is acceptable for the 2,600-student brief and should be reviewed before materially larger deployments.

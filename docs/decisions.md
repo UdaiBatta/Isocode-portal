@@ -213,3 +213,13 @@ The final code check passes 68 frontend / 170 Django tests, types, Ruff and Djan
 
 Claude's branch is still 7931ed7 with the posted ADMIN.6 create-delete-create collision. It must be fixed and reviewed before merge. T5.6 and T7.2 remain behind the explicit merge/pause gate; no fixture or prototype removal was performed. No frontend files were changed, no data reset/deletion was repeated, and nothing was pushed or deployed.
 - 2026-11-07 — The human chose https://github.com/UdaiBatta/Isocode-portal as the submission repository (the `origin` remote). README, TDD, PROMPTS and the home page link now point there. The earlier isocode-coaching_tracker repository holds the pre-rewrite history and is no longer the submission.
+
+## 2026-11-08 - T7.1 stopped after three main-branch authentication failures
+
+DEPTH.B is committed at 123c4bc and the full check passes 54 frontend and 186 Django tests. Frontend 79bdfd4 was not merged: a supported 1,045,049-byte / 5,000-row CSV encodes to a 1,050,141-byte action request, exceeding Next's unchanged 1,048,576-byte default. Django validates that same file with zero errors and no write. Claude must allow bounded action-envelope overhead and verify a near-limit upload before a new review. No package change is required.
+
+T7.1 selected the full 258-test Playwright suite on a production build of main with Django on :8000 against a separate snapshot database. The first three mobile controls tests still supplied obsolete prototype cookies; Django returned 401 and the expected staff controls were absent. The run stopped at the required third failure: 0 passed, 3 failed, 255 not run (JSON classifies those 255 as skipped). The runner's one additional error is only the maximum-failures stop notification. No retry or test weakening follows this stop. The branch already contains real-session migrations, but its merge blocker must be fixed first.
+
+An earlier bounded diagnostic used real parent sessions at 360x640 and 1280x800: ten settled parent-page checks, sixty rapid navigations and two settled landing loads produced zero page errors, including zero $RS parentNode errors. This does not establish that the reported race is harmless or automation-only. No application fix is justified by this run; the suppression is not accepted as a final clean-console waiver. Recheck the merged branch with unsuppressed, settled parent payment/navigation assertions and record any narrowly filtered race separately. Payment was not exercised by this diagnostic.
+
+No shared database seed/reset/migration ran. The isolated acceptance database and dump were removed, and owned servers stopped. T7.1 is blocked, not passed. PAUSE: Claude requested before T7.2. T7.2 and T8.2 were not started; nothing was pushed or deployed.
