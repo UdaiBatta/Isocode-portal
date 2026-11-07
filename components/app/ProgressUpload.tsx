@@ -15,6 +15,8 @@ const formats: Record<UploadKind, [string, string]> = {
   tests: ["student_code,test_date,test_name,score,max_score", "STU-0587,2026-10-28,Monthly Test 7,88,100"],
 };
 
+const rows = (count: number) => `${count} ${count === 1 ? "row" : "rows"}`;
+
 export function ProgressUpload({ batches }: { batches: { id: string; label: string }[] }) {
   const [batchId, setBatchId] = useState<string | null>(batches[0]?.id ?? null);
   const [kind, setKind] = useState<UploadKind>("attendance");
@@ -32,7 +34,7 @@ export function ProgressUpload({ batches }: { batches: { id: string; label: stri
         const response = await uploadProgress({ batchId, kind, csv, commit });
         if (!response.ok) { setResult(null); setError(response.message); return; }
         setResult(response);
-        if (response.applied) { toast.success(`Saved ${response.rows} rows`); setFile(null); }
+        if (response.applied) { toast.success(`Saved ${rows(response.rows)}`); setFile(null); }
       } catch { setError("Could not check the file. Please try again."); }
     });
   }
@@ -58,12 +60,12 @@ export function ProgressUpload({ batches }: { batches: { id: string; label: stri
       {error ? <p role="alert" className="text-body-regular text-text-error-primary">{error}</p> : null}
       {result && !result.applied && file ? <div className="flex flex-col gap-3">
         {result.errors.length ? <>
-          <p role="alert" className="text-body-medium text-text-error-primary">{result.errors.length} of {result.rows} rows need fixing. Nothing was saved.</p>
+          <p role="alert" className="text-body-medium text-text-error-primary">{result.errors.length} of {rows(result.rows)} need fixing. Nothing was saved.</p>
           <ul className="flex flex-col gap-1 text-body-2-regular">{result.errors.slice(0, 50).map((item) => <li key={`${item.line}-${item.message}`}>Line {item.line}: {item.message}</li>)}</ul>
           {result.errors.length > 50 ? <p className="text-body-2-regular text-text-secondary">And {result.errors.length - 50} more. Fix these first.</p> : null}
         </> : <>
-          <p role="status" className="text-body-medium">{result.rows} rows in {file.name} are ready. Rows already on file for the same week or test are updated.</p>
-          <Button className="self-start" disabled={pending} onClick={() => send(file.csv, true)}>Save {result.rows} rows</Button>
+          <p role="status" className="text-body-medium">{rows(result.rows)} in {file.name} {result.rows === 1 ? "is" : "are"} ready. Rows already on file for the same week or test are updated.</p>
+          <Button className="self-start" disabled={pending} onClick={() => send(file.csv, true)}>Save {rows(result.rows)}</Button>
         </>}
       </div> : null}
     </section></StaffFrame>
