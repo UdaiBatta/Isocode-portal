@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { RiBuilding2Line, RiCalendarScheduleLine, RiDashboardLine, RiGroupLine, RiHistoryLine, RiNotification3Line, RiPhoneLine, RiUserSettingsLine } from "@remixicon/react";
+import { RiBuilding2Line, RiCalendarScheduleLine, RiDashboardLine, RiGroupLine, RiHistoryLine, RiNotification3Line, RiPhoneLine, RiUserSettingsLine, RiUploadCloud2Line } from "@remixicon/react";
 import { WorkspaceSidebar } from "@/components/application/dashboard/dashboard-sidebar";
 import { Drawer, DrawerHeader, DrawerBody } from "@/components/base/drawer/drawer";
 import { Button } from "@/components/base/buttons/button";
@@ -25,8 +25,9 @@ export function StaffShell({ children, counsellor = false, admin = false }: { ch
     { key: "dashboard", label: "Dashboard", icon: RiDashboardLine, href: "/staff/dashboard" },
     { key: "students", label: "Students", icon: RiGroupLine, href: "/staff/students" },
     { key: "automation", label: "Automation", icon: RiNotification3Line, href: "/staff/automation" },
+    { key: "upload", label: "Upload results", icon: RiUploadCloud2Line, href: "/staff/upload" },
   ];
-  const nav = <WorkspaceSidebar items={items} selected={admin ? manage.find((item) => path.startsWith(item.href))?.key ?? "students" : counsellor ? "calls" : path.includes("automation") ? "automation" : path.includes("students") ? "students" : "dashboard"} footer={<LogoutButton language="en" />} />;
+  const nav = <WorkspaceSidebar items={items} selected={admin ? manage.find((item) => path.startsWith(item.href))?.key ?? "students" : counsellor ? "calls" : path.includes("automation") ? "automation" : path.includes("/upload") ? "upload" : path.includes("students") ? "students" : "dashboard"} footer={<LogoutButton language="en" />} />;
   // Staff screens are English, so date pickers and other React Aria controls use an English locale even when the root is Hindi.
   return <DirectionProvider locale="en-IN"><div className="staff-surface min-h-screen p-4 text-text-primary md:flex md:gap-8 md:p-0">
     <div className="hidden w-60 shrink-0 md:block"><div className="staff-spine ledger-butti sticky top-0 h-dvh">{nav}</div></div>
