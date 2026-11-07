@@ -29,6 +29,9 @@ test("staff dashboard groups, searches, exports and provides phone navigation", 
   const download = page.waitForEvent("download");
   await page.getByRole("link", { name: "Export dues CSV", exact: true }).click();
   expect((await download).suggestedFilename()).toBe("dues-2026-11-02.csv");
+  const tally = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Export to Tally", exact: true }).click();
+  expect((await tally).suggestedFilename()).toBe("tally-receipts-2026-11.xml");
   expect((await new AxeBuilder({ page }).analyze()).violations.filter((item) => item.impact === "serious" || item.impact === "critical")).toEqual([]);
   if (info.project.name === "mobile") {
     await page.getByRole("button", { name: "Menu", exact: true }).click();

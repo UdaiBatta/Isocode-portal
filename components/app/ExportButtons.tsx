@@ -7,5 +7,6 @@ export function ExportButtons({ filters }: { filters: { centre?: string; batch?:
   return <div role="group" aria-label="Export accounts data" className="flex flex-wrap gap-2">
     <ButtonLink variant="secondary" href={href("dues.csv")} download>Export dues CSV</ButtonLink>
     <ButtonLink variant="secondary" href={href("receipts.csv")} download>Export receipts CSV</ButtonLink>
+    <ButtonLink variant="secondary" href={href("tally.xml")} download>Export to Tally</ButtonLink>
   </div>;
 }

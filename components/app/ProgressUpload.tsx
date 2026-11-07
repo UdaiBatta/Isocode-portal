@@ -52,7 +52,7 @@ export function ProgressUpload({ batches }: { batches: { id: string; label: stri
           <SegmentedControlItem id="tests">Test scores</SegmentedControlItem>
         </SegmentedControl>
       </div>
-      <p className="text-body-regular text-text-secondary">Columns, in this order: <code className="text-body-2-regular">{formats[kind][0]}</code>. <a className="underline" href={template} download={`${kind}-template.csv`}>Download a template</a>.</p>
+      <p className="text-body-regular text-text-secondary">Columns, in this order: <code className="text-body-2-regular break-all">{formats[kind][0]}</code>. <a className="underline" href={template} download={`${kind}-template.csv`}>Download a template</a>.</p>
       <FileUpload key={`${kind}-${batchId}`} allowedExtensions={["csv"]} maxBytes={1024 * 1024} onUploadComplete={async (chosen) => {
         reset(); const csv = await chosen.text(); setFile({ name: chosen.name, csv }); send(csv, false);
       }} />

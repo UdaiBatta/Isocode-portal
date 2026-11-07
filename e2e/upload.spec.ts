@@ -27,8 +27,23 @@ test("accounts uploads a batch's scores: errors block the save, a clean file sav
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test("parents and counsellors cannot open the upload screen", async ({ page, context }) => {
-  await signIn(context, "counsellor");
+test("a valid file just under 1 MB reaches Django and checks clean", async ({ page, context }) => {
+  // 5,000 rows of 209 bytes plus the header = 1,045,049 bytes: under 1 MB, but over it once encoded as an action body.
+  const header = "student_code,test_date,test_name,score,max_score\n";
+  const csv = header + Array.from({ length: 5000 }, (_, i) => `STU-0587,2026-10-28,${`Near limit ${i} `.padEnd(182, "x")},1,100\n`).join("");
+  expect(Buffer.byteLength(csv)).toBe(1_045_049);
+  await signIn(context, "accounts");
   await page.goto("/staff/upload");
-  await expect(page).toHaveURL(/\/staff\/login$/);
+  await page.getByRole("button", { name: /Batch/ }).click();
+  await page.getByRole("option", { name: "Malviya Nagar · JEE 2027 Evening", exact: true }).click();
+  await choose(page, "Test scores", csv); // Checked only; never saved.
+  await expect(page.getByText(/^5000 rows in .+ are ready\./)).toBeVisible({ timeout: 60_000 });
 });
+
+for (const who of ["counsellor", "parent:9000000587"] as const) {
+  test(`${who.split(":")[0]} cannot open the upload screen`, async ({ page, context }) => {
+    await signIn(context, who);
+    await page.goto("/staff/upload");
+    await expect(page).toHaveURL(/\/staff\/login$/);
+  });
+}

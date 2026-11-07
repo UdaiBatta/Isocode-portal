@@ -5,6 +5,7 @@ import { getExport } from "@/lib/data/exports";
 const files = {
   "dues.csv": ["dues", "text/csv; charset=utf-8"],
   "receipts.csv": ["receipts", "text/csv; charset=utf-8"],
+  "tally.xml": ["tally", "text/xml; charset=utf-8"],
 } as const;
 
 export async function GET(request: Request, { params }: { params: Promise<{ file: string }> }) {
