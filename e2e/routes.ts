@@ -1,11 +1,11 @@
-export const prototypeRoutes = [
+// Every screen the layout spec checks. The payment result needs a real payment, so parent-payment.spec.ts covers it.
+export const routes = [
   { key: "login", title: "Parent sign-in", path: "/login", role: "parent" },
   { key: "consent", title: "Parental consent", path: "/consent", role: "parent" },
   { key: "home", title: "Parent home", path: "/dashboard", role: "parent" },
   { key: "dues", title: "Parent dues", path: "/dues", role: "parent" },
   { key: "pay", title: "Public payment link", path: "/pay/STU-0587-3", role: "public" },
   { key: "gateway", title: "Mock gateway", path: "/mock-gateway/STU-0587-3", role: "public" },
-  { key: "result", title: "Payment result", path: "/pay/STU-0587-3/result", role: "public" },
   { key: "receipts", title: "Parent receipts", path: "/receipts", role: "parent" },
   { key: "receipt", title: "GST receipt", path: "/receipts/STU-0587-receipt-3", role: "parent" },
   { key: "progress", title: "Academic info", path: "/progress", role: "parent" },
@@ -26,5 +26,4 @@ export const prototypeRoutes = [
   { key: "manage-staff", title: "Manage staff", path: "/staff/manage/staff", role: "admin" },
   { key: "manage-history", title: "Change history", path: "/staff/manage/history", role: "admin" },
   { key: "demo", title: "Reviewer walkthrough", path: "/demo", role: "public" },
-  { key: "proto", title: "Prototype index", path: "/proto", role: "public" },
 ] as const;

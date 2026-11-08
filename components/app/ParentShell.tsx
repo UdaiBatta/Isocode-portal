@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { RiArrowRightSLine, RiBarChart2Line, RiFileList3Line, RiGraduationCapLine, RiHomeLine, RiMoreLine, RiSettings4Line, RiUserLine, RiWallet3Line } from "@remixicon/react";
 import { Skeleton } from "@/components/base/skeleton/skeleton";
-import { EmptyState } from "./EmptyState";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { LogoutButton } from "./LogoutButton";
 import { StaffPageHeader } from "./StaffPage";
@@ -30,11 +29,11 @@ export const withStudent = (path: string, student: string, family: unknown[]) =>
 
 export interface ParentShellProps {
   language: Language; active: ParentTab; family: { studentId: string; fullName: string }[]; selected: string;
-  state?: "loading" | "empty" | null; emptyTitle?: string; title?: string; description?: string; showName?: boolean; showLanguage?: boolean; wide?: boolean; children?: ReactNode;
+  state?: "loading"; title?: string; description?: string; showName?: boolean; showLanguage?: boolean; wide?: boolean; children?: ReactNode;
 }
 
 // The staff frame's structure, drawn on the server: StaffShell's client sidebar and drawer would put /dues over its 200 KB script budget. Tabs use Link so switching keeps the page; prefetch stays off because it pulls sibling routes past that budget.
-export function ParentShell({ language, active, family, selected, state, emptyTitle, title, description, showName = true, showLanguage = true, wide = false, children }: ParentShellProps) {
+export function ParentShell({ language, active, family, selected, state, title, description, showName = true, showLanguage = true, wide = false, children }: ParentShellProps) {
   const href = (path: string, student = selected) => withStudent(path, student, family);
   const tab = tabs.find((item) => item.key === active)!;
   const name = family.find((child) => child.studentId === selected)?.fullName;
@@ -54,8 +53,7 @@ export function ParentShell({ language, active, family, selected, state, emptyTi
       {showName && name && family.length === 1 ? <p className="-mb-4 text-body-regular text-text-secondary print:hidden">{name}</p> : null}
       {title ?? state ? <StaffPageHeader title={title ?? pt(language, tab.label)} description={description ?? ""} /> : null}
       <div className="flex flex-col gap-8">
-        {state === "loading" ? <div aria-busy="true" role="status" aria-label={t(language, "common.loading")} className="flex flex-col gap-6"><Skeleton className="h-12 w-3/4" /><Skeleton className="h-20 w-full" /><Skeleton className="h-12 w-full" /></div>
-          : state === "empty" ? <EmptyState title={emptyTitle ?? ""} /> : children}
+        {state === "loading" ? <div aria-busy="true" role="status" aria-label={t(language, "common.loading")} className="flex flex-col gap-6"><Skeleton className="h-12 w-3/4" /><Skeleton className="h-20 w-full" /><Skeleton className="h-12 w-full" /></div> : children}
       </div>
     </main>
     <nav aria-label={pt(language, "portal.nav")} className="ledger-tabbar fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 pb-[env(safe-area-inset-bottom)] md:hidden print:hidden">

@@ -137,15 +137,13 @@ test("a batch with students cannot be archived, and an empty one can be archived
   }
 });
 
-test("an admin cannot archive their own account, and the screens have loading, empty and error states", async ({ page }) => {
+test("an admin cannot archive their own account, and the screens have empty and error states", async ({ page }) => {
   await page.goto("/staff/manage/staff");
   await press(page, "Edit Demo Admin");
   await expect(page.getByRole("dialog").getByText("You cannot archive or delete your own account.")).toBeVisible();
-  await page.goto("/staff/manage/centres?state=empty");
+  await page.goto("/staff/manage/centres?q=no-such-centre");
   await expect(page.getByText("No matching centres")).toBeVisible();
-  await page.goto("/staff/manage/history?state=loading");
-  await expect(page.getByRole("status").first()).toBeVisible();
-  await page.goto("/staff/manage/staff?state=error");
+  await page.goto("/staff/manage/students?batch=not-a-uuid");
   await expect(page.getByRole("button", { name: /Try again|फिर से/ })).toBeVisible();
   await page.goto("/staff/manage/constructor");
   await expect(page.getByText(/could not be found|404/i).first()).toBeVisible();

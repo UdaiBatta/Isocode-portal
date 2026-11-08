@@ -14,7 +14,7 @@ import { getInvoices, getReceipt, getReceipts } from "@/lib/data/receipts";
 import { getDues } from "@/lib/data/dues";
 import { getLedger } from "@/lib/data/ledger";
 
-beforeEach(() => { jar.clear(); vi.clearAllMocks(); vi.stubGlobal("fetch", fetcher); vi.stubEnv("NEXT_PUBLIC_PROTO", "1"); vi.stubEnv("DEMO_MODE", "true"); vi.stubEnv("BACKEND_URL", "http://localhost:8000"); vi.stubEnv("INTERNAL_API_SECRET", "test-internal-key"); vi.stubEnv("APP_URL", "http://localhost:3000"); });
+beforeEach(() => { jar.clear(); vi.clearAllMocks(); vi.stubGlobal("fetch", fetcher); vi.stubEnv("DEMO_MODE", "true"); vi.stubEnv("BACKEND_URL", "http://localhost:8000"); vi.stubEnv("INTERNAL_API_SECRET", "test-internal-key"); vi.stubEnv("APP_URL", "http://localhost:3000"); });
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 const phone = "+919000000587";
 function response(body: object, status = 200, session?: string) {
@@ -153,8 +153,7 @@ it("loads a real staff ledger through Django and sends stale sessions to staff s
   await expect(getLedger("STU-0412")).rejects.toThrow("redirect:/staff/login");
 });
 
-it("sets language through Django even when prototype mode is disabled", async () => {
-  vi.stubEnv("NEXT_PUBLIC_PROTO", "0");
+it("sets language through Django", async () => {
   fetcher.mockResolvedValueOnce(response({ ok: true, language: "hi" }));
   expect(await setLanguage({ language: "hi" })).toEqual({ ok: true, language: "hi" });
   expect(fetcher.mock.calls[0][0]).toBe("http://localhost:8000/api/set_language");

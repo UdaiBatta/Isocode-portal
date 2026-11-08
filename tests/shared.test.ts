@@ -3,7 +3,6 @@ import { inr, dateLabel } from "@/lib/format";
 import { t, languageFrom } from "@/lib/i18n";
 import { en } from "@/lib/i18n/en";
 import { hi } from "@/lib/i18n/hi";
-import { previewState } from "@/lib/preview";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -25,15 +24,5 @@ describe("shared display rules", () => {
     expect(() => t("hi", "dues.pay")).toThrow("Missing translation value");
     expect(languageFrom(undefined)).toBe("hi");
     expect(languageFrom("en")).toBe("en");
-  });
-
-  it("makes preview states available only in prototype mode", () => {
-    vi.stubEnv("NEXT_PUBLIC_PROTO", "1");
-    expect(previewState({ state: "loading" })).toBe("loading");
-    expect(previewState({ state: "empty" })).toBe("empty");
-    expect(() => previewState({ state: "error" })).toThrow("Prototype error preview");
-    expect(previewState({ state: ["error"] })).toBeNull();
-    vi.stubEnv("NEXT_PUBLIC_PROTO", "0");
-    expect(previewState({ state: "error" })).toBeNull();
   });
 });
