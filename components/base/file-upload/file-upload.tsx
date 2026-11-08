@@ -198,11 +198,24 @@ export function FileUpload({
     .join(", ");
 
   return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        aria-label="Choose a file to upload"
+        accept={allowedExtensions.map((extension) => `.${extension}`).join(",")}
+        className="sr-only"
+        tabIndex={-1}
+        onChange={(event) => {
+          const selectedFile = event.target.files?.[0];
+          event.target.value = "";
+          if (selectedFile) startUpload(selectedFile);
+        }}
+      />
     <div
       ref={boxRef}
       role="button"
       tabIndex={busy ? -1 : 0}
-      aria-label="Upload a file"
       onClick={() => !busy && inputRef.current?.click()}
       onKeyDown={(event) => {
         if (!busy && (event.key === "Enter" || event.key === " ")) {
@@ -229,20 +242,6 @@ export function FileUpload({
         className,
       )}
     >
-      <input
-        ref={inputRef}
-        type="file"
-        aria-label="Choose a file to upload"
-        accept={allowedExtensions.map((extension) => `.${extension}`).join(",")}
-        className="sr-only"
-        tabIndex={-1}
-        onChange={(event) => {
-          const selectedFile = event.target.files?.[0];
-          event.target.value = "";
-          if (selectedFile) startUpload(selectedFile);
-        }}
-      />
-
       <div
         aria-hidden
         className={cx(
@@ -364,5 +363,6 @@ export function FileUpload({
         </div>
       </div>
     </div>
+    </>
   );
 }

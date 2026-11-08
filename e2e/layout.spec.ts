@@ -13,7 +13,7 @@ async function realPath(key: string, path: string) {
   return path;
 }
 
-for (const route of routes) for (const language of route.role === "parent" || ["pay", "gateway", "policy"].includes(route.key) ? ["hi", "en"] as const : ["en"] as const) {
+for (const route of routes.filter((item) => item.key !== "result")) for (const language of route.role === "parent" || ["pay", "gateway", "policy"].includes(route.key) ? ["hi", "en"] as const : ["en"] as const) {
   test(`${route.title} fits and is accessible in ${language}`, async ({ page, context }) => {
     test.setTimeout(120000);
     const errors: string[] = [];

@@ -14,6 +14,7 @@ const who: Record<string, Who | null> = { parent: "parent:+919000000587", accoun
 async function realPath(key: string, path: string) {
   if (key === "pay") return payPath();
   if (key === "gateway") return (await payPath()).replace("/pay/", "/mock-gateway/");
+  if (key === "result") return `${await payPath()}/result`; // ponytail: no paid event, so this captures the real "being processed" state.
   if (key === "receipt") return `/receipts/${await latestReceiptId()}`;
   return path;
 }
