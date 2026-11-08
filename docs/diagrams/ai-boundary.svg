@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 306" role="img" aria-label="A High score opens one call task. Only six numbers go to the optional model, never a name, phone, student code or fee amount. With no key, or on a refusal or timeout, or when the reply is empty, overlong or contains a rupee sign, the template brief is used instead. The counsellor sees reasons without fee amounts. Risk code has no path to payments, reminders or ledger writes." font-family="Inter, 'Noto Sans Devanagari', Arial, sans-serif" font-size="11.5" fill="#17231d">
+  <defs>
+    <marker id="ab-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#17231d"/></marker>
+    <marker id="ab-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#25502e"/></marker>
+    <marker id="ab-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#8a5a00"/></marker>
+  </defs>
+  <rect width="680" height="306" fill="#fff"/>
+  <!-- Main path -->
+  <g stroke="#17231d" stroke-width="1.2" fill="#fff"><rect x="10" y="12" width="136" height="50" rx="6"/><rect x="176" y="12" width="114" height="50" rx="6"/><rect x="526" y="12" width="144" height="50" rx="6"/></g>
+  <g text-anchor="middle"><text x="78" y="33" font-weight="700">Fixed score</text><text x="78" y="50">fees, attendance, tests</text><text x="233" y="33" font-weight="700">One open task</text><text x="233" y="50">only when High</text><text x="598" y="33" font-weight="700">Counsellor</text><text x="598" y="50">reasons, no fee amounts</text></g>
+  <line x1="146" y1="37" x2="175" y2="37" stroke="#17231d" stroke-width="1.3" marker-end="url(#ab-a)"/>
+  <!-- What may leave -->
+  <text x="10" y="94" font-weight="700" fill="#25502e">Six numbers only</text>
+  <g fill="#25502e"><text x="10" y="110">overdue count, oldest overdue days,</text><text x="10" y="125">attendance recent and prior %,</text><text x="10" y="140">tests recent and earlier %</text></g>
+  <text x="10" y="170" font-weight="700" fill="#b3261e">Never sent</text><text x="10" y="186" fill="#b3261e">name, phone, student code, fee amount</text>
+  <!-- Out to the model -->
+  <path d="M233 62V116H276" fill="none" stroke="#17231d" stroke-width="1.3" marker-end="url(#ab-a)"/>
+  <rect x="277" y="84" width="118" height="64" rx="6" fill="#fff" stroke="#17231d" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="336" y="110" text-anchor="middle" font-weight="700">Model</text><text x="336" y="127" text-anchor="middle">optional, 15 s limit</text>
+  <line x1="395" y1="116" x2="427" y2="116" stroke="#17231d" stroke-width="1.3" marker-end="url(#ab-a)"/>
+  <rect x="428" y="84" width="110" height="64" rx="6" fill="#faf3e2" stroke="#8a5a00" stroke-width="1.5"/>
+  <text x="483" y="103" text-anchor="middle" font-weight="700" fill="#8a5a00">Reply check</text><text x="483" y="120" text-anchor="middle">short, supportive,</text><text x="483" y="135" text-anchor="middle">no ₹ in the text</text>
+  <path d="M538 116H576V63" fill="none" stroke="#25502e" stroke-width="1.4" marker-end="url(#ab-g)"/>
+  <text x="584" y="96" fill="#25502e" font-weight="600">model</text><text x="584" y="111" fill="#25502e" font-weight="600">brief</text>
+  <!-- Fallback -->
+  <rect x="428" y="192" width="242" height="46" rx="6" fill="#edf2ed" stroke="#25502e" stroke-width="1.5"/>
+  <text x="440" y="211" font-weight="700" fill="#25502e">Template brief, from the same reasons</text><text x="440" y="227">The call task always has a brief</text>
+  <path d="M336 148V215H427" fill="none" stroke="#8a5a00" stroke-width="1.4" marker-end="url(#ab-m)"/>
+  <text x="344" y="174" fill="#8a5a00">no API key,</text><text x="344" y="189" fill="#8a5a00">refusal, timeout</text>
+  <line x1="483" y1="148" x2="483" y2="191" stroke="#8a5a00" stroke-width="1.4" marker-end="url(#ab-m)"/>
+  <text x="491" y="168" fill="#8a5a00">empty, overlong,</text><text x="491" y="183" fill="#8a5a00">or contains ₹</text>
+  <line x1="650" y1="192" x2="650" y2="63" stroke="#25502e" stroke-width="1.4" marker-end="url(#ab-g)"/>
+  <!-- The wall -->
+  <rect x="10" y="252" width="660" height="46" fill="#fbeeec" stroke="#b3261e" stroke-width="1.5"/>
+  <text x="340" y="271" text-anchor="middle" font-weight="700" fill="#b3261e">No path from risk code to payments, reminders or ledger writes</text>
+  <text x="340" y="288" text-anchor="middle">An import guard test enforces it. Parents and accounts never receive risk data.</text>
+</svg>

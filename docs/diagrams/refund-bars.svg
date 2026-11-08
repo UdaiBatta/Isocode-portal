@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 318" role="img" aria-label="Udai withdraws on 2 November, day 216 of a 365 day session. On a fee of ₹1,20,000 that earns ₹71,013.69. Udai has paid ₹90,000, so the refund is ₹18,986.31. Approval moves from preview to draft to approved to paid, and an open unmatched payment blocks approval." font-family="Inter, 'Noto Sans Devanagari', Arial, sans-serif" font-size="11.5" fill="#17231d">
+  <defs>
+    <marker id="rb-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#17231d"/></marker>
+  </defs>
+  <rect width="680" height="318" fill="#fff"/>
+  <!-- Scale: full width 600 px is 365 days and also ₹1,20,000; 216 days and ₹71,013.69 both land at x=415 -->
+  <text x="60" y="20" font-weight="700">Session: 365 days</text>
+  <rect x="60" y="26" width="600" height="24" fill="#fff" stroke="#48564d"/>
+  <rect x="60" y="26" width="355" height="24" fill="#cfd9d1"/>
+  <text x="70" y="42">216 days elapsed, 1 Apr to 2 Nov</text><text x="425" y="42" fill="#48564d">149 days left</text>
+  <text x="60" y="76" font-weight="700">Net fee: ₹1,20,000</text>
+  <rect x="60" y="82" width="600" height="24" fill="#fff" stroke="#48564d"/>
+  <rect x="60" y="82" width="355" height="24" fill="#cfd9d1"/>
+  <text x="70" y="98" font-weight="600">Earned ₹71,013.69</text>
+  <text x="60" y="132" font-weight="700">Udai has paid: ₹90,000</text>
+  <rect x="60" y="138" width="450" height="24" fill="#fff" stroke="#48564d"/>
+  <rect x="60" y="138" width="355" height="24" fill="#cfd9d1"/>
+  <rect x="415" y="138" width="95" height="24" fill="#25502e"/>
+  <text x="70" y="154">Keeps ₹71,013.69</text>
+  <text x="462" y="154" text-anchor="middle" fill="#fff" font-weight="700">₹18,986.31</text>
+  <text x="518" y="154" fill="#25502e" font-weight="700">Refund, by 12 Nov</text>
+  <line x1="415" y1="14" x2="415" y2="172" stroke="#b3261e" stroke-width="1.6" stroke-dasharray="5 3"/>
+  <text x="422" y="20" fill="#b3261e" font-weight="700">Withdraws 2 Nov</text>
+  <text x="60" y="190" font-family="'IBM Plex Mono', Consolas, monospace" font-size="11">earned = net × elapsed // total  &#183;  refund = max(0, paid - earned)  &#183;  whole paise</text>
+  <!-- Approval -->
+  <g stroke="#17231d" stroke-width="1.2" fill="#fff"><rect x="60" y="218" width="96" height="40" rx="6"/><rect x="186" y="218" width="96" height="40" rx="6"/><rect x="564" y="218" width="96" height="40" rx="6"/></g>
+  <rect x="424" y="218" width="110" height="40" rx="6" fill="#edf2ed" stroke="#25502e" stroke-width="1.8"/>
+  <g text-anchor="middle" font-weight="700"><text x="108" y="242">Preview</text><text x="234" y="242">Draft</text><text x="479" y="242" fill="#25502e">Approve</text><text x="612" y="242">Mark paid</text></g>
+  <g stroke="#17231d" stroke-width="1.3" marker-end="url(#rb-a)"><line x1="156" y1="238" x2="185" y2="238"/><line x1="282" y1="238" x2="423" y2="238"/><line x1="534" y1="238" x2="563" y2="238"/></g>
+  <rect x="306" y="222" width="94" height="32" rx="4" fill="#fbeeec" stroke="#b3261e" stroke-width="1.3"/>
+  <text x="353" y="235" text-anchor="middle" fill="#b3261e" font-weight="700" font-size="10.5">Open unmatched</text><text x="353" y="248" text-anchor="middle" fill="#b3261e" font-size="10.5">payment blocks</text>
+  <text x="479" y="278" text-anchor="middle">freezes policy and figures,</text><text x="479" y="293" text-anchor="middle">withdraws student, stops reminders</text>
+</svg>

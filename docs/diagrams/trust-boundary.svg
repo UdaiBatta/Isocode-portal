@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 345" role="img" aria-label="The browser talks only to Next.js with a session cookie. Next.js adds a server-only key when calling Django. Django alone decides access and reaches PostgreSQL. A direct browser call to Django is refused. The gateway and cron reach Django with their own secrets." font-family="Inter, 'Noto Sans Devanagari', Arial, sans-serif" font-size="11.5" fill="#17231d">
+  <defs>
+    <marker id="tb-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#17231d"/></marker>
+    <marker id="tb-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#25502e"/></marker>
+  </defs>
+  <rect width="680" height="345" fill="#fff"/>
+  <!-- Layers -->
+  <g stroke="#17231d" stroke-width="1.2">
+    <rect x="170" y="12" width="240" height="46" rx="6" fill="#fff"/>
+    <rect x="170" y="100" width="240" height="46" rx="6" fill="#fff"/>
+    <rect x="170" y="190" width="240" height="54" rx="6" fill="#edf2ed" stroke="#25502e" stroke-width="1.8"/>
+    <rect x="170" y="288" width="240" height="46" rx="6" fill="#fff"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="290" y="31" font-weight="700">Browser</text><text x="290" y="48">parent or staff device</text>
+    <text x="290" y="119" font-weight="700">Next.js</text><text x="290" y="136">renders screens, checks Origin on actions</text>
+    <text x="290" y="212" font-weight="700" fill="#25502e">Django</text><text x="290" y="231">only place that decides role and scope</text>
+    <text x="290" y="307" font-weight="700">PostgreSQL</text><text x="290" y="324">paise as integers, balances derived</text>
+  </g>
+  <!-- Allowed path -->
+  <g stroke="#17231d" stroke-width="1.3" marker-end="url(#tb-a)">
+    <line x1="290" y1="58" x2="290" y2="99"/><line x1="290" y1="146" x2="290" y2="189"/><line x1="290" y1="244" x2="290" y2="287"/>
+  </g>
+  <text x="298" y="83">sid cookie: HttpOnly, SameSite=Lax</text>
+  <text x="298" y="172">sid + server-only X-Internal-Key</text>
+  <text x="298" y="270">row locks, constraints, audit rows</text>
+  <!-- What each layer never gets -->
+  <g fill="#48564d">
+    <text x="424" y="31" font-weight="600">Never holds</text><text x="424" y="47">internal key, database login</text>
+    <text x="424" y="119" font-weight="600">Never holds</text><text x="424" y="135">database login, or any say in access</text>
+  </g>
+  <!-- Refused bypass -->
+  <path d="M170 35H118V217H160" fill="none" stroke="#b3261e" stroke-width="1.4" stroke-dasharray="5 4"/>
+  <g stroke="#b3261e" stroke-width="2.2"><line x1="152" y1="209" x2="168" y2="225"/><line x1="168" y1="209" x2="152" y2="225"/></g>
+  <g fill="#b3261e"><text x="108" y="118" text-anchor="end">direct call</text><text x="108" y="133" text-anchor="end">with no key:</text><text x="108" y="148" text-anchor="end" font-weight="700">refused, 403</text></g>
+  <!-- Outside callers -->
+  <g stroke="#17231d" stroke-width="1.2" fill="#fff"><rect x="560" y="188" width="110" height="28" rx="5"/><rect x="560" y="220" width="110" height="28" rx="5"/></g>
+  <g text-anchor="middle"><text x="615" y="206">Payment gateway</text><text x="615" y="238">Daily cron</text></g>
+  <g stroke="#25502e" stroke-width="1.3" marker-end="url(#tb-g)"><line x1="560" y1="202" x2="411" y2="202"/><line x1="560" y1="234" x2="411" y2="234"/></g>
+  <g fill="#25502e"><text x="424" y="197">HMAC-signed event</text><text x="424" y="229">bearer secret</text></g>
+</svg>

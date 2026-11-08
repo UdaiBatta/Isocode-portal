@@ -23,7 +23,7 @@ async function main() {
     const path = resolve("docs", file);
     assert(path.startsWith(resolve("docs/screens") + sep));
     return `src="data:image/png;base64,${readFileSync(path).toString("base64")}"`;
-  });
+  }).replace(/<img src="diagrams\/([\w-]+\.svg)"[^>]*>/g, (_, file: string) => readFileSync(resolve("docs/diagrams", file), "utf8")); // Inline, so diagrams use the PDF's embedded fonts.
   const html = `<!doctype html><html lang="en"><meta charset="utf-8"><title>Coaching Fees</title><style>
   ${faces}
   body { font: 10pt/1.5 Inter, "Noto Sans Devanagari", sans-serif; color: #17231d; }
@@ -42,6 +42,8 @@ async function main() {
   img { display: block; max-width: 100%; max-height: 125mm; object-fit: contain; margin: 10pt auto 4pt; }
   img[alt="Hindi parent dues"] { width: 62mm; height: 110mm; object-fit: cover; object-position: top; }
   img[alt="Accounts dashboard"], img[alt="Counsellor tasks"] { width: 100%; height: 110mm; object-fit: cover; object-position: top; }
+  svg { display: block; width: 100%; height: auto; margin: 10pt 0 4pt; break-inside: avoid; }
+  p:has(> svg) { break-inside: avoid; break-after: avoid; }
   p:has(> img) { break-inside: avoid; break-after: avoid; } em { color: #48564d; font-size: 9pt; }
   </style><body>${content}</body></html>`;
   mkdirSync("dist", { recursive: true });
@@ -60,6 +62,7 @@ async function main() {
     const { fonts } = await client.send("CSS.getPlatformFontsForNode", { nodeId });
     assert(fonts.some((font) => font.isCustomFont && /Noto.*Devanagari/.test(font.familyName)), "Hindi must use the embedded Noto font.");
     assert.equal(await page.locator("img").count(), 4);
+    assert.equal(await page.locator("svg").count(), 6);
     assert(await page.locator("img").evaluateAll((images) => images.every((image) => (image as HTMLImageElement).naturalWidth > 0)));
     await page.pdf({ path: "dist/TDD.pdf", format: "A4", printBackground: true,
       margin: { top: "17mm", right: "16mm", bottom: "19mm", left: "16mm" },
