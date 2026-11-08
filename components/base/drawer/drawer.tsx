@@ -6,9 +6,7 @@ import type { DialogRenderProps, ModalOverlayProps } from "react-aria-components
 import {
   ModalBody,
   ModalDialog,
-  ModalFooter,
   ModalHeader,
-  ModalTrigger,
 } from "@/components/base/modal/modal";
 import { useDirection } from "@/components/foundations/direction/direction";
 import { cx, sortCx } from "@/utils/cx";
@@ -144,12 +142,9 @@ export function Drawer({
 
 export {
   ModalBody as DrawerBody,
-  ModalFooter as DrawerFooter,
   ModalHeader as DrawerHeader,
-  ModalTrigger as DrawerTrigger,
 };
 export type {
   ModalBodyProps as DrawerBodyProps,
   ModalHeaderProps as DrawerHeaderProps,
-  ModalTriggerProps as DrawerTriggerProps,
 } from "@/components/base/modal/modal";

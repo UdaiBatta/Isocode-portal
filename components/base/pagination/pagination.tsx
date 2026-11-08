@@ -1,7 +1,5 @@
 "use client";
 
-import { useTemplateCopy } from "@/components/foundations/template-copy/template-copy";
-
 import { useEffect, useRef, useState } from "react";
 import { RiArrowLeftLine, RiArrowRightLine } from "@remixicon/react";
 import { Button } from "@/components/base/buttons/button";
@@ -102,12 +100,11 @@ export function Pagination({
   nextLabel = "Next",
   "aria-label": ariaLabel = "Pagination",
 }: PaginationProps) {
-  const localize = useTemplateCopy();
   const [navRef, isCompact] = useIsCompact();
   if (totalPages <= 1) return null;
   const pages = paginationRange(page, totalPages, isCompact ? 0 : siblingCount);
 
-  return localize((
+  return (
     <nav
       ref={navRef}
       aria-label={ariaLabel}
@@ -170,5 +167,5 @@ export function Pagination({
         {isCompact ? undefined : nextLabel}
       </Button>
     </nav>
-  ));
+  );
 }

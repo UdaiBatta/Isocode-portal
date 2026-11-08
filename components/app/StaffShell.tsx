@@ -3,12 +3,12 @@
 import { useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { RiBuilding2Line, RiCalendarScheduleLine, RiDashboardLine, RiGroupLine, RiHistoryLine, RiNotification3Line, RiPhoneLine, RiUserSettingsLine, RiUploadCloud2Line } from "@remixicon/react";
-import { WorkspaceSidebar } from "@/components/application/dashboard/dashboard-sidebar";
 import { Drawer, DrawerHeader, DrawerBody } from "@/components/base/drawer/drawer";
 import { Button } from "@/components/base/buttons/button";
 import { LogoutButton } from "./LogoutButton";
 import { Toaster } from "@/components/base/toast/toast";
 import { DirectionProvider } from "@/components/foundations/direction/direction";
+import { cx } from "@/utils/cx";
 
 const manage = [
   { key: "students", label: "Students", icon: RiGroupLine, href: "/staff/manage/students" },
@@ -27,7 +27,15 @@ export function StaffShell({ children, counsellor = false, admin = false }: { ch
     { key: "automation", label: "Automation", icon: RiNotification3Line, href: "/staff/automation" },
     { key: "upload", label: "Upload results", icon: RiUploadCloud2Line, href: "/staff/upload" },
   ];
-  const nav = <WorkspaceSidebar items={items} selected={admin ? manage.find((item) => path.startsWith(item.href))?.key ?? "students" : counsellor ? "calls" : path.includes("automation") ? "automation" : path.includes("/upload") ? "upload" : path.includes("students") ? "students" : "dashboard"} footer={<LogoutButton language="en" />} />;
+  const selected = admin ? manage.find((item) => path.startsWith(item.href))?.key ?? "students" : counsellor ? "calls" : path.includes("automation") ? "automation" : path.includes("/upload") ? "upload" : path.includes("students") ? "students" : "dashboard";
+  const nav = <aside className="flex h-full w-full flex-col gap-10 rounded-3xl bg-background-secondary-default p-5">
+    <div><p className="text-headline-medium">Company A</p><p className="text-body-regular text-text-secondary">Jaipur · Coaching</p></div>
+    <nav aria-label="Workspace" className="flex flex-col gap-2">{items.map(({ key, label, icon: Icon, href }) => <a key={key} href={href} aria-current={selected === key ? "page" : undefined} className={cx("flex w-full items-center gap-2 overflow-hidden rounded-2lg p-2 transition-[background-color] duration-300 ease-in-out", selected === key ? "bg-linear-to-b from-accent-500 to-accent-600 shadow-nav-selected" : "hover:bg-background-secondary-hover")}>
+      <Icon className={cx("size-5 shrink-0", selected === key ? "text-text-white" : "text-foreground-icon-secondary")} aria-hidden />
+      <span className={cx("min-w-0 overflow-hidden text-body-medium whitespace-nowrap", selected === key ? "text-text-white" : "text-text-secondary")}>{label}</span>
+    </a>)}</nav>
+    <div className="mt-auto"><LogoutButton language="en" /></div>
+  </aside>;
   // Staff screens are English, so date pickers and other React Aria controls use an English locale even when the root is Hindi.
   return <DirectionProvider locale="en-IN"><div className="staff-surface min-h-screen p-4 text-text-primary md:flex md:gap-8 md:p-0">
     <div className="hidden w-60 shrink-0 md:block"><div className="staff-spine ledger-butti sticky top-0 h-dvh">{nav}</div></div>

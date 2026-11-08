@@ -16,7 +16,6 @@
    * overrides below are the only intentional deviations (see Figma → variables
    * → color/...).
    * --------------------------------------------------------------------------*/
-  --color-slate-200:   #ebeff5;
   --color-neutral-100: #f7f7f7;
   --color-neutral-200: #ebebeb;
   --color-neutral-925: #121212;
@@ -65,8 +64,6 @@
    * --------------------------------------------------------------------------*/
   --radius-2lg: 10px;
   /* Figma `radius/2,5xl`: kanban columns and other large inset panels. */
-  --radius-2-5xl: 20px;
-  --radius-notification-card: 10px;
 
   /* ----- Shadows -------------------------------------------------------------
    * 2xs, xs, 2xl and the inner shadows already match Tailwind v4. Sizes sm, md,
@@ -116,12 +113,6 @@
   /* Floating template waitlist (Figma node 4117:32737). This extends the
    * sidebar elevation recipe with the two broad ambient layers used by the
    * signup surface. */
-  --shadow-waitlist:
-    0 0 6px 0 rgb(0 0 0 / 0.06),
-    0 0 64px 0 rgb(0 0 0 / 0.16),
-    0 0 1px 0 rgb(0 0 0 / 0.32),
-    0 1px 12px 0 rgb(0 0 0 / 0.06),
-    0 1px 0 0 rgb(0 0 0 / 0.02);
 
   /* Inner shadows (Figma names inner-shadow/*; Tailwind utility prefix is
    * inset-shadow-*).
@@ -200,11 +191,6 @@
   --color-ticket-detail-resource-text: var(--color-blue-600);
   --color-ticket-detail-favorite: #ffb83c; /* raw Figma fill, no token yet */
   /* Empty-state illustration: raw Figma fills from node 4488:11848. */
-  --color-project-board-empty-panel: rgb(242 242 242 / 0.8);
-  --color-project-board-empty-front: #d9d9d9;
-  --color-project-board-empty-middle: #e5e5e5;
-  --color-project-board-empty-back: #ededed;
-  --color-project-board-empty-detail: var(--color-white);
   --color-background-primary-default:   var(--color-white);
   --color-background-inner-default:     var(--color-white);
   --color-background-primary-hover:     var(--color-neutral-100);
@@ -454,11 +440,6 @@
   --color-ticket-detail-low-text: var(--color-indigo-300);
   --color-ticket-detail-resource-background: color-mix(in srgb, var(--color-blue-950) 60%, transparent);
   --color-ticket-detail-resource-text: var(--color-blue-300);
-  --color-project-board-empty-panel: color-mix(in srgb, var(--color-neutral-800) 60%, transparent);
-  --color-project-board-empty-front: color-mix(in srgb, var(--color-neutral-800) 75%, var(--color-neutral-700));
-  --color-project-board-empty-middle: var(--color-neutral-700);
-  --color-project-board-empty-back: color-mix(in srgb, var(--color-neutral-600) 35%, var(--color-neutral-700));
-  --color-project-board-empty-detail: var(--color-neutral-500);
   --color-background-primary-default:   var(--color-neutral-800);
   --color-background-inner-default:     color-mix(in srgb, var(--color-neutral-800) 60%, transparent);
   --color-background-primary-hover:     color-mix(in srgb, var(--color-neutral-700) 60%, transparent);
@@ -527,12 +508,6 @@
     0 1px 0 0 rgb(0 0 0 / 0.10),
     0 1px 12px 0 rgb(0 0 0 / 0.16),
     0 0 1px 0 rgb(0 0 0 / 0.42);
-  --shadow-waitlist:
-    0 0 6px 0 rgb(0 0 0 / 0.12),
-    0 0 64px 0 rgb(0 0 0 / 0.22),
-    0 0 1px 0 rgb(0 0 0 / 0.42),
-    0 1px 12px 0 rgb(0 0 0 / 0.14),
-    0 1px 0 0 rgb(0 0 0 / 0.08);
 
   /* Badges */
   --color-badge-neutral-background: var(--color-neutral-800);
