@@ -2,7 +2,7 @@
 
 ## In progress now
 
-- TEST LOCK: Claude 2026-11-08 13:40 (human asked to remove unused code without changing functionality). Claim, frontend only: components/application/**, components/base/**, components/foundations/template-copy, components/app/StaffShell.tsx, styles/globals.css, public/**, lib/csv.ts, tests/csv.test.ts. No backend, no prototype removal (T7.2 keeps its pause). Nav fix committed at 180cfaa.
+- TEST LOCK: Claude 2026-11-08 (human instruction: remove the prototype tools now, T7.2, instead of waiting for the Codex pause flow). Claim: /proto, lib/preview.ts, lib/prototype-routes.ts, lib/actions/prototype.ts, every app page and error boundary using them, lib/data/parent-page.ts, ParentShell, e2e specs using ?state=, scripts/screens.ts, tests stubbing NEXT_PUBLIC_PROTO, .env.example, ci.yml env line, README setup lines, stale docs/screens state images. Keep real loading, empty and error UI. No backend. Unused-code removal pushed on branch at c30ac6d; full browser suite stopped at 81 passed, 0 failed so one complete run covers the final tree.
 
 - **Review checks complete (Codex, 2026-11-08):** npm run check passed on main before the review commit: 54 frontend / 186 Django tests, 0 failures, 0 skips; types, Ruff and Django system checks pass, eight existing lint warnings. Review claim cleared at commit; TEST LOCK remains owned for the merged-tree verification and acceptance requested next. No source changes by Codex.
 
