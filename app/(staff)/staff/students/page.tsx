@@ -18,6 +18,8 @@ export default async function Students({ searchParams }: { searchParams: Promise
   const auth = await getAuthState();
   if (auth.role && auth.role !== "accounts") redirect("/staff/login");
   const filters: StudentFilters = { status: statuses.find((status) => status === query.status), centre: text(query.centre), batch: text(query.batch), q: text(query.q), page: Math.max(1, Number(query.page) || 1) };
-  const [view, directory] = await Promise.all([getStudents(filters), getStaffDirectory()]);
-  return <StaffShell><StudentRoster view={state === "empty" ? { ...view, rows: [], pages: 1, counts: Object.fromEntries(Object.keys(view.counts).map((key) => [key, 0])) as typeof view.counts } : view} directory={directory} filters={filters} /></StaffShell>;
+  const [view, { centres, batches }] = await Promise.all([getStudents(filters), getStaffDirectory()]);
+  // The dashboard's search opens the student directly when it finds exactly one.
+  if (query.open === "1" && view.rows.length === 1 && view.pages === 1) redirect(`/staff/students/${view.rows[0].code}`);
+  return <StaffShell><StudentRoster view={state === "empty" ? { ...view, rows: [], pages: 1, counts: Object.fromEntries(Object.keys(view.counts).map((key) => [key, 0])) as typeof view.counts } : view} directory={{ centres, batches }} filters={filters} /></StaffShell>;
 }

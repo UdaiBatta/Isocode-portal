@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RiBuilding2Line, RiCalendarScheduleLine, RiDashboardLine, RiGroupLine, RiHistoryLine, RiNotification3Line, RiPhoneLine, RiUserSettingsLine, RiUploadCloud2Line } from "@remixicon/react";
 import { Drawer, DrawerHeader, DrawerBody } from "@/components/base/drawer/drawer";
@@ -30,10 +31,10 @@ export function StaffShell({ children, counsellor = false, admin = false }: { ch
   const selected = admin ? manage.find((item) => path.startsWith(item.href))?.key ?? "students" : counsellor ? "calls" : path.includes("automation") ? "automation" : path.includes("/upload") ? "upload" : path.includes("students") ? "students" : "dashboard";
   const nav = <aside className="flex h-full w-full flex-col gap-10 rounded-3xl bg-background-secondary-default p-5">
     <div><p className="text-headline-medium">Company A</p><p className="text-body-regular text-text-secondary">Jaipur · Coaching</p></div>
-    <nav aria-label="Workspace" className="flex flex-col gap-2">{items.map(({ key, label, icon: Icon, href }) => <a key={key} href={href} aria-current={selected === key ? "page" : undefined} className={cx("flex w-full items-center gap-2 overflow-hidden rounded-2lg p-2 transition-[background-color] duration-300 ease-in-out", selected === key ? "bg-linear-to-b from-accent-500 to-accent-600 shadow-nav-selected" : "hover:bg-background-secondary-hover")}>
+    <nav aria-label="Workspace" className="flex flex-col gap-2">{items.map(({ key, label, icon: Icon, href }) => <Link key={key} href={href} aria-current={selected === key ? "page" : undefined} className={cx("flex w-full items-center gap-2 overflow-hidden rounded-2lg p-2 transition-[background-color] duration-300 ease-in-out", selected === key ? "bg-linear-to-b from-accent-500 to-accent-600 shadow-nav-selected" : "hover:bg-background-secondary-hover")}>
       <Icon className={cx("size-5 shrink-0", selected === key ? "text-text-white" : "text-foreground-icon-secondary")} aria-hidden />
       <span className={cx("min-w-0 overflow-hidden text-body-medium whitespace-nowrap", selected === key ? "text-text-white" : "text-text-secondary")}>{label}</span>
-    </a>)}</nav>
+    </Link>)}</nav>
     <div className="mt-auto"><LogoutButton language="en" /></div>
   </aside>;
   // Staff screens are English, so date pickers and other React Aria controls use an English locale even when the root is Hindi.
