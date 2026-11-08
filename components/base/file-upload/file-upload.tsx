@@ -1,7 +1,5 @@
 "use client";
 
-import { useTemplateCopy } from "@/components/foundations/template-copy/template-copy";
-
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   RiFileExcel2Line,
@@ -40,7 +38,7 @@ export interface FileUploadProps {
   className?: string;
 }
 
-export function formatFileSize(bytes: number) {
+function formatFileSize(bytes: number) {
   if (bytes >= 1024 * 1024) {
     const mb = bytes / (1024 * 1024);
     return `${mb >= 10 ? Math.round(mb) : Math.round(mb * 10) / 10} MB`;
@@ -123,7 +121,6 @@ export function FileUpload({
   renderFileIcon,
   className,
 }: FileUploadProps) {
-  const localize = useTemplateCopy();
   const [phase, setPhase] = useState<UploadPhase>("idle");
   const [progress, setProgress] = useState(0);
   const [file, setFile] = useState<File | null>(null);
@@ -200,7 +197,7 @@ export function FileUpload({
     .map((extension) => extension.toUpperCase())
     .join(", ");
 
-  return localize(
+  return (
     <div
       ref={boxRef}
       role="button"

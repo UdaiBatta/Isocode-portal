@@ -117,3 +117,40 @@ export interface RefundResult {
   stillPayable: number; deadline: string;
   taxable: number; cgst: number; sgst: number;   // GST split of refund
 }
+
+// Admin Manage section (assumption beyond the brief, see docs/progress.md). Django decides every flag below; screens only show them.
+export type ManageEntity = "student" | "batch" | "centre" | "staff";
+export type RecordState = "active" | "archived";
+export interface RecordActions {
+  canEdit: boolean; canArchive: boolean; canRestore: boolean; canDelete: boolean;
+  blockedReason: string | null;   // why archive or delete is not offered, e.g. "Move its 12 students to another batch first."
+}
+export interface AdminCentreVM { id: string; code: string; name: string; state: RecordState; batches: number; students: number; staff: number; actions: RecordActions }
+export interface AdminBatchVM {
+  id: string; name: string; centreId: string; centre: string; stream: "JEE" | "NEET";
+  sessionStart: string; sessionEnd: string; state: RecordState; students: number; actions: RecordActions;
+}
+export interface AdminStaffVM {
+  id: string; fullName: string; email: string; role: "accounts" | "counsellor" | "admin";
+  centreId: string | null; centre: string | null; state: RecordState; actions: RecordActions;
+}
+export interface AdminStudentVM {
+  id: string; code: string; name: string; batchId: string; batch: string; centreId: string; centre: string;
+  status: "active" | "withdrawn"; state: RecordState; enrolledOn: string;
+  guardian: { name: string; phone: string; language: Language };
+  fee: { gross: number; discount: number; discountReason: string | null; net: number; paid: number; editable: boolean; lockedReason: string | null };
+  actions: RecordActions;
+}
+export interface AdminFilters { q?: string; centre?: string; batch?: string; state?: RecordState; page?: number }
+export interface AdminListVM<T> { today: string; rows: T[]; page: number; pages: number; counts: Record<RecordState, number> }
+export interface AdminDirectoryVM { centres: { id: string; name: string }[]; batches: { id: string; name: string; centreId: string }[] }
+export interface ChangeVM {
+  id: string; at: string;           // ISO date-time
+  actor: string; action: "create" | "update" | "fee" | "archive" | "restore" | "delete";
+  entity: ManageEntity; entityId: string; label: string;
+  changes: { field: string; before: string | number | null; after: string | number | null }[];   // money fields in paise; batchId and centreId values are display names
+  reason: string | null;
+}
+export interface ChangeFilters { entity?: ManageEntity; id?: string; page?: number }
+
+export type SearchParams = Record<string, string | string[] | undefined>;

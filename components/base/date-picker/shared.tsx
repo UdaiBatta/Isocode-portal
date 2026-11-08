@@ -27,7 +27,7 @@ import { cx } from "@/utils/cx";
 
 /** Exact paths from Figma's month-nav chevrons (node 3869:5461 / 3869:5528) — a
  *  16×16 glyph, 2px round-capped stroke, mirrored around x=8. */
-export function ChevronLeft16({ className }: { className?: string }) {
+function ChevronLeft16({ className }: { className?: string }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={cx("rtl:rotate-180", className)} aria-hidden>
       <path
@@ -40,7 +40,7 @@ export function ChevronLeft16({ className }: { className?: string }) {
   );
 }
 
-export function ChevronRight16({ className }: { className?: string }) {
+function ChevronRight16({ className }: { className?: string }) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={cx("rtl:rotate-180", className)} aria-hidden>
       <path
@@ -59,7 +59,7 @@ export function formatTriggerDate(date: CalendarDate, locale?: string) {
   );
 }
 
-export function formatChipDate(date: CalendarDate) {
+function formatChipDate(date: CalendarDate) {
   return `${String(date.day).padStart(2, "0")}/${String(date.month).padStart(2, "0")}/${date.year}`;
 }
 
@@ -67,7 +67,7 @@ export function formatChipDate(date: CalendarDate) {
  *  null if the text isn't a valid date (out-of-range day/month is rejected
  *  up front; CalendarDate itself constrains impossible day-in-month combos
  *  like Feb 30). */
-export function parseChipDate(text: string): CalendarDate | null {
+function parseChipDate(text: string): CalendarDate | null {
   const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text.trim());
   if (!match) return null;
   const day = Number(match[1]);
@@ -77,7 +77,7 @@ export function parseChipDate(text: string): CalendarDate | null {
   return new CalendarDate(year, month, day);
 }
 
-export function DayCell(props: CalendarCellRenderProps & { isRange: boolean; showToday?: boolean }) {
+function DayCell(props: CalendarCellRenderProps & { isRange: boolean; showToday?: boolean }) {
   const { locale } = useLocale();
   const { date, formattedDate, isSelected, isSelectionStart, isSelectionEnd, isHovered, isFocusVisible, isDisabled, isUnavailable, isToday, isOutsideMonth, isRange, showToday = false } = props;
 

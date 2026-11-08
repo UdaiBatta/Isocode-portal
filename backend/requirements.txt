@@ -3,3 +3,4 @@ psycopg[binary]==3.3.2
 dj-database-url==3.1.2
 python-dotenv==1.2.2
 tzdata==2026.2
+anthropic==2.6.0

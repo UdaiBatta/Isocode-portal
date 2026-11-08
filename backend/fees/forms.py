@@ -57,6 +57,57 @@ class LedgerQueryForm(forms.Form):
     student = forms.RegexField(r"^STU-[0-9]{4}$", max_length=32)
 
 
+class DashboardQueryForm(forms.Form):
+    group = forms.ChoiceField(required=False, choices=[("centre", "centre"), ("batch", "batch")])
+    centre = forms.CharField(required=False, max_length=32)
+    batch = forms.UUIDField(required=False)
+
+
+class ProgressUploadForm(forms.Form):
+    batchId = forms.UUIDField()
+    kind = forms.ChoiceField(choices=[("attendance", "attendance"), ("tests", "tests")])
+    csv = forms.CharField(strip=False, max_length=1024 * 1024)
+    commit = forms.BooleanField(required=False)
+
+    def clean_csv(self):
+        value = self.data.get("csv")
+        if not isinstance(value, str) or len(value.encode("utf-8", errors="replace")) > 1024 * 1024:
+            raise forms.ValidationError("Upload CSV text of at most 1 MB.")
+        return value
+
+    def clean_commit(self):
+        value = self.data.get("commit")
+        if type(value) is not bool:
+            raise forms.ValidationError("Choose whether to apply the upload.")
+        return value
+
+
+class StudentsQueryForm(DashboardQueryForm):
+    status = forms.ChoiceField(required=False, choices=[(value, value) for value in (
+        "overdue", "upcoming", "clear", "checking", "withdrawn", "over60",
+    )])
+    q = forms.CharField(required=False, max_length=200)
+    page = forms.IntegerField(required=False, min_value=1, max_value=100000)
+
+
+class DemoDateForm(forms.Form):
+    date = forms.DateField(input_formats=["%Y-%m-%d"])
+
+
+class RefundQueryForm(LedgerQueryForm):
+    withdrawalDate = forms.DateField(required=False, input_formats=["%Y-%m-%d"])
+
+
+class RefundDraftForm(forms.Form):
+    studentId = forms.RegexField(r"^STU-[0-9]{4}$", max_length=32)
+    withdrawalDate = forms.DateField(input_formats=["%Y-%m-%d"])
+    reason = forms.ChoiceField(choices=[(value, value) for value in ["Personal", "Moved city", "Changed course", "Health", "Other"]])
+
+
+class RefundActionForm(forms.Form):
+    refundId = forms.RegexField(r"^STU-[0-9]{4}$", max_length=32)
+
+
 class ReceiptListQueryForm(forms.Form):
     student = forms.RegexField(r"^STU-[0-9]{4}$", required=False, max_length=32)
 
@@ -120,3 +171,93 @@ class AutomationQueryForm(forms.Form):
     ])
     page = forms.IntegerField(required=False, min_value=1, max_value=100000)
     focus = forms.UUIDField(required=False)
+
+
+class AdminListForm(forms.Form):
+    q = forms.CharField(required=False, max_length=200)
+    centre = forms.UUIDField(required=False)
+    batch = forms.UUIDField(required=False)
+    state = forms.ChoiceField(required=False, choices=[("active", "active"), ("archived", "archived")])
+    page = forms.IntegerField(required=False, min_value=1, max_value=100000)
+
+
+class AdminHistoryForm(forms.Form):
+    entity = forms.ChoiceField(required=False, choices=[(value, value) for value in ("student", "batch", "centre", "staff")])
+    id = forms.UUIDField(required=False)
+    page = forms.IntegerField(required=False, min_value=1, max_value=100000)
+
+
+class AdminCentreForm(forms.Form):
+    id = forms.UUIDField(required=False)
+    code = forms.RegexField(r"^[A-Z]{3}$")
+    name = forms.CharField(min_length=2, max_length=80)
+
+
+class AdminBatchForm(forms.Form):
+    id = forms.UUIDField(required=False)
+    name = forms.RegexField(r"^(JEE|NEET) 20[0-9]{2} (Morning|Evening)$")
+    centreId = forms.UUIDField()
+    stream = forms.ChoiceField(choices=[("JEE", "JEE"), ("NEET", "NEET")])
+    sessionStart = forms.DateField(input_formats=["%Y-%m-%d"])
+    sessionEnd = forms.DateField(input_formats=["%Y-%m-%d"])
+
+
+class AdminStaffForm(forms.Form):
+    id = forms.UUIDField(required=False)
+    fullName = forms.CharField(min_length=2, max_length=80)
+    email = forms.EmailField(max_length=120)
+    role = forms.ChoiceField(choices=[(value, value) for value in ("admin", "accounts", "counsellor")])
+    centreId = forms.UUIDField(required=False)
+    password = forms.CharField(required=False, min_length=12, max_length=128, strip=False)
+
+
+class AdminStudentForm(forms.Form):
+    id = forms.UUIDField(required=False)
+    fullName = forms.CharField(min_length=2, max_length=80)
+    batchId = forms.UUIDField()
+    enrolledOn = forms.DateField(input_formats=["%Y-%m-%d"])
+    guardianName = forms.CharField(min_length=2, max_length=80)
+    guardianPhone = forms.CharField(max_length=40)
+    guardianLanguage = forms.ChoiceField(choices=[("hi", "hi"), ("en", "en")])
+    gross = forms.IntegerField(required=False, min_value=1, max_value=9007199254740991)
+    discount = forms.IntegerField(required=False, min_value=0, max_value=9007199254740991)
+    discountReason = forms.CharField(required=False, min_length=5, max_length=200)
+
+    def clean_guardianPhone(self):
+        phone = normalize_phone(self.cleaned_data["guardianPhone"])
+        if phone is None:
+            raise forms.ValidationError("Enter a valid Indian mobile number.")
+        return phone
+
+    def clean_gross(self):
+        return _clean_paise(self.data["gross"]) if self.cleaned_data["gross"] is not None else None
+
+    def clean_discount(self):
+        return _clean_paise(self.data["discount"]) if self.cleaned_data["discount"] is not None else 0
+
+
+class AdminFeeForm(forms.Form):
+    studentId = forms.UUIDField()
+    gross = forms.IntegerField(min_value=1, max_value=9007199254740991)
+    discount = forms.IntegerField(min_value=0, max_value=9007199254740991)
+    reason = forms.CharField(min_length=5, max_length=200)
+
+    def clean_gross(self):
+        return _clean_paise(self.data["gross"])
+
+    def clean_discount(self):
+        return _clean_paise(self.data["discount"])
+
+
+class AdminTargetForm(forms.Form):
+    entity = forms.ChoiceField(choices=[(value, value) for value in ("student", "batch", "centre", "staff")])
+    id = forms.UUIDField()
+
+
+class TaskForm(forms.Form):
+    taskId = forms.UUIDField()
+
+
+class CloseTaskForm(TaskForm):
+    outcome = forms.ChoiceField(choices=[("called", "called"), ("false_flag", "false_flag")])
+    note = forms.CharField(required=False, max_length=300)

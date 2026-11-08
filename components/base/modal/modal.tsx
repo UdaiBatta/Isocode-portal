@@ -110,7 +110,7 @@ interface ModalContextValue {
 const ModalContext = createContext<ModalContextValue | null>(null);
 
 /** Closes the surrounding Modal, Drawer, or AlertDialog. */
-export function useModalClose() {
+function useModalClose() {
   const state = useContext(OverlayTriggerStateContext);
   return () => state?.close();
 }

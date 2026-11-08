@@ -9,7 +9,7 @@ from django.urls import include, path
 from django.utils import timezone
 
 from fees.auth import api
-from fees.models import Batch, Centre, Consent, Guardian, GuardianStudent, OtpChallenge, StaffUser, Student
+from fees.models import AppSetting, Batch, Centre, Consent, Guardian, GuardianStudent, OtpChallenge, StaffUser, Student
 
 
 @api(role="parent", methods=("GET",))
@@ -24,6 +24,7 @@ urlpatterns = [path("api/", include("fees.urls")), path("api/parent_data", prote
 class ConsentTests(TestCase):
     @classmethod
     def setUpTestData(cls):
+        AppSetting.objects.create(key="demo_today", value="2026-11-02")
         cls.guardian = Guardian.objects.create(phone="+919000000777", full_name="Demo guardian", language="hi")
         other = Guardian.objects.create(phone="+919000000587", full_name="Other guardian", language="en")
         centre = Centre.objects.create(code="MLV", name="Demo centre")

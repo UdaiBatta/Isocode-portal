@@ -1,23 +1,32 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { latestReceiptId, signIn as signInAs } from "./session";
 
 async function signIn(context: BrowserContext, phone: string, language: "en" | "hi" = "en") {
-  await context.addCookies([
-    { name: "lang", value: language, url: "http://127.0.0.1:3001" },
-    { name: "proto", value: encodeURIComponent(JSON.stringify({ role: "parent", phone, consent: true })), url: "http://127.0.0.1:3001" },
-  ]);
+  await context.addCookies([{ name: "lang", value: language, url: "http://127.0.0.1:3001" }]);
+  await signInAs(context, `parent:${phone}`);
+}
+
+async function waitForParentPage(page: Page) {
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator("main [aria-busy=\"true\"]")).toHaveCount(0);
 }
 
 // On phones the less-used pages sit behind More; on desktop every page is in the left sidebar.
 async function openFromNav(page: Page, href: string) {
+  await waitForParentPage(page);
   const link = page.locator(`nav a[href="${href}"]:visible`);
   if (!await link.count()) await page.locator("nav.fixed summary").click();
   await link.click();
+  await waitForParentPage(page);
 }
 
 for (const language of ["en", "hi"] as const) test(`every page opens from the navigation without sideways scroll in ${language}`, async ({ page, context }) => {
+  test.setTimeout(120000); // Seven real pages, each with an accessibility scan.
   await signIn(context, "+919000000587", language);
   await page.goto("/dashboard");
+  await expect(page.getByText("₹15,000", { exact: true })).toBeVisible();
+  await waitForParentPage(page);
   for (const path of ["/dues", "/receipts", "/progress", "/course", "/student", "/settings", "/dashboard"]) {
     await openFromNav(page, path);
     await expect(page).toHaveURL(new RegExp(`${path}$`));
@@ -30,6 +39,8 @@ for (const language of ["en", "hi"] as const) test(`every page opens from the na
 for (const [language, amountDate, pay] of [["en", "Was due 10 Oct", "Pay ₹15,000"], ["hi", "अंतिम तिथि 10 अक्टूबर थी", "₹15,000 का भुगतान करें"]] as const) for (const path of ["/dashboard", "/dues"]) test(`${path} shows amount, date and Pay in the first view in ${language}`, async ({ page, context }) => {
   await signIn(context, "+919000000587", language);
   await page.goto(path);
+  await expect(page.getByText("₹15,000", { exact: true })).toBeVisible();
+  await waitForParentPage(page);
   const viewport = page.viewportSize()!;
   const bar = await page.locator("nav.fixed").boundingBox();
   const fold = bar ? bar.y : viewport.height;
@@ -47,9 +58,9 @@ test("home summarises the family's facts and each row opens its detail page", as
   await expect(page.getByRole("heading", { level: 1, name: "Ishita Sharma" })).toBeVisible();
   await expect(page.getByText("JEE 2027 Evening · Malviya Nagar").first()).toBeVisible();
   await expect(page.getByText("₹75,000 of ₹1,20,000 paid · ₹45,000 remaining", { exact: true })).toBeVisible();
-  await expect(page.getByText("19 of 20 classes in the last 4 weeks", { exact: true })).toBeVisible();
+  await expect(page.getByText("23 of 24 classes in the last 4 weeks", { exact: true })).toBeVisible();
   await expect(page.getByText("₹15,000 · 10 Oct", { exact: true })).toBeVisible();
-  await expect(page.getByText("Monthly Test 7 · 86/100", { exact: true })).toBeVisible();
+  await expect(page.getByText("Monthly Test 7 · 88/100", { exact: true })).toBeVisible();
   await expect(page.locator("main")).not.toContainText(/risk|flag|counsellor|average|rank|topper/i);
   await page.locator('main a[href="/receipts"]').click();
   await expect(page).toHaveURL(/\/receipts$/);
@@ -79,7 +90,7 @@ test("home shows no Pay for clear and withdrawn students, and no risk data for a
   await expect(page.getByRole("link", { name: /^Pay/ })).toHaveCount(0);
   await expect(page.getByText("₹45,000 remaining", { exact: false })).toHaveCount(0);
   await signIn(context, "+919000000733");
-  await page.goto("/dashboard");
+  await page.goto("/dashboard"); await page.waitForLoadState("networkidle");
   await expect(page.locator("main")).not.toContainText(/risk|flag|counsellor|high/i);
 });
 
@@ -116,9 +127,23 @@ test("a parent with two children stays on the same page when switching, and cann
   await expect(page.getByText("Ishita Sharma", { exact: true })).toHaveCount(0);
 });
 
+test("switching parent tabs keeps the page loaded and moves the highlight", async ({ page, context }) => {
+  await signIn(context, "+919000000587");
+  await page.goto("/dashboard");
+  await waitForParentPage(page);
+  await page.evaluate(() => { (window as unknown as { kept: boolean }).kept = true; });
+  for (const href of ["/progress", "/dues", "/dashboard"]) {
+    await openFromNav(page, href);
+    await expect(page).toHaveURL(new RegExp(`${href}$`));
+    await expect(page.locator(`nav a[href="${href}"][aria-current="page"]:visible`)).toHaveCount(1);
+  }
+  expect(await page.evaluate(() => (window as unknown as { kept?: boolean }).kept)).toBe(true); // A full reload would have cleared it.
+});
+
 test("settings changes the language and logs out", async ({ page, context }) => {
   await signIn(context, "+919000000587");
-  await page.goto("/settings");
+  await page.goto("/dashboard");
+  await openFromNav(page, "/settings"); // In-page navigation, so the browser holds a cached parent page.
   await expect(page.getByText("+91 90000 00587", { exact: true })).toBeVisible();
   await expect(page.getByText("Showing attendance and test scores", { exact: true })).toBeVisible();
   await page.getByRole("radio", { name: "हिंदी", exact: true }).click();
@@ -128,6 +153,9 @@ test("settings changes the language and logs out", async ({ page, context }) => 
   if (await page.locator("nav.fixed summary").isVisible()) await page.locator("nav.fixed summary").click();
   await page.locator("button:visible", { hasText: "Log out" }).click();
   await expect(page).toHaveURL(/\/login$/);
+  await page.goBack(); // Logging out must not leave the parent's page reachable.
+  await expect(page).toHaveURL(/\/login/);
+  await expect(page.getByText("+91 90000 00587", { exact: true })).toHaveCount(0);
 });
 
 test("switching child on receipts stays on receipts", async ({ page, context }) => {
@@ -146,7 +174,7 @@ test("receipts list payments being checked without offering a receipt for them",
 
 test("a receipt keeps the portal navigation on screen but prints clean", async ({ page, context }) => {
   await signIn(context, "+919000000587");
-  await page.goto("/receipts/STU-0587-receipt-1");
+  await page.goto(`/receipts/${await latestReceiptId()}`);
   await expect(page.locator('a[href="/dashboard"]:visible')).toHaveCount(1);
   await page.emulateMedia({ media: "print" });
   await expect(page.locator('a[href="/dashboard"]:visible')).toHaveCount(0);
@@ -162,6 +190,10 @@ test("student info shows the reminder language chosen in settings", async ({ pag
   await expect(page.getByRole("heading", { name: "सेटिंग्स", exact: true })).toBeVisible();
   await page.goto("/student");
   await expect(page.getByRole("definition").filter({ hasText: "हिंदी" })).toBeVisible();
+  // The guardian language is shared data now, so put it back.
+  await page.goto("/settings");
+  await page.getByRole("radio", { name: "English", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
 });
 
 for (const path of ["/dashboard", "/course", "/student", "/settings"]) test(`signed-out visitors to ${path} are sent to sign-in`, async ({ page }) => {

@@ -1,8 +1,3 @@
-import { readProto, requirePrototypeRole } from "@/lib/fixtures/state";
-import { counsellorFor } from "@/lib/fixtures/views";
-
-export async function getCounsellor() {
-  const state = await readProto();
-  requirePrototypeRole(state, "counsellor");
-  return counsellorFor(state);
-}
+import { backend } from "@/lib/backend";
+import type { CounsellorVM } from "@/lib/types";
+export async function getCounsellor() { return backend<CounsellorVM>("counsellor", "/staff/login"); }

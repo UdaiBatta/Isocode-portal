@@ -10,12 +10,13 @@ from django.urls import URLResolver, get_resolver
 from django.utils import timezone
 
 from fees.auth import api
-from fees.models import Guardian, LoginAttempt, StaffUser
+from fees.models import AppSetting, Guardian, LoginAttempt, StaffUser
 
 
 class AccessTests(TestCase):
     @classmethod
     def setUpTestData(cls):
+        AppSetting.objects.create(key="demo_today", value="2026-11-02")
         password_hash = make_password("test-staff-password")
         cls.staff = {}
         for role in ["accounts", "counsellor", "admin"]:
@@ -69,6 +70,13 @@ class AccessTests(TestCase):
         self.assertEqual(self.post("staff_login", {"email": "invalid", "password": "x"}).status_code, 400)
         self.assertEqual(self.post("set_language", {"language": "xx"}).status_code, 400)
 
+    def test_anonymous_context_uses_backend_date_and_exposes_no_identity(self):
+        with patch.dict(os.environ, {"DEMO_MODE": "true"}):
+            response = self.client.get("/api/public_context", HTTP_X_INTERNAL_KEY="test-internal-key")
+        self.assertEqual(response.json(), {"ok": True, "today": "2026-11-02", "demo": True})
+        self.assertEqual(self.client.get("/api/public_context").status_code, 403)
+        self.assertEqual(self.post("public_context").status_code, 405)
+
     def test_language_is_public_and_only_updates_the_signed_in_guardian(self):
         self.assertEqual(self.post("set_language", {"language": "en"}).json(), {"ok": True, "language": "en"})
         other = Guardian.objects.create(phone="+919000000412", full_name="Other demo guardian", language="hi")
@@ -94,7 +102,8 @@ class AccessTests(TestCase):
         self.assertEqual(self.client.get("/api/me", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 401)
 
     def test_staff_session_roles_expiry_logout_and_archival(self):
-        for role, next_path in [("accounts", "/staff/dashboard"), ("counsellor", "/counsellor/tasks")]:
+        for role, next_path in [("accounts", "/staff/dashboard"), ("counsellor", "/counsellor/tasks"),
+                                ("admin", "/staff/manage/students")]:
             with self.subTest(role=role):
                 self.assertEqual(self.login(role).json()["next"], next_path)
                 self.assertEqual(self.client.session.get_expiry_age(), 43200)
@@ -109,10 +118,14 @@ class AccessTests(TestCase):
         StaffUser.objects.filter(pk=self.staff["accounts"].pk).update(archived_at=timezone.now())
         self.assertEqual(self.client.get("/api/me", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 401)
 
-    def test_admin_sign_in_waits_for_manage_workspace(self):
-        response = self.login("admin")
-        self.assertEqual((response.status_code, response.json()["code"]), (403, "role_unavailable"))
-        self.assertNotIn("sid", self.client.cookies)
+    def test_admin_manage_access_and_database_role_revocation(self):
+        self.assertEqual(self.login("admin").json(), {"ok": True, "next": "/staff/manage/students"})
+        self.assertEqual(self.client.get("/api/admin_directory", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 200)
+        for path in ("dashboard", "counsellor", "progress"):
+            self.assertEqual(self.client.get(f"/api/{path}", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 403)
+        StaffUser.objects.filter(pk=self.staff["admin"].pk).update(role="accounts")
+        self.assertEqual(self.client.get("/api/admin_directory", HTTP_X_INTERNAL_KEY="test-internal-key").status_code, 403)
+        self.assertEqual(self.client.get("/api/me", HTTP_X_INTERNAL_KEY="test-internal-key").json()["role"], "accounts")
 
     def test_staff_failure_limit_and_window(self):
         for _ in range(10):

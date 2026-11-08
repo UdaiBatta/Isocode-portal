@@ -30,7 +30,7 @@ type ChipVariant = "bold" | "subtle" | "caption";
 export type ChipColor = "orange" | "lime" | "rose" | "yellow" | "cyan" | "blue" | "purple" | "neutral" | "gray" | "soft";
 
 /** Background and text pair per colour, shared with Tag Group's tags. */
-export const CHIP_COLORS: Record<ChipColor, string> = {
+const CHIP_COLORS: Record<ChipColor, string> = {
   orange: "bg-status-orange-background text-status-orange-text",
   lime: "bg-status-lime-background text-status-lime-text",
   rose: "bg-status-rose-background text-status-rose-text",

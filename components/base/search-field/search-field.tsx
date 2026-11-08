@@ -11,7 +11,6 @@ import { InputBase } from "@/components/base/input/input";
 import type { InputSize } from "@/components/base/input/input";
 import { Label } from "@/components/base/input/label";
 import { SpinnerGlyph } from "@/components/base/spinner/spinner";
-import { useTemplateCopy } from "@/components/foundations/template-copy/template-copy";
 import { cx } from "@/utils/cx";
 
 /**
@@ -69,7 +68,6 @@ export function SearchField({
   fieldClassName,
   ...props
 }: SearchFieldProps) {
-  const localize = useTemplateCopy();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
   const value = controlledValue ?? uncontrolledValue;
@@ -130,7 +128,7 @@ export function SearchField({
             trailingAddon={
               <CloseButton
                 size="2xs"
-                aria-label={localize(clearLabel)}
+                aria-label={clearLabel}
                 aria-hidden={isEmpty || undefined}
                 tabIndex={-1}
                 disabled={isDisabled}

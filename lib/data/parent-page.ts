@@ -1,17 +1,16 @@
 import { redirect } from "next/navigation";
 import { getParentPageContext } from "./auth";
 import { getFamily } from "./student";
-import { previewState, type SearchParams } from "@/lib/preview";
+import type { SearchParams } from "@/lib/types";
 
-// Every signed-in parent page starts the same way: gate access, read the child, and hold back data in preview states.
+// Every signed-in parent page starts the same way: gate access, then read the child.
 export async function parentPage(query: SearchParams) {
   const context = await getParentPageContext();
-  const state = previewState(query);
-  if (!state && context.role !== "parent") redirect("/login");
-  if (!state && !context.consent) redirect("/consent");
+  if (context.role !== "parent") redirect("/login");
+  if (!context.consent) redirect("/consent");
   const student = typeof query.student === "string" ? query.student : undefined;
-  const family = context.role === "parent" ? await getFamily(state ? undefined : student) : { family: [], selected: "" };
-  return { context, language: context.language, today: context.today, student, state, shell: { language: context.language, state, ...family } };
+  const family = await getFamily(student);
+  return { context, language: context.language, today: context.today, student, shell: { language: context.language, ...family } };
 }
 
 export async function parentLoadingShell() {

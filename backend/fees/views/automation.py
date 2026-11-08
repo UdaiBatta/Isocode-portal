@@ -83,8 +83,10 @@ def _reminder_rows(request, list_name, current_date):
 
     if list_name == "sent":
         logs = ReminderLog.objects.select_related("instalment__plan__student").filter(
-            instalment_id__in=rows_query.values("id"),
+            instalment__plan__student__archived_at__isnull=True,
         )
+        if request.subject.centre_id:
+            logs = logs.filter(instalment__plan__student__batch__centre_id=request.subject.centre_id)
         total = logs.count()
         return total, lambda offset, page_size: [
             _row(log.instalment, step=log.step, on=log.sent_on, language=log.language,
@@ -222,7 +224,7 @@ def automation(request):
 
     payload = {
         "ok": True, "today": current_date.isoformat(),
-        "demo": os.getenv("DEMO_MODE", "false").lower() == "true",
+        "demo": os.getenv("DEMO_MODE", "false").lower() == "true" and request.subject.centre_id is None,
         "list": list_name, "page": page, "pageSize": PAGE_SIZE,
         "total": total, "totalPages": total_pages,
         **_counts(request, current_date),

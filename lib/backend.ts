@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 export type BackendResult<T extends object> = ({ ok: true } & T) | { ok: false; code: string; message: string };
 export interface SessionInfo {
+  today: string;
   role: "parent" | "accounts" | "counsellor" | "admin";
   phone: string | null;
   centreId: string | null;
@@ -22,7 +23,7 @@ export async function backendResponse(name: string, input?: unknown) {
     headers: { "X-Internal-Key": secret, ...(input === undefined ? {} : { "Content-Type": "application/json" }), ...(sid ? { Cookie: `sid=${sid}` } : {}) },
     body: input === undefined ? undefined : JSON.stringify(input),
     cache: "no-store",
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(name === "ensure_call_brief" ? 35000 : 10000),
   });
 }
 
@@ -50,3 +51,5 @@ export const getMe = cache(async () => {
   if (!result.ok) throw new Error(result.message);
   return result;
 });
+
+export const getPublicContext = cache(async () => backend<{ today: string; demo: boolean }>("public_context"));

@@ -14,6 +14,19 @@ CENTRES = (("MLV", "Malviya Nagar"), ("VSH", "Vaishali Nagar"),
 BATCH_NAMES = ("JEE 2027 Morning", "JEE 2027 Evening", "NEET 2027 Morning", "NEET 2027 Evening")
 DUE_DAYS = {"MLV": (10, 15), "VSH": (5, 9), "MSR": (30, 5), "RJP": (2, 20)}
 NAMED_CODES = (412, 587, 219, 771, 772, 733, 734, 735, 801, 802, 803, 804)
+FIRST_NAMES = tuple("""Aditi Ananya Anika Anushka Avani Bhavna Charvi Deepa Diya Esha Gauri Harini Ira Ishani
+Jhanvi Kritika Kiara Lavanya Meera Naina Navya Nisha Pallavi Pari Pooja Prisha Radhika Ritika Saanvi Sakshi Tanvi Vanya
+Aditya Akash Aman Aniket Anirudh Arnav Atharv Ayush Chirag Darsh Dev Dhruv Harsh Ishaan Kabir Karan
+Kartik Kunal Lakshya Manav Nakul Naman Neel Nikhil Pranav Raghav Rahul Rohan Samarth Shaurya Varun Vihaan""".split())
+LAST_NAMES = tuple("""Agarwal Arora Bansal Batra Bhardwaj Bhatia Chauhan Chawla Desai Dixit Dubey Garg Goyal Gupta Jain Jha
+Kapoor Khanna Khatri Kulkarni Kumar Malhotra Mathur Mehta Menon Mishra Nair Pandey Patel Rao Rathore Reddy
+Saxena Sethi Shah Sharma Shukla Singh Sinha Soni Srivastava Tiwari Trivedi Verma Wadhwa Yadav Joshi Meena""".split())
+
+
+def fictional_student_name(code: int) -> str:
+    # A fixed permutation keeps names distinct and leaves the financial RNG untouched.
+    position = (code * 1093 + 1987) % (len(FIRST_NAMES) * len(LAST_NAMES))
+    return f"{FIRST_NAMES[position // len(LAST_NAMES)]} {LAST_NAMES[position % len(LAST_NAMES)]}"
 
 
 @dataclass(frozen=True)
@@ -98,7 +111,7 @@ def build_fleet(small: bool = False) -> tuple[StudentSeed, ...]:
                     allocations = ((amount, min(DEMO_TODAY, due + timedelta(days=rng.choice([0, 0, 3, 12])))),)
             instalments.append(InstalmentHistory(amount, due, allocations))
         attendance, tests = academic_history(profile, enrolled_on, rng)
-        students.append(StudentSeed(f"STU-{code:04d}", f"Demo Student {code:04d}", centre,
+        students.append(StudentSeed(f"STU-{code:04d}", fictional_student_name(code), centre,
                                     batch_name, phone, language, discount, reason, enrolled_on,
                                     tuple(instalments), attendance, tests))
     return tuple(students)
@@ -114,7 +127,7 @@ def build_named() -> tuple[StudentSeed, ...]:
         (771, "Kavya Joshi", 0, "hi", 2, 0, None, None),
         (772, "Dev Joshi", 2, "hi", 2, 0, None, None),
         (733, "Riya Verma", 1, "hi", 1, 0, None, None),
-        (734, "Arjun Yadav", 3, "en", 1, 0, None, None),
+        (734, "Arjun Yadav", 3, "en", 0, 0, None, None),
         (735, "Neha Kumawat", 0, "hi", 3, 0, None, None),
         (801, "Sameer Rathore", 2, "en", 2, 0, "draft", date(2026, 11, 2)),
         (802, "Ananya Saini", 0, "en", 3, 0, "approved", date(2026, 10, 28)),

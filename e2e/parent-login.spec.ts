@@ -42,10 +42,13 @@ test("real parent OTP and consent permit dues access", async ({ page, context },
     await page.getByRole("button", { name: "Agree and continue", exact: true }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
   }
+  // The live ledger changes as payments are recorded, so check the protected page itself rather than a balance.
   await page.goto("/dues");
-  await expect(page.getByRole("link", { name: "Pay ₹15,000", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/dues$/);
+  await expect(page.getByRole("heading", { name: "Fee summary", exact: true })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("link", { name: "Pay ₹15,000", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/dues$/);
+  await expect(page.getByRole("heading", { name: "Fee summary", exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 

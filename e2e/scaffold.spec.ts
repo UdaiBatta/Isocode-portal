@@ -33,9 +33,9 @@ test("scaffold renders BoardUI, Hindi and safe headers at both widths", async ({
   expect(errors).toEqual([]);
   await page.screenshot({ path: testInfo.outputPath("scaffold.png"), fullPage: true });
 
-  await page.route("https://github.com/UdaiBatta/isocode-coaching_tracker", (route) =>
+  await page.route("https://github.com/UdaiBatta/Isocode-portal", (route) =>
     route.fulfill({ contentType: "text/html", body: "<h1>Project source</h1>" }),
   );
   await projectLink.click();
-  await expect(page).toHaveURL("https://github.com/UdaiBatta/isocode-coaching_tracker");
+  await expect(page).toHaveURL("https://github.com/UdaiBatta/Isocode-portal");
 });

@@ -1,7 +1,7 @@
 You are building a coaching institute's fee tracking system and parent portal for Company A, Jaipur. The frontend is Next.js with BoardUI, and the backend is Django with PostgreSQL. This one prompt replaces all earlier prompts. It runs the job from where the repo stands now through to Gate 7. Keep going through every task and phase without waiting for me, except where STOP RULES says to stop.
 
 Full spec: docs/PLAN.md.
-Repository: https://github.com/UdaiBatta/isocode-coaching_tracker. It must stay public.
+Repository: https://github.com/UdaiBatta/Isocode-portal. It must stay public.
 
 MY SETTINGS
 WHY DJANGO: Django gives me migrations, transactions with row locks, sessions and password hashing out of the box, so the money and access code stands on tested parts instead of code I wrote myself.

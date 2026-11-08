@@ -25,10 +25,18 @@ test("staff dashboard groups, searches, exports and provides phone navigation", 
   const search = page.getByRole("searchbox", { name: "Search student" });
   await search.fill("nobody-matches"); await search.press("Enter");
   await expect(page.getByText("No matching students", { exact: true })).toBeVisible();
+  await page.goto("/staff/dashboard");
+  await page.getByRole("searchbox", { name: "Search student" }).fill("STU-0587");
+  await page.getByRole("searchbox", { name: "Search student" }).press("Enter");
+  await expect(page).toHaveURL(/\/staff\/students\/STU-0587$/); // Exactly one match opens the student.
+  await page.goto("/staff/dashboard");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export dues CSV", exact: true }).click();
+  await page.getByRole("link", { name: "Export dues CSV", exact: true }).click();
   expect((await download).suggestedFilename()).toBe("dues-2026-11-02.csv");
+  const tally = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Export to Tally", exact: true }).click();
+  expect((await tally).suggestedFilename()).toBe("tally-receipts-2026-11.xml");
   expect((await new AxeBuilder({ page }).analyze()).violations.filter((item) => item.impact === "serious" || item.impact === "critical")).toEqual([]);
   if (info.project.name === "mobile") {
     await page.getByRole("button", { name: "Menu", exact: true }).click();

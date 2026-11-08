@@ -29,7 +29,7 @@ type QueueItem = AutomationVM["unmatched"][number];
 type Candidate = { code: string; name: string; instalments: { id: string; balance: number; seq: number }[] };
 type ListedReminder = ReminderRow & { id: string };
 
-export function AutomationWorkspace({ view, candidates, tab, initialItem, initialFilter = "upcoming" }: { view: AutomationPageVM; candidates: Candidate[]; tab: "reminders" | "unmatched"; initialItem?: string; initialFilter?: Exclude<AutomationList, "unmatched"> }) {
+export function AutomationWorkspace({ view, candidates, tab, initialItem, initialFilter = "upcoming", shared = false }: { shared?: boolean; view: AutomationPageVM; candidates: Candidate[]; tab: "reminders" | "unmatched"; initialItem?: string; initialFilter?: Exclude<AutomationList, "unmatched"> }) {
   const router = useRouter();
   const filter: Exclude<AutomationList, "unmatched"> = view.list === "unmatched" ? initialFilter : view.list;
   const [message, setMessage] = useState<ReminderRow | null>(null);
@@ -99,6 +99,6 @@ export function AutomationWorkspace({ view, candidates, tab, initialItem, initia
       {selected ? <Select label="Instalment" placeholder="Choose an instalment" selectedKey={instalment || null} onSelectionChange={(key) => setInstalment(String(key))}>{selected.instalments.map((item) => <SelectItem id={item.id} key={item.id}>Instalment {item.seq} · {inr(item.balance)}</SelectItem>)}</Select> : null}
       <Textarea label="Resolution note" value={note} onChange={setNote} maxLength={300} hint="Required when rejecting a payment." /><Button disabled={pending || !instalment} onClick={() => resolve("match")}>Match payment</Button><Button variant="secondary" disabled={pending} onClick={() => resolve("reject")}>Reject payment</Button>{error ? <p role="alert" className="text-body-regular text-text-error-primary">{error}</p> : null}
     </>}{queue.suggested ? <LinkButton href={`/staff/students/${queue.suggested.studentCode}`} variant="secondary">Open student ledger</LinkButton> : null}</div> : null}</DrawerBody></Drawer>
-    <AlertDialog isOpen={resetOpen} onOpenChange={setResetOpen} title="Reset the demo?" description="This restores sample payments, reminders, refunds and the demo date in this browser." confirmLabel="Reset demo" onConfirm={async () => { const result = await resetDemo(); if (!result.ok) { toast.error(result.message); throw new Error("Reset failed"); } setResetOpen(false); toast.success("Demo restored"); router.refresh(); }} />
+    <AlertDialog isOpen={resetOpen} onOpenChange={setResetOpen} title={shared ? "Reset the shared demo for everyone?" : "Reset the demo?"} description={shared ? "This restores the twelve named sample students, with their payments, reminders and refunds, and sets the demo date back to 2 Nov 2026 in the shared database. Everyone using this demo sees the change. Other records are not touched." : "This restores sample payments, reminders, refunds and the demo date in this browser."} confirmLabel={shared ? "Reset for everyone" : "Reset demo"} onConfirm={async () => { const result = await resetDemo(); if (!result.ok) { toast.error(result.message); throw new Error("Reset failed"); } setResetOpen(false); toast.success("Demo restored"); router.refresh(); }} />
   </>;
 }

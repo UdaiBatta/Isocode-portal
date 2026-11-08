@@ -77,7 +77,6 @@ export const en = {
   "status.high": "High",
   "status.watch": "Watch",
   "status.insufficient": "Not enough data",
-  "setup.empty": "Nothing to show in this preview.",
   "common.language": "Language",
   "login.demoCode": "Demo code: {code}",
   "login.cooldown": "New code in {seconds}s",

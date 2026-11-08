@@ -21,7 +21,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      NEXT_PUBLIC_PROTO: "1"
       DEMO_MODE: "true"
       DATABASE_URL: postgresql://demo:ci-only-not-a-live-secret@localhost:5432/coaching_fees
       DJANGO_SECRET_KEY: ci-only-not-a-live-secret

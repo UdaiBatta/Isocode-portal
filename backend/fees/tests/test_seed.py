@@ -1,18 +1,22 @@
 import hashlib
 import io
+import os
 from collections import Counter
+from dataclasses import replace
 from datetime import date
 from unittest.mock import patch
 
+from django.apps import apps
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db.models import Q, Sum
+from django.db.models import Sum
 from django.test import SimpleTestCase, TestCase
 
 from fees import models as m
 from fees.domain.ledger import instalment_view, over60_metric
-from fees.seed import at_day, database_over60_metric, seed_named
+from fees.seed import at_day, database_over60_metric, refresh_fleet_names, seed_id, seed_named
 from fees.seed_data import DEMO_TODAY, NAMED_CODES, build_fleet, build_named
+from fees.services.demo import reset_demo
 
 
 class SeedRowsTests(SimpleTestCase):
@@ -32,6 +36,8 @@ class SeedRowsTests(SimpleTestCase):
         self.assertEqual(len(counts), 16)
         self.assertLessEqual(max(counts.values()) - min(counts.values()), 1)
         self.assertEqual(len(build_fleet(small=True)), 200)
+        self.assertEqual(len({row.name for row in self.fleet}), len(self.fleet))
+        self.assertFalse(any(row.name.startswith("Demo Student") for row in self.fleet))
 
     def test_brief_sample_rows(self):
         rows = {row.code: row for row in self.named}
@@ -77,6 +83,36 @@ class SeedRowsTests(SimpleTestCase):
 
 
 class SeedDatabaseTests(TestCase):
+    def test_name_backfill_preserves_custom_names_ids_and_every_history(self):
+        fleet = build_fleet(small=True)
+        first = m.Student.objects.get(code=fleet[0].code)
+        self.assertEqual(first.pk, seed_id(first.code))
+        custom = m.Student.objects.get(code=fleet[1].code)
+        m.Student.objects.filter(pk=first.pk).update(full_name=f"Demo Student {int(first.code[4:]):04d}")
+        m.Student.objects.filter(pk=custom.pk).update(full_name="Fictional edited name")
+        external = m.Student.objects.create(code="STU-9998", full_name="Demo Student 9998",
+                                             batch=first.batch, enrolled_on=first.enrolled_on)
+        rows = (*fleet, replace(fleet[0], code=external.code, name="Unchanged external student"))
+
+        def histories():
+            return {model.__name__: hashlib.sha256(repr(list(model.objects.order_by("pk").values())).encode()).hexdigest()
+                    for model in apps.get_app_config("fees").get_models() if model != m.Student}
+
+        before = histories()
+        student_fields = [field.name for field in m.Student._meta.fields if field.name != "full_name"]
+        students_before = list(m.Student.objects.order_by("pk").values(*student_fields))
+        named_before = dict(m.Student.objects.filter(code__in=[f"STU-{n:04d}" for n in NAMED_CODES]).values_list("code", "full_name"))
+        self.assertEqual(refresh_fleet_names(rows), 1)
+        self.assertEqual(refresh_fleet_names(rows), 0)
+        self.assertEqual(m.Student.objects.get(pk=first.pk).full_name, fleet[0].name)
+        self.assertEqual(m.Student.objects.get(pk=custom.pk).full_name, "Fictional edited name")
+        self.assertEqual(m.Student.objects.get(pk=external.pk).full_name, "Demo Student 9998")
+        self.assertEqual(histories(), before)
+        self.assertEqual(list(m.Student.objects.order_by("pk").values(*student_fields)), students_before)
+        self.assertEqual(dict(m.Student.objects.filter(code__in=named_before).values_list("code", "full_name")), named_before)
+        with patch.dict(os.environ, {"DEMO_MODE": "false"}), self.assertRaises(CommandError):
+            refresh_fleet_names(rows)
+
     @classmethod
     def setUpTestData(cls):
         call_command("seed", small=True, stdout=io.StringIO())
@@ -153,19 +189,7 @@ class SeedDatabaseTests(TestCase):
         m.Student.objects.filter(code__in=codes).update(status="withdrawn", withdrawn_on=date(2026, 11, 1))
         m.FeePlan.objects.filter(student=ishita).update(gross_paise=12100000, net_paise=12100000)
         m.Instalment.objects.filter(plan__student=ishita, seq=3).update(amount_paise=3100000)
-        queue_ids = list(m.UnmatchedPayment.objects.values_list("pk", flat=True))
-        # Event FKs protect payments and queue rows, so reset clears these dependent records first.
-        m.PaymentEvent.objects.filter(Q(payment__student__code__in=codes) | Q(unmatched_id__in=queue_ids)).delete()
-        m.UnmatchedPayment.objects.filter(pk__in=queue_ids).delete()
-        m.CounsellorTask.objects.filter(student__code__in=codes).delete()
-        m.RiskFlag.objects.filter(student__code__in=codes).delete()
-        m.Refund.objects.filter(student__code__in=codes).delete()
-        m.Allocation.objects.filter(payment__student__code__in=codes).delete()
-        m.Receipt.objects.filter(payment__student__code__in=codes).delete()
-        m.Payment.objects.filter(student__code__in=codes).delete()
-        m.ReminderLog.objects.filter(instalment__plan__student__code__in=codes).delete()
-        m.Consent.objects.filter(student__code__in=codes).delete()
-        seed_named()
+        reset_demo()
         self.assertEqual({model: set(model.objects.values_list("pk", flat=True)) for model in masters}, ids_before)
         self.assertTrue(audit_ids.issubset(set(m.AuditLog.objects.values_list("pk", flat=True))))
         for row in rows:

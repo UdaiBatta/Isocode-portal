@@ -1,6 +1,5 @@
 import { RiLockLine } from "@remixicon/react";
 import { PageShell } from "@/components/app/PageShell";
-import { PageSkeleton } from "@/components/app/PageSkeleton";
 import { EmptyState } from "@/components/app/EmptyState";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import { Money } from "@/components/app/Money";
@@ -9,16 +8,13 @@ import { getPayDetails } from "@/lib/data/payments";
 import { getParentPageContext } from "@/lib/data/auth";
 import { ORG } from "@/lib/config";
 import { dateLabel } from "@/lib/format";
-import { previewState, type SearchParams } from "@/lib/preview";
 import { t } from "@/lib/i18n";
 import { ct } from "@/lib/i18n/checkout";
 
-export default async function Gateway({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<SearchParams> }) {
+export default async function Gateway({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const { language, today } = await getParentPageContext();
-  const state = previewState(await searchParams);
-  if (state === "loading") return <PageSkeleton language={language} />;
-  const view = state === "empty" ? null : await getPayDetails(token);
+  const view = await getPayDetails(token);
   if (!view) return <PageShell><EmptyState title={t(language, "pay.invalid")} /></PageShell>;
   return <PageShell className="flex flex-col gap-6">
     <div className="flex items-center justify-between gap-4">

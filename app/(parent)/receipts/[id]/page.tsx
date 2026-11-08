@@ -2,8 +2,6 @@ import { redirect } from "next/navigation";
 import { PageShell } from "@/components/app/PageShell";
 import { ParentShell } from "@/components/app/ParentShell";
 import { getFamily } from "@/lib/data/student";
-import { PageSkeleton } from "@/components/app/PageSkeleton";
-import { EmptyState } from "@/components/app/EmptyState";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import { Money } from "@/components/app/Money";
 import { PrintReceipt } from "@/components/app/PrintReceipt";
@@ -11,18 +9,14 @@ import { ReceiptTaxTable } from "@/components/app/ReceiptTaxTable";
 import { LinkButton } from "@/components/base/buttons/link-button";
 import { getReceipt, getReceiptOrganisation } from "@/lib/data/receipts";
 import { getParentPageContext } from "@/lib/data/auth";
-import { previewState, type SearchParams } from "@/lib/preview";
 import { dateLabel } from "@/lib/format";
 import { methodLabel } from "@/lib/i18n/checkout";
 import { t, type TranslationKey } from "@/lib/i18n";
 
-export default async function Receipt({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<SearchParams> }) {
+export default async function Receipt({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const context = await getParentPageContext();
   const { language, today } = context;
-  const state = previewState(await searchParams);
-  if (state === "loading") return <PageSkeleton language={language} />;
-  if (state === "empty") return <PageShell><EmptyState title={t(language, "receipts.empty")} /></PageShell>;
   if (context.role !== "parent" && context.role !== "accounts") redirect(`/login?next=${encodeURIComponent(`/receipts/${id}`)}`);
   if (context.role === "parent" && !context.consent) redirect(`/consent?next=${encodeURIComponent(`/receipts/${id}`)}`);
   const receipt = await getReceipt(id);
