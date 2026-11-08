@@ -10,7 +10,7 @@ beforeEach(() => {
   jar.clear(); vi.clearAllMocks(); jar.set("sid", "accounts-session");
   vi.stubGlobal("fetch", fetcher);
   vi.stubEnv("BACKEND_URL", "http://localhost:8000"); vi.stubEnv("INTERNAL_API_SECRET", "test-internal-key");
-  vi.stubEnv("NEXT_PUBLIC_PROTO", "1"); vi.stubEnv("DEMO_MODE", "true");
+  vi.stubEnv("DEMO_MODE", "true");
 });
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 

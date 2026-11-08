@@ -108,7 +108,7 @@ const textareaStyles = sortCx({
 /** Fallback line box for `text-body-regular` (14/20) before styles resolve. */
 const FALLBACK_LINE_HEIGHT = 20;
 
-export function TextareaBase({
+function TextareaBase({
   size: sizeProp,
   rows = 3,
   autoResize = false,

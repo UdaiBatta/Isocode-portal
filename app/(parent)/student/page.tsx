@@ -3,12 +3,11 @@ import { parentPage } from "@/lib/data/parent-page";
 import { getStudentInfo } from "@/lib/data/student";
 import { dateLabel, phoneLabel } from "@/lib/format";
 import { pt } from "@/lib/i18n/portal";
-import type { SearchParams } from "@/lib/preview";
+import type { SearchParams } from "@/lib/types";
 
 export default async function Student({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { language, today, student, state, shell } = await parentPage(await searchParams);
-  const header = { active: "student", showName: false, title: pt(language, "portal.student"), description: pt(language, "student.description"), emptyTitle: pt(language, "student.empty") } as const;
-  if (state) return <ParentShell {...shell} {...header} />;
+  const { language, today, student, shell } = await parentPage(await searchParams);
+  const header = { active: "student", showName: false, title: pt(language, "portal.student"), description: pt(language, "student.description") } as const;
   const info = await getStudentInfo(student);
   return <ParentShell {...shell} {...header}>
     <section className={parentSectionClass}>

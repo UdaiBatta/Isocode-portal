@@ -5,7 +5,7 @@ import { ParentDetails, ParentShell, parentSectionClass } from "@/components/app
 import { LinkButton } from "@/components/base/buttons/link-button";
 import { getParentPageContext } from "@/lib/data/auth";
 import { getDues } from "@/lib/data/dues";
-import { previewState, type SearchParams } from "@/lib/preview";
+import type { SearchParams } from "@/lib/types";
 import { inr } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import { pt } from "@/lib/i18n/portal";
@@ -14,9 +14,7 @@ export default async function Dues({ searchParams }: { searchParams: Promise<Sea
   const params = await searchParams;
   const context = await getParentPageContext();
   const { language, today } = context;
-  const state = previewState(params);
-  const header = { language, active: "fees", title: pt(language, "portal.fees"), description: pt(language, "fees.description"), emptyTitle: t(language, "dues.clear") } as const;
-  if (state) return <ParentShell {...header} state={state} family={[]} selected="" />;
+  const header = { language, active: "fees", title: pt(language, "portal.fees"), description: pt(language, "fees.description") } as const;
   if (context.role === "parent" && !context.consent) redirect("/consent");
   if (context.role && context.role !== "parent") redirect("/staff/login");
   const view = await getDues(typeof params.student === "string" ? params.student : undefined);

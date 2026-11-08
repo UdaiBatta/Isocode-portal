@@ -42,11 +42,14 @@ test("clear, withdrawn, due-today and preview states render", async ({ page, con
   await setDemoDate("2026-10-10");
   try {
   await page.goto("/dues"); await expect(page.getByText("Due today", { exact: true })).toBeVisible();
-  await page.goto("/dues?state=empty"); await expect(page.getByText("No dues", { exact: true })).toBeVisible();
-  await page.goto("/dues?state=loading"); await expect(page.getByRole("status", { name: "Loading" })).toBeVisible();
-  await page.goto("/dues?state=error"); await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
-  await page.getByRole("button", { name: "Try again" }).click();
-  await expect(page).toHaveURL(/\/dues$/);
-  await expect(page.getByText("Due today", { exact: true })).toBeVisible();
   } finally { await setDemoDate("2026-11-02"); }
+});
+
+test("a request Django refuses shows the parent error screen, and retry stays usable", async ({ page, context }) => {
+  await context.addCookies([{ name: "lang", value: "en", url: "http://127.0.0.1:3001" }]);
+  await signIn(context, "parent:+919000000587");
+  await page.goto("/dues?student=not-a-student");
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect(page.locator("main")).not.toContainText("₹");
 });

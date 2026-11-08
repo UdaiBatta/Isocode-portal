@@ -79,7 +79,6 @@ export const hi: Record<keyof typeof en, string> = {
   "status.high": "अधिक जोखिम",
   "status.watch": "ध्यान दें",
   "status.insufficient": "पर्याप्त जानकारी नहीं",
-  "setup.empty": "इस प्रीव्यू में दिखाने के लिए कुछ नहीं है।",
   "common.language": "भाषा",
   "login.demoCode": "डेमो कोड: {code}",
   "login.cooldown": "{seconds} सेकंड में नया कोड",

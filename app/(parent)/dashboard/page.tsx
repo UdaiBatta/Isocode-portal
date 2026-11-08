@@ -7,11 +7,10 @@ import { getReceipts } from "@/lib/data/receipts";
 import { getStudentInfo } from "@/lib/data/student";
 import { dateLabel, inr } from "@/lib/format";
 import { pt } from "@/lib/i18n/portal";
-import type { SearchParams } from "@/lib/preview";
+import type { SearchParams } from "@/lib/types";
 
 export default async function ParentHome({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { language, today, student, state, shell } = await parentPage(await searchParams);
-  if (state) return <ParentShell {...shell} active="home" emptyTitle={pt(language, "home.empty")} />;
+  const { language, today, student, shell } = await parentPage(await searchParams);
   const [view, progress, receipts, info] = await Promise.all([getDues(student), getProgress(student), getReceipts(student), getStudentInfo(student)]);
   const link = (path: string) => withStudent(path, shell.selected, shell.family);
   const { total, paid, remaining } = feeTotals(view);

@@ -5,16 +5,13 @@ import type { ComponentType, ReactNode, Ref } from "react";
 import {
   Button as AriaButton,
   ComboBox as AriaComboBox,
-  Header as AriaHeader,
   ListBox as AriaListBox,
   ListBoxItem as AriaListBoxItem,
-  ListBoxSection as AriaListBoxSection,
   Popover as AriaPopover,
 } from "react-aria-components";
 import type {
   ComboBoxProps as AriaComboBoxProps,
   ListBoxItemProps as AriaListBoxItemProps,
-  ListBoxSectionProps as AriaListBoxSectionProps,
 } from "react-aria-components";
 import { RiCheckLine } from "@remixicon/react";
 import { MENU_ITEM, MENU_ITEM_ACTIVE, MENU_ITEMS_CONTAINER, MENU_POPOVER_SURFACE } from "@/components/base/dropdown/menu-styles";
@@ -178,22 +175,5 @@ export function ComboBoxItem({ className, children, ...props }: ComboBoxItemProp
         </>
       )}
     </AriaListBoxItem>
-  );
-}
-
-export interface ComboBoxSectionProps<T extends object> extends Omit<AriaListBoxSectionProps<T>, "className" | "children"> {
-  /** Muted heading above the section's rows. */
-  title?: ReactNode;
-  className?: string;
-  /** ComboBoxItems, or a React Aria Collection for a dynamic section. */
-  children: ReactNode;
-}
-
-export function ComboBoxSection<T extends object>({ title, className, children, ...props }: ComboBoxSectionProps<T>) {
-  return (
-    <AriaListBoxSection {...props} className={cx("flex flex-col gap-1 [&:not(:first-child)]:pt-2", className)}>
-      {title ? <AriaHeader className="ps-2 pt-1 pb-0.5 text-body-medium text-text-secondary">{title}</AriaHeader> : null}
-      {children}
-    </AriaListBoxSection>
   );
 }

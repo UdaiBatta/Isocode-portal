@@ -1,5 +1,4 @@
 import type {
-  AnchorHTMLAttributes,
   ButtonHTMLAttributes,
   ComponentType,
   Ref,
@@ -38,14 +37,6 @@ export interface IconButtonProps
   ref?: Ref<HTMLButtonElement>;
 }
 
-export interface IconLinkButtonProps
-  extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "children"> {
-  icon: IconComponent;
-  size?: IconButtonSize;
-  /** Accessible name — required since there is no visible label. */
-  "aria-label": string;
-  ref?: Ref<HTMLAnchorElement>;
-}
 
 const styles = sortCx({
   base: [
@@ -86,24 +77,5 @@ export function IconButton({
     >
       <Icon className={cx(styles.icon[size], directionalIconClass(Icon))} aria-hidden />
     </button>
-  );
-}
-
-/** Anchor counterpart to IconButton for external and navigational actions. */
-export function IconLinkButton({
-  icon: Icon,
-  size = "medium",
-  className,
-  ref,
-  ...props
-}: IconLinkButtonProps) {
-  return (
-    <a
-      ref={ref}
-      className={cx(styles.base, styles.size[size], className)}
-      {...props}
-    >
-      <Icon className={cx(styles.icon[size], directionalIconClass(Icon))} aria-hidden />
-    </a>
   );
 }

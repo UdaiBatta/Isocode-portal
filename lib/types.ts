@@ -152,3 +152,5 @@ export interface ChangeVM {
   reason: string | null;
 }
 export interface ChangeFilters { entity?: ManageEntity; id?: string; page?: number }
+
+export type SearchParams = Record<string, string | string[] | undefined>;

@@ -70,7 +70,7 @@ export interface RadioDotProps {
  * gradient are stacked layers cross-fading over 200ms (a gradient background
  * can't transition directly), while the white inner dot scales in and out.
  */
-export function RadioDot({ selected = false, size = "sm", focusVisible = false, className }: RadioDotProps) {
+function RadioDot({ selected = false, size = "sm", focusVisible = false, className }: RadioDotProps) {
   const s = dotStyles[size];
   return (
     <span

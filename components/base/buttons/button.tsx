@@ -212,6 +212,3 @@ export function ButtonLink({
     </a>
   );
 }
-
-/** Style maps, exported for advanced composition and the dev Design Tuner. */
-export const buttonStyles = styles;

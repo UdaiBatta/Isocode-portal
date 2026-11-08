@@ -20,7 +20,7 @@ import { inr, dateLabel } from "@/lib/format";
 import { cx } from "@/utils/cx";
 import type { AgeingRow, DashboardVM } from "@/lib/types";
 
-type Directory = { centres: { id: string; name: string }[]; students: { code: string; name: string }[] };
+type Directory = { centres: { id: string; name: string }[] };
 export function DuesDashboard({ view, directory, filters, attention }: { view: DashboardVM; directory: Directory; filters: { group: "centre" | "batch"; centre?: string; batch?: string }; attention: { label: string; count: number; href: string }[] }) {
   const router = useRouter();
   const counterKey = `dues:${filters.centre ?? "all"}:${filters.batch ?? "all"}`;
@@ -63,8 +63,7 @@ export function DuesDashboard({ view, directory, filters, attention }: { view: D
       <SegmentedControl aria-label="Group dues" selectedKeys={[filters.group]} onSelectionChange={(keys) => navigate({ group: String(Array.from(keys)[0]), batch: undefined })}><SegmentedControlItem id="centre">By centre</SegmentedControlItem><SegmentedControlItem id="batch">By batch</SegmentedControlItem></SegmentedControl>
       {view.canPickCentre ? <Select label="Centre" selectedKey={filters.centre ?? "all"} onSelectionChange={(key) => navigate({ centre: key === "all" ? undefined : String(key), batch: undefined })}><SelectItem id="all">All centres</SelectItem>{directory.centres.map((centre) => <SelectItem id={centre.id} key={centre.id}>{centre.name}</SelectItem>)}</Select> : null}
       <div className="min-w-0 flex-1 basis-full md:ms-auto md:max-w-xs md:basis-auto"><SearchField label="Search student" placeholder="Name or student code" value={query} onChange={setQuery} onSubmit={(value) => {
-        const found = directory.students.filter((student) => `${student.name} ${student.code}`.toLowerCase().includes(value.trim().toLowerCase()));
-        if (value.trim() && found.length === 1) router.push(`/staff/students/${found[0].code}`); else router.push(value.trim() ? `/staff/students?q=${encodeURIComponent(value.trim())}` : "/staff/students");
+        router.push(value.trim() ? `/staff/students?q=${encodeURIComponent(value.trim())}&open=1` : "/staff/students");
       }} /></div>
     </div>
     {view.rows.length ? <DataTable data={rows} columns={columns} label="Dues ageing" renderCard={(row) => <div className="flex flex-col gap-4"><LinkButton variant="secondary" className="row-link self-start text-text-primary" onClick={() => activate(row)}>{row.label}</LinkButton><div className="flex justify-between gap-4"><span>{row.studentsWithDues} students with dues</span><span className="text-headline-medium tabular-nums">{inr(row.outstanding)}</span></div><AgeingBar row={row} /><dl className="grid grid-cols-2 gap-3">{moneyColumns.slice(1).map(([key, label]) => <div key={key}><dt className="text-body-2-regular text-text-secondary">{label}</dt><dd className="text-body-regular tabular-nums">{inr(row[key])}</dd></div>)}</dl></div>} /> : <EmptyState title="No dues in this view" />}

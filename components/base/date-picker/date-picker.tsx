@@ -1,7 +1,5 @@
 "use client";
 
-import { useTemplateCopy } from "@/components/foundations/template-copy/template-copy";
-
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { Calendar, Dialog, Popover, useLocale } from "react-aria-components";
@@ -68,7 +66,6 @@ export function DatePicker({
   isOpen: controlledIsOpen,
   onOpenChange: controlledOnOpenChange,
 }: DatePickerProps) {
-  const localize = useTemplateCopy();
   const { locale } = useLocale();
   const ownTriggerRef = useRef<HTMLButtonElement>(null);
   const triggerRef = externalTriggerRef ?? ownTriggerRef;
@@ -115,7 +112,7 @@ export function DatePicker({
     setIsOpen(open);
   };
 
-  return localize((
+  return (
     <>
       {!isExternal && (
         <button
@@ -181,5 +178,5 @@ export function DatePicker({
         </Dialog>
       </Popover>
     </>
-  ));
+  );
 }

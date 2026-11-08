@@ -1,5 +1,4 @@
 import { PageShell } from "@/components/app/PageShell";
-import { PageSkeleton } from "@/components/app/PageSkeleton";
 import { EmptyState } from "@/components/app/EmptyState";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import { Money } from "@/components/app/Money";
@@ -9,7 +8,7 @@ import { getPaymentResult } from "@/lib/data/payments";
 import { getParentPageContext } from "@/lib/data/auth";
 import { ORG } from "@/lib/config";
 import { dateLabel } from "@/lib/format";
-import { previewState, type SearchParams } from "@/lib/preview";
+import type { SearchParams } from "@/lib/types";
 import { t } from "@/lib/i18n";
 import { ct, methodLabel } from "@/lib/i18n/checkout";
 
@@ -24,9 +23,7 @@ export default async function PaymentResult({ params, searchParams }: { params: 
   const { token } = await params;
   const query = await searchParams;
   const { language, today } = await getParentPageContext();
-  const state = previewState(query);
-  if (state === "loading") return <PageSkeleton language={language} />;
-  const view = state === "empty" ? null : await getPaymentResult(token, query.e);
+  const view = await getPaymentResult(token, query.e);
   if (!view) return <PageShell><EmptyState title={t(language, "pay.pending")} /></PageShell>;
   const receiptPath = view.receiptId ? `/receipts/${view.receiptId}` : null;
   const receiptHref = receiptPath && (view.canViewReceipt ? receiptPath : `/login?next=${encodeURIComponent(receiptPath)}`);

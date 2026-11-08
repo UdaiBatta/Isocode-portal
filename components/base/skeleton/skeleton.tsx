@@ -71,25 +71,3 @@ export function Skeleton({ shape = "rect", isLoaded = false, className, style, c
     </span>
   );
 }
-
-export interface SkeletonTextProps {
-  /** Number of lines. Default 3; the last one runs 60% wide. */
-  lines?: number;
-  /** Line height, matched to the text it stands in for. Default `h-3.5` (Body 1). */
-  lineClassName?: string;
-  className?: string;
-}
-
-export function SkeletonText({ lines = 3, lineClassName = "h-3.5", className }: SkeletonTextProps) {
-  return (
-    <span aria-hidden className={cx("flex w-full flex-col gap-2.5", className)}>
-      {Array.from({ length: lines }, (_, index) => (
-        <Skeleton
-          key={index}
-          shape="text"
-          className={cx(lineClassName, index === lines - 1 && lines > 1 ? "w-3/5" : "w-full")}
-        />
-      ))}
-    </span>
-  );
-}
