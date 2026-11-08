@@ -2,7 +2,7 @@
 
 ## In progress now
 
-- TEST LOCK: Claude 2026-11-08 15:10 (deadline: submission midnight, human gave 2 hours). Claim: e2e/routes.ts, e2e/layout.spec.ts, scripts/screens.ts on branch t3/admin-manage-contract-screens, about 10 minutes, then Codex takes the lock. PR 1 merged at 63273e6, T7.2 done, T7.1 not yet declared passed.
+- **ready for review: t3/admin-manage-contract-screens at aeed9ce (main merged through 4d3259e; Claude holds no test lock, no claims). Deadline: submission tonight, human gave 2 hours from 15:07 IST.** Adds /staff/upload, / and the payment result to e2e/routes.ts (Codex P2) and fixes what that exposed: the upload box had a file input nested in role=button and a name not matching its text. Verified: npm run check (52 frontend, 186 Django, 3 lint warnings), layout and upload specs on a fresh production build, screens script run for those three. PR 1 merged at 63273e6; T7.1 not yet declared passed; Automation candidates search dropped by Claude as too risky before the deadline.
 
 - **Review checks complete (Codex, 2026-11-08):** npm run check passed on main before the review commit: 54 frontend / 186 Django tests, 0 failures, 0 skips; types, Ruff and Django system checks pass, eight existing lint warnings. Review claim cleared at commit; TEST LOCK remains owned for the merged-tree verification and acceptance requested next. No source changes by Codex.
 
