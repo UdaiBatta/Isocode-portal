@@ -6,8 +6,7 @@ export async function getStaffPageContext() {
   return { role: me.role, today: me.today, demo: process.env.DEMO_MODE === "true" };
 }
 export async function getStaffDirectory() {
-  return backend<{ centres: { id: string; name: string }[]; batches: { id: string; name: string; centreId: string }[];
-    students: { code: string; name: string; centreId: string; batchId: string }[] }>("staff_directory", "/staff/login");
+  return backend<{ centres: { id: string; name: string }[]; batches: { id: string; name: string; centreId: string }[] }>("staff_directory", "/staff/login");
 }
 export async function getPaymentCandidates() {
   return (await backend<{ candidates: { code: string; name: string; instalments: { id: string; balance: number; seq: number }[] }[] }>("payment_candidates", "/staff/login")).candidates;

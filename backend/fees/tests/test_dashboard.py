@@ -88,6 +88,9 @@ class DashboardTests(TestCase):
         self.assertEqual(self.get("dashboard").json()["totals"]["outstanding"], active_total)
 
     def test_scope_and_totals_and_counter_payment(self):
+        directory = self.get("staff_directory").json()
+        self.assertEqual(set(directory), {"ok", "centres", "batches"})
+        self.assertIn(str(self.batch.pk), [row["id"] for row in directory["batches"]])
         all_view = self.get("dashboard").json()
         self.assertEqual(all_view["totals"]["outstanding"], sum(
             self.get(f"dashboard?centre={code}").json()["totals"]["outstanding"]
@@ -107,7 +110,11 @@ class DashboardTests(TestCase):
         self.assertEqual(self.get("students?centre=ZZZ").json()["counts"]["all"], 0)
         directory = self.get("staff_directory").json()
         self.assertEqual([row["id"] for row in directory["centres"]], ["MLV"])
-        self.assertTrue(all(row["centreId"] == "MLV" for row in directory["students"]))
+        self.assertNotIn("students", directory)
+        self.assertEqual({row["id"] for row in directory["batches"]},
+                         {str(pk) for pk in m.Batch.objects.filter(centre__code="MLV", archived_at__isnull=True)
+                          .values_list("pk", flat=True)})
+        self.assertTrue(all(row["centreId"] == "MLV" for row in directory["batches"]))
 
     def test_roster_filters_sort_counts_and_pages_are_consistent(self):
         for index in range(30):

@@ -150,7 +150,6 @@ def dashboard(actor, filters, date):
 def staff_directory(actor):
     centres = Centre.objects.filter(archived_at__isnull=True)
     batches = Batch.objects.filter(archived_at__isnull=True, centre__archived_at__isnull=True)
-    students = scoped_students(actor, {})
     if actor.centre_id:
         centres = centres.filter(pk=actor.centre_id)
         batches = batches.filter(centre_id=actor.centre_id)
@@ -158,6 +157,4 @@ def staff_directory(actor):
         "centres": [{"id": row.code, "name": row.name} for row in centres.order_by("code")],
         "batches": [{"id": str(row.pk), "name": row.name, "centreId": row.centre.code}
                     for row in batches.select_related("centre").order_by("centre__code", "name")],
-        "students": [{"code": row.code, "name": row.full_name, "centreId": row.batch.centre.code, "batchId": str(row.batch_id)}
-                     for row in students.select_related("batch__centre").order_by("full_name", "code")],
     }

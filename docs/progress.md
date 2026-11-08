@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- **PERF.DIRECTORY:** reviewed aeed9ce merged locally with --no-ff. Grep confirmed dashboard/students/upload use only centres/batches. Removed the unused full student list from the Django directory and adapter type; retained role denial and strengthened non-vacuous all-centre/single-centre batch assertions. COMPLETE: npm run check passed (52 frontend / 186 Django; zero failures/skips, three existing lint warnings). Actual diff reviewed. PERF.DIRECTORY file claim cleared at commit; no shared database writes.
+
 - **TEST LOCK: Codex 15:19 IST, 2026-11-08.** Submission deadline 16:45 IST. Claims: docs/progress.md; then PERF.DIRECTORY backend/fees/services/reporting.py, backend/fees/tests/test_dashboard.py, lib/data/staff.ts, tests/backend-staff-reporting.test.ts; then docs/TDD.md, README.md, stale current docs, scripts/build-tdd.ts, package files and docs/screens. Shared :3010/:8001 and database will remain untouched. Prior uncommitted active/retry notes cleared as obsolete; their historical outcomes remain below.
 
 - **T7.3-UI review aeed9ce:** reviewed all four changed files against main. No blocker: file input is outside the upload button, visible text supplies its accessible name, landing/upload join layout coverage and payment-result screenshots capture the explicitly pending state; paid result is covered by parent-payment/golden. Pre-merge npm run check passed: 52 frontend / 186 Django, zero failures/skips, three existing lint warnings. Review claim cleared; lock remains owned for the immediately following requested work.

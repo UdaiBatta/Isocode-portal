@@ -28,7 +28,7 @@ it("forwards real dashboard and roster filters to Django without reading fixture
 });
 
 it("uses the real scoped directory and redirects expired sessions", async () => {
-  const directory = { ok: true, centres: [{ id: "MLV", name: "Synthetic centre" }], batches: [], students: [] };
+  const directory = { ok: true, centres: [{ id: "MLV", name: "Synthetic centre" }], batches: [] };
   fetcher.mockResolvedValueOnce(Response.json(directory));
   expect(await getStaffDirectory()).toEqual(directory);
   expect(fetcher.mock.calls[0][0]).toBe("http://localhost:8000/api/staff_directory");
