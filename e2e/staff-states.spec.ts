@@ -118,6 +118,8 @@ test("the staff and parent spines stay in place while the page scrolls", async (
   await context.addCookies([{ name: "lang", value: "en", url: "http://127.0.0.1:3001" }]);
   await signIn(context, "parent:+919000000587");
   await page.goto("/dashboard");
+  // The loading screen has its own spine; wait until streaming has swapped it for the page's.
+  await expect(page.locator(".ledger-spine")).toHaveCount(1);
   await page.evaluate(() => scrollTo(0, 200));
   await expect.poll(() => page.locator(".ledger-spine").boundingBox().then((box) => [box!.y, box!.height])).toEqual([0, 800]);
 });
