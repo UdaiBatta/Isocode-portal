@@ -25,11 +25,9 @@ The dashboard shows over-60-days value against the 6% target. Its numerator incl
 
 ## Architecture and why
 
-```text
-Browser → Next.js pages/actions → Django JSON APIs → PostgreSQL
-                                   │
-                       pure rules + transactional services
-```
+![Who holds which secret](diagrams/trust-boundary.svg)
+
+*Each layer holds only what it needs. A browser that skips Next.js has no key, so Django refuses it. The gateway and the cron job reach Django with their own secrets.*
 
 Next.js 16, React 19 and BoardUI render the interface. Pages use `lib/data`, actions use `lib/actions`, and `lib/backend.ts` forwards the session and server-only internal key to Django. The browser calls Next.js, keeping database credentials and the internal key out of browser code. Django 5.2 LTS on Python 3.14 owns auth, permissions, validation, migrations, money transactions, reminders and risk. PostgreSQL supplies constraints and durable history. Local verification uses PostgreSQL 18; CI specifies PostgreSQL 17.
 
@@ -58,39 +56,33 @@ Pure domain rules have no database, network or clock imports. Services lock stud
 
 ### Pay and reconcile
 
-```text
-Dues/token → mock gateway → signed event → lock/recheck
-                            ├─ exact → allocation + GST receipt
-                            └─ wrong/ambiguous → unmatched review
-```
+![What can happen to one payment](diagrams/payment-fates.svg)
+
+*One ₹15,000 event for Ishita. The amount is compared with the balance read under lock, so only an exact match issues a receipt. The balance is never stored: it is derived from allocations.*
 
 Opaque public links expose minimal information. A result parameter cannot manufacture success. Private receipts need a linked, consented guardian or scoped accounts staff. Failed attempts issue no receipt; wrong/ambiguous payments show Checking. Counter payments allocate oldest first. Included GST is assumed at 18%: integer arithmetic rounds taxable value half up, then splits GST so all three parts equal the payment.
 
 ### Remind from current facts
 
-```text
-Daily/manual run → locked balance/status + eligible step
-                   ├─ paid/withdrawn/held/ineligible → stop
-                   └─ positive balance → unique log → mock message
-```
+![Reminder steps for one instalment](diagrams/reminder-ladder.svg)
+
+*Ishita's third instalment, to scale. The schedule is fixed, but each send rereads the live balance, so a payment stops every later step. A unique instalment and step pair prevents duplicates.*
 
 Steps are -7, -3, 0, +3, +7, +15 and +30 days. After an outage only the latest eligible unsent step is used. Part payments keep reminders on the remainder. A unique instalment/step prevents duplicates. The timeline explains sent, upcoming and stopped states. Pre-login reminders assume enrolment-paperwork consent; portal data still requires recorded consent.
 
 ### Refund
 
-```text
-Withdrawal date → preview → draft → lock/recheck unmatched
-                                    → freeze + withdraw + audit
-```
+![How a refund is worked out](diagrams/refund-bars.svg)
 
-Policy v1 assumes daily pro-rata on net fees, no deduction and ten calendar days. Inclusive elapsed days are clamped to the session. Earned fee is `net_paise × elapsed_days // total_days`; refund is `max(0, paid_paise - earned_paise)`. Still-payable value is separate. No editable total bypasses the formula. A related open unmatched payment blocks approval. Approval freezes policy/figures, withdraws the student and stops reminders. Aarav's supplied 2 November example returns ₹18,986.31. The client's real policy must replace this assumption before real use.
+*A worked example using Udai. The bars share one scale, so the withdrawal date lines up with what has been earned. The figures match the brief's sample withdrawal, which the seeded app shows as Aarav.*
+
+Policy v1 assumes daily pro-rata on net fees, no deduction and ten calendar days. Inclusive elapsed days are clamped to the session. Earned fee is `net_paise × elapsed_days // total_days`; refund is `max(0, paid_paise - earned_paise)`. Still-payable value is separate. No editable total bypasses the formula. A related open unmatched payment blocks approval. Approval freezes policy/figures, withdraws the student and stops reminders. The worked example above returns ₹18,986.31, matching the brief's supplied 2 November example. The client's real policy must replace this assumption before real use.
 
 ### Support flag
 
-```text
-Fee + attendance + tests → fixed score/band → High task
-                                             → brief/template → outcome
-```
+![Why one signal cannot raise a flag](diagrams/risk-caps.svg)
+
+*The most each signal can add. No single signal reaches High, so a call task always needs at least two kinds of evidence.*
 
 Risk never writes payments or reminders. Parents/accounts receive no risk data. Counsellors receive support reasons without fee amounts.
 
@@ -99,6 +91,10 @@ Risk never writes payments or reminders. Parents/accounts receive no risk data. 
 This is a hand-set policy, not a trained dropout predictor. Fee points cap at 40, attendance at 35 and test decline at 25. High starts at 60; Watch at 35. One signal cannot reach High. Fewer than four valid attendance weeks or three tests gives “Not enough data.” Attendance compares recent four weeks with prior four when available; tests compare the last two with earlier results in the latest five. Pure tests fix rounding/boundaries.
 
 High may create one open task. Trigger facts remain separate from later assessments. False flag suppresses another task for 30 days unless score rises by at least 15. Outcomes allow correction; scores never initiate collection or decide refunds.
+
+![What the model receives and what stops a bad reply](diagrams/ai-boundary.svg)
+
+*The model is optional and sees only six numbers. Every failure ends in the template, so the counsellor's task never depends on it.*
 
 Optional wording receives six allowlisted numeric features: overdue count, oldest overdue days, recent/prior attendance and recent/earlier test percentages. No names, phones or fee amounts are sent. Structured output must be a short supportive brief. Failures, refusals, empty/overlong or rupee-containing responses use the template. Calls have a 15-second timeout and one retry; a task caches its brief.
 
