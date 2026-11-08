@@ -1,4 +1,4 @@
-// Every screen the layout spec checks. The payment result needs a real payment, so parent-payment.spec.ts covers it.
+// Every screen. layout.spec skips the payment result: its paid state needs a real payment, which parent-payment.spec.ts covers.
 export const routes = [
   { key: "login", title: "Parent sign-in", path: "/login", role: "parent" },
   { key: "consent", title: "Parental consent", path: "/consent", role: "parent" },
@@ -25,5 +25,8 @@ export const routes = [
   { key: "manage-centres", title: "Manage centres", path: "/staff/manage/centres", role: "admin" },
   { key: "manage-staff", title: "Manage staff", path: "/staff/manage/staff", role: "admin" },
   { key: "manage-history", title: "Change history", path: "/staff/manage/history", role: "admin" },
+  { key: "landing", title: "Landing page", path: "/", role: "public" },
+  { key: "upload", title: "Upload results", path: "/staff/upload", role: "accounts" },
+  { key: "result", title: "Payment result", path: "/pay/STU-0587-3/result", role: "public" },
   { key: "demo", title: "Reviewer walkthrough", path: "/demo", role: "public" },
 ] as const;
