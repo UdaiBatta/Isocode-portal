@@ -2,6 +2,8 @@
 
 ## In progress now
 
+- TEST LOCK: Claude 2026-11-08 21:50 (TDD diagrams at the human's request: docs/TDD.md, docs/diagrams/**, scripts/build-tdd.ts on the Claude branch).
+
 
 - **PERF.DIRECTORY:** reviewed aeed9ce merged locally with --no-ff. Grep confirmed dashboard/students/upload use only centres/batches. Removed the unused full student list from the Django directory and adapter type; retained role denial and strengthened non-vacuous all-centre/single-centre batch assertions. COMPLETE: npm run check passed (52 frontend / 186 Django; zero failures/skips, three existing lint warnings). Actual diff reviewed. PERF.DIRECTORY file claim cleared at commit; no shared database writes.
 
