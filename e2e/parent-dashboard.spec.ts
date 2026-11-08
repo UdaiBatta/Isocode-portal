@@ -127,9 +127,23 @@ test("a parent with two children stays on the same page when switching, and cann
   await expect(page.getByText("Ishita Sharma", { exact: true })).toHaveCount(0);
 });
 
+test("switching parent tabs keeps the page loaded and moves the highlight", async ({ page, context }) => {
+  await signIn(context, "+919000000587");
+  await page.goto("/dashboard");
+  await waitForParentPage(page);
+  await page.evaluate(() => { (window as unknown as { kept: boolean }).kept = true; });
+  for (const href of ["/progress", "/dues", "/dashboard"]) {
+    await openFromNav(page, href);
+    await expect(page).toHaveURL(new RegExp(`${href}$`));
+    await expect(page.locator(`nav a[href="${href}"][aria-current="page"]:visible`)).toHaveCount(1);
+  }
+  expect(await page.evaluate(() => (window as unknown as { kept?: boolean }).kept)).toBe(true); // A full reload would have cleared it.
+});
+
 test("settings changes the language and logs out", async ({ page, context }) => {
   await signIn(context, "+919000000587");
-  await page.goto("/settings");
+  await page.goto("/dashboard");
+  await openFromNav(page, "/settings"); // In-page navigation, so the browser holds a cached parent page.
   await expect(page.getByText("+91 90000 00587", { exact: true })).toBeVisible();
   await expect(page.getByText("Showing attendance and test scores", { exact: true })).toBeVisible();
   await page.getByRole("radio", { name: "हिंदी", exact: true }).click();
@@ -139,6 +153,9 @@ test("settings changes the language and logs out", async ({ page, context }) => 
   if (await page.locator("nav.fixed summary").isVisible()) await page.locator("nav.fixed summary").click();
   await page.locator("button:visible", { hasText: "Log out" }).click();
   await expect(page).toHaveURL(/\/login$/);
+  await page.goBack(); // Logging out must not leave the parent's page reachable.
+  await expect(page).toHaveURL(/\/login/);
+  await expect(page.getByText("+91 90000 00587", { exact: true })).toHaveCount(0);
 });
 
 test("switching child on receipts stays on receipts", async ({ page, context }) => {

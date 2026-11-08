@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { RiArrowRightSLine, RiBarChart2Line, RiFileList3Line, RiGraduationCapLine, RiHomeLine, RiMoreLine, RiSettings4Line, RiUserLine, RiWallet3Line } from "@remixicon/react";
 import { Skeleton } from "@/components/base/skeleton/skeleton";
 import { EmptyState } from "./EmptyState";
@@ -32,7 +33,7 @@ export interface ParentShellProps {
   state?: "loading" | "empty" | null; emptyTitle?: string; title?: string; description?: string; showName?: boolean; showLanguage?: boolean; wide?: boolean; children?: ReactNode;
 }
 
-// The staff frame's structure, drawn on the server with plain links: StaffShell's client sidebar and drawer would put /dues over its 200 KB script budget.
+// The staff frame's structure, drawn on the server: StaffShell's client sidebar and drawer would put /dues over its 200 KB script budget. Tabs use Link so switching keeps the page; prefetch stays off because it pulls sibling routes past that budget.
 export function ParentShell({ language, active, family, selected, state, emptyTitle, title, description, showName = true, showLanguage = true, wide = false, children }: ParentShellProps) {
   const href = (path: string, student = selected) => withStudent(path, student, family);
   const tab = tabs.find((item) => item.key === active)!;
@@ -40,9 +41,9 @@ export function ParentShell({ language, active, family, selected, state, emptyTi
   return <div className="parent-surface min-h-dvh text-text-primary md:flex md:gap-10 print:block print:p-0">
     <div className="hidden w-64 shrink-0 md:block print:hidden"><aside className="ledger-spine ledger-butti sticky top-0 flex h-dvh flex-col gap-10 py-7 ps-5">
       <div className="pe-5"><p className="ledger-type ledger-spine-brand text-title-1-medium">{ORG.name}</p><p className="text-body-regular">{ORG.city} · {pt(language, "portal.area")}</p></div>
-      <nav aria-label={pt(language, "portal.nav")} className="flex flex-col gap-1">{tabs.map((item) => <a key={item.key} href={href(item.path)} aria-current={item.key === active ? "page" : undefined} className="flex items-center gap-2 rounded-s-lg p-2 ps-3">
+      <nav aria-label={pt(language, "portal.nav")} className="flex flex-col gap-1">{tabs.map((item) => <Link prefetch={false} key={item.key} href={href(item.path)} aria-current={item.key === active ? "page" : undefined} className="flex items-center gap-2 rounded-s-lg p-2 ps-3">
         <item.icon aria-hidden className="size-5 shrink-0" /><span className="text-body-medium">{pt(language, item.label)}</span>
-      </a>)}</nav>
+      </Link>)}</nav>
       <div className="mt-auto pe-5"><LogoutButton language={language} /></div>
     </aside></div>
     <main className={cx("mx-auto flex w-full min-w-0 flex-col gap-6 px-4 pb-28 pt-3 md:px-0 md:py-8 md:pe-10 print:max-w-none print:p-0", wide ? "max-w-[1040px]" : "max-w-[720px]")}>
@@ -58,13 +59,13 @@ export function ParentShell({ language, active, family, selected, state, emptyTi
       </div>
     </main>
     <nav aria-label={pt(language, "portal.nav")} className="ledger-tabbar fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 pb-[env(safe-area-inset-bottom)] md:hidden print:hidden">
-      {tabs.filter((item) => item.phone).map((item) => <a key={item.key} href={href(item.path)} aria-current={item.key === active ? "page" : undefined} className="flex min-w-0 flex-col items-center justify-center gap-0.5 py-1.5 text-body-medium">
+      {tabs.filter((item) => item.phone).map((item) => <Link prefetch={false} key={item.key} href={href(item.path)} aria-current={item.key === active ? "page" : undefined} className="flex min-w-0 flex-col items-center justify-center gap-0.5 py-1.5 text-body-medium">
         <item.icon aria-hidden className="size-5 shrink-0" /><span>{pt(language, short[item.key as keyof typeof short])}</span>
-      </a>)}
+      </Link>)}
       <details className="relative" data-active={tab.phone ? undefined : true}>
         <summary className="flex min-h-12 cursor-pointer list-none flex-col items-center justify-center gap-0.5 py-1.5 text-body-medium [&::-webkit-details-marker]:hidden"><RiMoreLine aria-hidden className="size-5 shrink-0" /><span>{pt(language, "portal.more")}</span></summary>
         <div className="absolute bottom-full end-2 mb-2 flex w-56 flex-col rounded-2xl border border-border-button-default bg-background-primary-default p-2 shadow-xs">
-          {tabs.filter((item) => !item.phone).map((item) => <a key={item.key} href={href(item.path)} aria-current={item.key === active ? "page" : undefined} className={cx("flex items-center gap-2 rounded-xl px-3 text-body-medium", item.key === active ? "bg-background-secondary-default text-text-primary" : "text-text-secondary")}><item.icon aria-hidden className="size-5 shrink-0" />{pt(language, item.label)}</a>)}
+          {tabs.filter((item) => !item.phone).map((item) => <Link prefetch={false} key={item.key} href={href(item.path)} aria-current={item.key === active ? "page" : undefined} className={cx("flex items-center gap-2 rounded-xl px-3 text-body-medium", item.key === active ? "bg-background-secondary-default text-text-primary" : "text-text-secondary")}><item.icon aria-hidden className="size-5 shrink-0" />{pt(language, item.label)}</Link>)}
           <div className="border-t border-separator-border px-3"><LogoutButton language={language} /></div>
         </div>
       </details>
@@ -79,9 +80,9 @@ export function ParentDetails({ rows }: { rows: [string, ReactNode][] }) {
 }
 
 export function GlanceRow({ href, label, value, figure }: { href: string; label: string; value: ReactNode; figure?: ReactNode }) {
-  return <li><a href={href} className="flex items-center justify-between gap-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+  return <li><Link prefetch={false} href={href} className="flex items-center justify-between gap-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
     <span className="flex min-w-0 flex-col gap-0.5"><span className="text-body-regular text-text-secondary">{label}</span><span className="text-body-medium tabular-nums">{value}</span></span>
     {figure ? <span aria-hidden className="ledger-figure ms-auto">{figure}</span> : null}
     <RiArrowRightSLine aria-hidden className="size-5 shrink-0 text-foreground-icon-secondary rtl:rotate-180" />
-  </a></li>;
+  </Link></li>;
 }
