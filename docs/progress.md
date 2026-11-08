@@ -2,7 +2,7 @@
 
 ## In progress now
 
-- **PR 1 merged into main at 63273e6 (human-requested; Codex review of c984eff..6eeb113: CLEAR TO MERGE, no blockers; not run by that review: tests, build, browser, failure trace, cross-tab sessions).** T7.2 is done on main. Full browser run on this code: 248 passed, 1 failed, 5 intentional skips; the failure (mobile controls queue search, 30 s timeout at the start of the run) passed 3/3 alone at about 12 s, cause unconfirmed, so T7.1 is NOT declared passed. Follow-ups: scripts/screens.ts must cover /staff/upload, /pay/[token]/result and / before T7.3 (Codex P2); backend: remove students from staff_directory (no frontend reader now); Automation candidates search API proposed; T8.2 documents and the TDD still describe the prototype. No Claude test lock or claims.
+- TEST LOCK: Claude 2026-11-08 15:10 (deadline: submission midnight, human gave 2 hours). Claim: e2e/routes.ts, e2e/layout.spec.ts, scripts/screens.ts on branch t3/admin-manage-contract-screens, about 10 minutes, then Codex takes the lock. PR 1 merged at 63273e6, T7.2 done, T7.1 not yet declared passed.
 
 - **Review checks complete (Codex, 2026-11-08):** npm run check passed on main before the review commit: 54 frontend / 186 Django tests, 0 failures, 0 skips; types, Ruff and Django system checks pass, eight existing lint warnings. Review claim cleared at commit; TEST LOCK remains owned for the merged-tree verification and acceptance requested next. No source changes by Codex.
 
