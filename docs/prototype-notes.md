@@ -1,5 +1,7 @@
 # Prototype notes
 
+Historical design-stage record. The current app uses Django sessions, permissions and PostgreSQL transactions; legacy fixtures/helpers are removed. See TDD.md and progress.md for current evidence. Dated observations below are not final-app or human-study results.
+
 The prototype answers the parent's first questions in order: what is owed, when it was due, and what to press. Home (`/dashboard`) is the new landing page after sign-in and consent. It shares `DuesStatus` with fee details (`/dues`), so paid, checking, clear and withdrawn states use the same presentation. Attendance, latest test and latest receipt link to their detail pages. Parents receive their own child's facts without risk labels, comparisons or counsellor data.
 
 The human's master prompt replaced the earlier single-screen parent layout with a desktop sidebar and a four-item phone bar. Parent pages use paper surfaces and forest actions; staff pages use graphite panels and lime actions. Both use the installed BoardUI components and shared semantic tokens, including portalled controls. The existing Inter and Noto Sans Devanagari fonts remain.
@@ -12,4 +14,4 @@ Review found that staff failures fell back to the parent paper screen and lost w
 
 The 2026-11-04 review covers the merged changes since `97aa6c6` and that bounded state repair. `npm run check` passed with 32 unit tests and eight existing lint warnings. The baseline full browser suite passed 202 cases; the repaired source passed 58 selected new and affected cases, including state/accessibility, navigation, parent retry, staff sign-in and script budgets. The production build passed; an earlier stale generated Turbopack cache failure was resolved without touching the development preview. All 384 screenshots were refreshed, with changed images being reviewed again. Lighthouse mobile scored 94, with LCP 1.206 seconds; see `gate-0.md` for the evidence and remaining review status.
 
-No five-second test, real-phone test, Hindi-reader review or human sign-off has been run. No user-study findings have been inferred. This remains a fictional-data prototype; Django, durable transactions, real permissions and provider integrations come in later phases.
+No five-second test, real-phone test, Hindi-reader review or human sign-off has been run. No user-study findings have been inferred. Django, durable transactions and real permissions have since been implemented. Payment and message providers remain mocked.

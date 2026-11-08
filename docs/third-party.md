@@ -2,7 +2,7 @@
 
 | Source | Item | URL | Licence | Use | Changes |
 | --- | --- | --- | --- | --- | --- |
-| BoardUI | Free components and design tokens | https://www.boardui.com | MIT | Prototype UI | Teal accent ramp and Hindi font fallback per B2–B3 |
+| BoardUI | Free components and design tokens | https://www.boardui.com | MIT | Application UI | Parent/staff semantic themes, Hindi typography and reduced motion |
 | Motion | motion 12.42.2 | https://motion.dev | MIT | Staff number interpolation and /demo words | Already installed; no parent-route import |
 
 | 21st.dev prompts | app-sign-in, hero-02 | Supplied by the human as prompts | Not stated | Layout reference for AuthLayout and StaffPage | No code, images, packages or copy taken. Rebuilt with BoardUI tokens and plain CSS |

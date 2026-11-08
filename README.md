@@ -2,35 +2,57 @@
 
 Project: https://github.com/UdaiBatta/Isocode-portal
 
-A focused fee-tracking application for Company A, Jaipur. The core build covers parent dues and payment links, student ledgers, reminders that stop on payment, policy-based refunds, an accounts dashboard, and counsellor call tasks.
+Parents see dues, pay through a mock gateway and receive GST receipts. Accounts manages ledgers, reminders, refunds, reconciliation, academic uploads and exports. Counsellors see support tasks without fee amounts. Admin maintains audited master records.
 
-The selected stack is React and BoardUI in a Next.js frontend, with Django and PostgreSQL for the backend. The Django decision overrides the original Node backend proposal in `docs/PLAN.md`; see `docs/decisions.md`.
+Next.js 16, React 19 and BoardUI render the frontend. Django 5.2 LTS on Python 3.14 owns sessions, permissions, validation and transactions; PostgreSQL stores the ledger. Sessions and permissions are real. Money, OTP delivery and outbound messages are mocked.
 
-Current state: parent and staff screens run on real Django sessions and PostgreSQL. Payments and messages are simulated, and the demo controls are labelled as such.
+## Run locally
 
-## Run the frontend
+Use Node 22.12+, Python 3.14 and PostgreSQL 17 (local verification also uses 18). Create a dedicated demo database; browser tests reset its named examples. In PowerShell:
 
-Use Node 22.12 or later:
-
-```bash
+```powershell
 npm ci
-cp .env.example .env.local
-npm run dev
+python -m venv .venv
+.venv/Scripts/python.exe -m pip install -r backend/requirements-dev.txt
+createdb -U postgres coaching_fees_review
+Copy-Item .env.example .env.local
 ```
 
-Before starting, set `DEMO_MODE=true` and `APP_URL=http://localhost:3000` in `.env.local`. In PowerShell, use `Copy-Item .env.example .env.local` for the copy step. Open http://localhost:3000. The first build downloads Inter and Noto Sans Devanagari; runtime font files are served locally.
+Fill the ignored environment file with:
 
-Start at `/login` with fictional parent phone `9000000587`; in demo mode the one-time code appears on screen. Grant the sample consent, pay Ishita's remaining ₹15,000 with the mock gateway, then open and print the receipt. The gateway also offers failed and wrong-amount outcomes. Staff sign in at `/staff/login`. These are demonstration controls, not production authentication.
+- `DATABASE_URL` for that database.
+- Independently generated `DJANGO_SECRET_KEY`, `INTERNAL_API_SECRET`, `PAYMENT_WEBHOOK_SECRET` and `CRON_SECRET`.
+- Your own `SEED_DEMO_PASSWORD`.
+- `DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1`, `DJANGO_DEBUG=true`, `DEMO_MODE=true`.
+- `BACKEND_URL=http://127.0.0.1:8000`, `APP_URL=http://localhost:3000`.
 
-## Check the frontend
+`ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` are optional. Without a key, call briefs use the template. Do not commit environment files.
 
-```bash
+```powershell
+npm run db:migrate
+npm run db:seed
+npm run dev:api
+```
+
+In another terminal run `npm run dev`, then open http://localhost:3000. The first build downloads Google font files; runtime serves them locally. Unix users can use `.venv/bin/python` and `cp` for equivalent steps.
+
+At `/login`, use fictional parent phone `9000000587`; demo mode shows the generated OTP. Grant consent, pay Ishita's INR 15,000, then open/print the receipt. Staff sign in at `/staff/login` with `accounts@demo.test`, `accounts.mlv@demo.test`, `counsellor@demo.test` or `admin@demo.test`, using the password you set.
+
+## Verify and capture
+
+```powershell
 npm run check
-npm run build
 npx playwright install chromium
+$env:NEXT_DIST_DIR=".next-e2e"
+$env:APP_URL="http://127.0.0.1:3001"
+npm run build
 npm run test:e2e
 ```
 
-Unit tests cover formatting, translations, simulated state changes, receipt scope and the parent animation boundary. Browser tests check the parent sign-in-to-receipt flow, failure/review outcomes, 360 × 640 and 1280 × 800 layouts, Hindi fonts, security headers, console errors and serious accessibility findings. Browser QA uses port 3001 so it can run alongside the development preview on 3000. To capture existing routes and preview states, run `npm run start` and then `npm run screens` in another terminal; the script supplies sample payment and receipt routes.
+The check runs lint, types, Vitest, Ruff, Django system checks and PostgreSQL-backed tests. The database role needs permission to create its test database. Playwright starts Next.js on :3001 and Django on :8000; leave those ports free and use a dedicated demo database. The golden journey covers Hindi OTP/consent/payment/receipt and accounts reconciliation, alongside layout, scope, accessibility, script-budget and reduced-motion checks.
 
-The original build specification is in `docs/PLAN.md`. `docs/PROMPTS.md` supplies the current local-only execution sequence; Vercel is deferred until after development. `docs/progress.md` records the restart point. Backend implementation waits for prototype review at Gate 0.
+For screenshots, start Django on :8000 and `npm run start -- --hostname 127.0.0.1 --port 3001`, then `npm run screens`. It uses real sessions and saves normal states in both languages/widths. The payment-result screenshot is pending; paid results have separate browser coverage.
+
+After the production build and screenshots, run `npx tsx scripts/build-tdd.ts --no-live`. The PDF embeds Hindi fonts and images. Omit `--no-live` only after resolving the source live-URL and human-result placeholders. `dist/` stays ignored.
+
+Current design/limits: `docs/TDD.md`. Current status: `docs/progress.md`. Specification: `docs/PLAN.md`. Prototype notes and Gate 0 records describe the earlier design stage. No deployment or real-phone, Hindi-reader or five-second human test is claimed.

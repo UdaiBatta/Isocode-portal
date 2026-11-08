@@ -2,9 +2,10 @@
 
 ## In progress now
 
+
 - **PERF.DIRECTORY:** reviewed aeed9ce merged locally with --no-ff. Grep confirmed dashboard/students/upload use only centres/batches. Removed the unused full student list from the Django directory and adapter type; retained role denial and strengthened non-vacuous all-centre/single-centre batch assertions. COMPLETE: npm run check passed (52 frontend / 186 Django; zero failures/skips, three existing lint warnings). Actual diff reviewed. PERF.DIRECTORY file claim cleared at commit; no shared database writes.
 
-- TEST LOCK: Claude 2026-11-08 16:02 (Codex stopped at its usage limit until 19:25 IST; its acceptance run had finished and no agent or test process is running). Finishing T7.4/T8.2 packaging from Codex's uncommitted documents; no backend edits.
+- **T7.1 PASSED, T7.4 done, no-live-app package built (2026-11-08, finished by Claude after Codex hit its usage limit until 19:25 IST; no test lock or claims held).** Final application code bed736f, production build, isolated snapshot, both viewports: 253 passed, 0 failed, 5 intentional skips, golden included. Fresh-clone setup passed through migrate, seed and Django check, without starting servers. Streaming $RS error: intermittent at 360 px only under rapid interrupted reloads, 6 of 42 in one unfiltered run and 0 of 42 in another, 0 in 42 settled loads and 60 tab switches; no visible failure; recorded as a known limit, not waived, cause unconfirmed. dist/TDD.pdf (9 pages), dist/deployment.md and dist/submission.zip (exactly those two, 486 KB) are built; both placeholders resolved in the packaged copy, and docs/TDD.md keeps them for a live version. Human checks not run and stated as such. Documents and acceptance evidence not reviewed by Codex. Automation candidates search not built. Push to GitHub awaits the human.
 
 - **T7.3-UI review aeed9ce:** reviewed all four changed files against main. No blocker: file input is outside the upload button, visible text supplies its accessible name, landing/upload join layout coverage and payment-result screenshots capture the explicitly pending state; paid result is covered by parent-payment/golden. Pre-merge npm run check passed: 52 frontend / 186 Django, zero failures/skips, three existing lint warnings. Review claim cleared; lock remains owned for the immediately following requested work.
 

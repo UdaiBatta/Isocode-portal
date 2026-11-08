@@ -1,5 +1,7 @@
 # Gate 0 review
 
+Historical design-stage evidence. The current app uses Django sessions, durable transactions and real permissions; legacy routes, cookies and preview helpers are removed. See TDD.md and progress.md for current results. No human phone, Hindi-reader or five-second results have been supplied.
+
 Reviewed on 2026-11-04 against merged commit `fa46397` (changes since `97aa6c6`), the staff-state repair and three fixes from the final screenshot pass. Every automated and review check passes; the four human checks have not been run and do not block Phase 1. Codex began this review and its usage limit ran out, so Claude finished the final screenshot pass and the rerun at the human's request. **Codex has not reviewed the resulting commit.** The human-authorized parent Home and paper/forest and dark/lime themes supersede the older no-sidebar/teal layout.
 
 | Check | Result and evidence |
