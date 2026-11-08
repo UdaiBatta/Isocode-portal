@@ -2,7 +2,7 @@
 
 ## In progress now
 
-- TEST LOCK: Claude 2026-11-08 (parent nav speed fix: reported by the human, about a second when switching parent sidebar tabs). Claim: components/app/ParentShell.tsx, e2e/parent-dashboard.spec.ts. Branch t3/admin-manage-contract-screens.
+- TEST LOCK: Claude 2026-11-08 13:40 (human asked to remove unused code without changing functionality). Claim, frontend only: components/application/**, components/base/**, components/foundations/template-copy, components/app/StaffShell.tsx, styles/globals.css, public/**, lib/csv.ts, tests/csv.test.ts. No backend, no prototype removal (T7.2 keeps its pause). Nav fix committed at 180cfaa.
 
 - **Review checks complete (Codex, 2026-11-08):** npm run check passed on main before the review commit: 54 frontend / 186 Django tests, 0 failures, 0 skips; types, Ruff and Django system checks pass, eight existing lint warnings. Review claim cleared at commit; TEST LOCK remains owned for the merged-tree verification and acceptance requested next. No source changes by Codex.
 
