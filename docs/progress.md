@@ -2,7 +2,7 @@
 
 ## In progress now
 
-- **TDD diagrams ready on branch t3/admin-manage-contract-screens at 3151117; Claude holds no test lock or claims.** Six SVG figures in docs/diagrams replace the TDD's text-arrow blocks; scripts/build-tdd.ts inlines them. The refund example is named Udai at the human's request, with the caption noting that the seeded app and the brief show it as Aarav; seed data unchanged. npm run check passes (52 frontend, 186 Django). dist/ rebuilt (TDD.pdf 11 pages, submission.zip 607 KB). Not yet merged or pushed: awaiting the human.
+- **Claude, docs gap check (2026-11-09): TDD diagrams remain on t3/admin-manage-contract-screens at 3151117. Running a fresh GitHub clone in the scratchpad on its own database and ports 3000/8000, then editing deployment.md, README.md, docs/TDD.md on that branch. No test lock taken; shared database untouched.**
 
 
 - **PERF.DIRECTORY:** reviewed aeed9ce merged locally with --no-ff. Grep confirmed dashboard/students/upload use only centres/batches. Removed the unused full student list from the Django directory and adapter type; retained role denial and strengthened non-vacuous all-centre/single-centre batch assertions. COMPLETE: npm run check passed (52 frontend / 186 Django; zero failures/skips, three existing lint warnings). Actual diff reviewed. PERF.DIRECTORY file claim cleared at commit; no shared database writes.
